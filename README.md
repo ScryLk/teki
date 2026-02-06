@@ -1,36 +1,389 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# Teki
 
-First, run the development server:
+**Assistente IA para Suporte Tecnico | Powered by Algolia Agent Studio**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+[![Algolia](https://img.shields.io/badge/Algolia-Agent%20Studio-5468FF?style=flat&logo=algolia&logoColor=white)](https://www.algolia.com/products/ai-search/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+
+[Demo ao Vivo](https://teki.vercel.app) | [Documentacao](#configuracao-do-algolia) | [Contribuir](#contribuicao)
+
+</div>
+
+---
+
+## Sobre o Projeto
+
+Teki e um assistente inteligente desenvolvido para auxiliar tecnicos de suporte de TI durante atendimentos ao vivo. Utilizando o poder do **Algolia Agent Studio**, o sistema busca em bases de conhecimento indexadas e fornece diagnosticos precisos com passos acionaveis em tempo real.
+
+### O Problema
+
+Tecnicos de helpdesk frequentemente enfrentam:
+- Pressao por respostas rapidas durante ligacoes com usuarios
+- Dificuldade em localizar documentacoes relevantes
+- Falta de acesso a historico de problemas similares ja resolvidos
+- Necessidade de consultar multiplas fontes simultaneamente
+
+### A Solucao
+
+Teki centraliza todas as fontes de informacao em uma interface de chat inteligente que:
+- Busca em documentacoes, tickets historicos e cadastro de sistemas em menos de 50ms
+- Fornece diagnosticos estruturados com passos numerados
+- Permite adicionar contexto do atendimento para respostas mais precisas
+- Funciona em qualquer dispositivo com interface responsiva
+
+### Publico-Alvo
+
+- Analistas de suporte tecnico (N1, N2, N3)
+- Equipes de helpdesk corporativo
+- Tecnicos de campo com acesso mobile
+- Gestores de base de conhecimento
+
+---
+
+## Features
+
+| Feature | Descricao |
+|---------|-----------|
+| **Chat com IA Contextual** | Conversacao natural com respostas baseadas em dados reais da empresa |
+| **Busca Ultra-Rapida** | Resultados em menos de 50ms usando Algolia Search |
+| **Diagnostico Estruturado** | Respostas organizadas com passos, alertas e referencias |
+| **Base de Conhecimento** | Upload e indexacao de documentos PDF/DOC com chunking automatico |
+| **Painel de Contexto** | Adicione informacoes do sistema, versao e erro para respostas precisas |
+| **Interface Minimalista** | Design limpo e responsivo que funciona em desktop e mobile |
+| **Streaming de Respostas** | Respostas em tempo real via Server-Sent Events |
+
+---
+
+## Tech Stack
+
+### Frontend
+- **Next.js 16** - Framework React com App Router
+- **React 19** - Biblioteca de UI
+- **Tailwind CSS v4** - Estilizacao utility-first
+- **shadcn/ui** - Componentes acessiveis e customizaveis
+- **TypeScript** - Tipagem estatica
+
+### AI e Search
+- **Algolia Agent Studio** - Motor de IA com RAG integrado
+- **Gemini 2.5 Flash** - LLM para geracao de respostas
+
+### Indices Algolia
+| Indice | Conteudo |
+|--------|----------|
+| `documentacoes` | SOPs, manuais, procedimentos |
+| `tickets` | Historico de chamados resolvidos |
+| `sistemas` | Catalogo de sistemas, versoes, bugs conhecidos |
+| `solucoes` | Base de conhecimento criada pelos tecnicos |
+
+### Infraestrutura
+- **Vercel** - Deploy e hosting
+- **Edge Runtime** - API de chat otimizada
+
+---
+
+## Screenshots
+
+<div align="center">
+
+<!-- Substituir pelo GIF/imagem real -->
+```
++------------------------------------------+
+|  Teki        Chat | Base de Conhecimento |
++------------------------------------------+
+|                                          |
+|              [Logo Teki]                 |
+|                 Teki                     |
+|    Assistente inteligente para suporte   |
+|                                          |
+|   +----------------+ +----------------+  |
+|   | Excel nao abre | | VPN desconecta |  |
+|   +----------------+ +----------------+  |
+|   +----------------+ +----------------+  |
+|   | Usuario sem    | | Impressora     |  |
+|   | senha          | | em branco      |  |
+|   +----------------+ +----------------+  |
+|                                          |
+|  [____________________________________]  |
+|  [Descreva o problema...]          [->]  |
++------------------------------------------+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+</div>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Quick Start
 
-## Learn More
+### Pre-requisitos
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js 18.17 ou superior
+- Conta no [Algolia](https://www.algolia.com/) com Agent Studio habilitado
+- npm, yarn ou pnpm
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Instalacao
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Clone o repositorio
+git clone https://github.com/seu-usuario/teki.git
+cd teki
 
-## Deploy on Vercel
+# Instale as dependencias
+npm install
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Configure as variaveis de ambiente
+cp .env.example .env.local
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Variaveis de Ambiente
+
+Edite o arquivo `.env.local`:
+
+```env
+# Algolia - Obtenha em https://dashboard.algolia.com/
+NEXT_PUBLIC_ALGOLIA_APP_ID=seu_app_id
+NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=sua_search_key
+NEXT_PUBLIC_ALGOLIA_AGENT_ID=seu_agent_id
+
+# Admin Key - Necessaria para indexacao (server-side only)
+ALGOLIA_ADMIN_KEY=sua_admin_key
+```
+
+### Executar
+
+```bash
+# Desenvolvimento
+npm run dev
+
+# Build de producao
+npm run build
+npm start
+```
+
+Acesse [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Configuracao do Algolia
+
+### 1. Criar os Indices
+
+No [Algolia Dashboard](https://dashboard.algolia.com/), crie os seguintes indices:
+
+**documentacoes**
+```json
+{
+  "searchableAttributes": ["title", "content", "category"],
+  "attributesForFaceting": ["filterOnly(category)", "filterOnly(system)"]
+}
+```
+
+**tickets**
+```json
+{
+  "searchableAttributes": ["title", "description", "solution", "tags"],
+  "attributesForFaceting": ["filterOnly(status)", "filterOnly(category)"]
+}
+```
+
+**sistemas**
+```json
+{
+  "searchableAttributes": ["name", "description", "known_issues"],
+  "attributesForFaceting": ["filterOnly(category)", "filterOnly(status)"]
+}
+```
+
+**solucoes**
+```json
+{
+  "searchableAttributes": ["title", "content", "description", "tags"],
+  "attributesForFaceting": ["filterOnly(category)", "filterOnly(criticality)"]
+}
+```
+
+### 2. Configurar o Agent Studio
+
+1. Acesse **Agent Studio** no dashboard Algolia
+2. Crie um novo agente com o nome "Teki"
+3. Adicione os 4 indices como **Data Sources**
+4. Configure o **System Prompt**:
+
+```
+Voce e Teki, um assistente de IA especializado em ajudar tecnicos de suporte de TI durante atendimentos ao vivo.
+
+## SEU PAPEL
+- Voce auxilia o TECNICO, nao o usuario final
+- Use a busca Algolia para encontrar informacoes relevantes na base de conhecimento
+- Forneca diagnosticos baseados em DADOS REAIS, nao suposicoes
+
+## FONTES DE DADOS (via Algolia Search)
+1. documentacoes - SOPs, manuais, procedimentos
+2. tickets - Historico de chamados resolvidos
+3. sistemas - Catalogo de sistemas, versoes, bugs conhecidos
+4. solucoes - Base de conhecimento dos tecnicos
+
+## REGRAS
+1. Seja OBJETIVO - o tecnico esta em uma ligacao, tempo e critico
+2. Forneca passos NUMERADOS e acionaveis
+3. Sempre cite as FONTES quando usar informacoes da base
+4. Se nao encontrar informacao, admita e sugira alternativas
+5. Alerte sobre riscos ou prerequisitos importantes
+```
+
+5. Selecione **Gemini 2.5 Flash** como modelo
+6. Publique o agente
+
+### 3. Obter o Agent ID
+
+Apos publicar, copie o **Agent ID** da URL ou das configuracoes do agente e adicione ao `.env.local`.
+
+---
+
+## Estrutura de Pastas
+
+```
+teki/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── chat/
+│   │   │   │   └── route.ts          # Endpoint de chat (Edge)
+│   │   │   ├── solucoes/
+│   │   │   │   ├── route.ts          # CRUD solucoes
+│   │   │   │   └── [id]/route.ts     # Solucao individual
+│   │   │   └── uploads/
+│   │   │       └── [filename]/route.ts
+│   │   ├── base-conhecimento/
+│   │   │   ├── page.tsx              # Listagem
+│   │   │   ├── nova/page.tsx         # Formulario
+│   │   │   └── layout.tsx
+│   │   ├── layout.tsx                # Root layout
+│   │   ├── page.tsx                  # Chat principal
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── ui/                       # shadcn/ui components
+│   │   ├── base-conhecimento/        # Componentes da KB
+│   │   ├── Header.tsx
+│   │   ├── ChatArea.tsx
+│   │   ├── ContextPanel.tsx
+│   │   └── DiagnosticPanel.tsx
+│   ├── hooks/
+│   │   └── use-media-query.ts
+│   └── lib/
+│       ├── algolia-admin.ts          # Cliente admin Algolia
+│       ├── chunking.ts               # Chunking de documentos
+│       ├── process-solution.ts       # Pipeline de indexacao
+│       ├── solutions-store.ts        # Store de metadados
+│       ├── text-extraction.ts        # Extracao PDF/DOC
+│       └── types.ts
+├── public/
+│   └── teki.png                      # Logo
+├── .env.local                        # Variaveis de ambiente
+├── next.config.ts
+├── tailwind.config.ts
+└── package.json
+```
+
+---
+
+## API Reference
+
+### POST /api/chat
+
+Envia uma mensagem para o agente e recebe a resposta em streaming.
+
+**Request**
+
+```typescript
+{
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+  context?: {
+    sistema?: string;
+    versao?: string;
+    ambiente?: string;
+    sistemaOperacional?: string;
+    mensagemErro?: string;
+  };
+}
+```
+
+**Response**
+
+Server-Sent Events com formato:
+
+```
+data: {"type":"text-delta","delta":"Texto parcial..."}
+data: {"type":"text-delta","delta":" continuacao"}
+data: [DONE]
+```
+
+**Exemplo**
+
+```typescript
+const response = await fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [{ role: 'user', content: 'Excel nao abre' }],
+    context: { sistema: 'Microsoft Excel', versao: '365' }
+  })
+});
+
+const reader = response.body.getReader();
+// Processar streaming...
+```
+
+---
+
+## Contribuicao
+
+Contribuicoes sao bem-vindas! Para contribuir:
+
+1. Fork o repositorio
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Commit suas mudancas (`git commit -m 'Adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
+
+### Reportar Bugs
+
+Use as [Issues](https://github.com/seu-usuario/teki/issues) para reportar bugs ou sugerir features.
+
+---
+
+## Licenca
+
+Este projeto esta licenciado sob a **MIT License** - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+---
+
+## Autor
+
+**Lucas**
+
+[![GitHub](https://img.shields.io/badge/GitHub-@lucas-181717?style=flat&logo=github)](https://github.com/lucas)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Lucas-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/lucas)
+
+---
+
+## Agradecimentos
+
+<div align="center">
+
+**Desenvolvido para o Algolia Agent Studio Challenge**
+
+[![Algolia Challenge](https://img.shields.io/badge/Built%20for-Algolia%20Agent%20Studio%20Challenge-5468FF?style=for-the-badge&logo=algolia&logoColor=white)](https://dev.to/challenges/algolia)
+
+Agradecimentos especiais a equipe da **Algolia** por disponibilizar o Agent Studio e promover este desafio.
+
+</div>
+# teki
