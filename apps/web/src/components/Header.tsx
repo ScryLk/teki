@@ -56,7 +56,7 @@ export function Header({
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/', label: 'Chat', icon: MessageSquare },
+    { href: '/chat', label: 'Chat', icon: MessageSquare },
     { href: '/base-conhecimento', label: 'Base de Conhecimento', icon: BookOpen },
   ];
 
@@ -73,10 +73,7 @@ export function Header({
 
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive =
-                item.href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(item.href);
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
@@ -95,10 +92,7 @@ export function Header({
           {/* Mobile nav */}
           <nav className="flex md:hidden items-center gap-1">
             {navItems.map((item) => {
-              const isActive =
-                item.href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(item.href);
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
