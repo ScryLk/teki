@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { IconDownload, IconBrandWindows, IconBrandApple, IconBrandUbuntu, IconChevronDown } from '@tabler/icons-react';
 import { AnimatedCat } from './AnimatedCat';
@@ -15,6 +15,30 @@ function getOS(): OS {
   if (ua.includes('linux')) return 'linux';
   return 'unknown';
 }
+
+// Pre-computed particle positions to avoid hydration mismatch
+const particles = [
+  { w: 3.1, top: 12, left: 8, op: 0.1, dur: 7.2, delay: 1.3 },
+  { w: 2.4, top: 28, left: 92, op: 0.15, dur: 6.1, delay: 0.5 },
+  { w: 4.2, top: 45, left: 23, op: 0.09, dur: 8.5, delay: 2.7 },
+  { w: 2.8, top: 67, left: 78, op: 0.12, dur: 5.8, delay: 4.1 },
+  { w: 3.5, top: 82, left: 45, op: 0.08, dur: 9.3, delay: 0.8 },
+  { w: 2.1, top: 15, left: 55, op: 0.14, dur: 6.7, delay: 3.2 },
+  { w: 4.0, top: 38, left: 71, op: 0.11, dur: 7.9, delay: 1.9 },
+  { w: 2.6, top: 53, left: 12, op: 0.13, dur: 5.4, delay: 4.6 },
+  { w: 3.3, top: 91, left: 34, op: 0.09, dur: 8.1, delay: 2.1 },
+  { w: 2.9, top: 7, left: 67, op: 0.16, dur: 6.3, delay: 3.8 },
+  { w: 3.7, top: 74, left: 89, op: 0.10, dur: 7.5, delay: 0.2 },
+  { w: 2.3, top: 41, left: 4, op: 0.12, dur: 9.0, delay: 2.4 },
+  { w: 4.1, top: 59, left: 51, op: 0.08, dur: 6.9, delay: 4.3 },
+  { w: 2.7, top: 23, left: 38, op: 0.15, dur: 5.6, delay: 1.7 },
+  { w: 3.4, top: 86, left: 62, op: 0.11, dur: 8.3, delay: 3.5 },
+  { w: 2.2, top: 33, left: 85, op: 0.13, dur: 7.1, delay: 0.9 },
+  { w: 3.8, top: 71, left: 19, op: 0.09, dur: 5.2, delay: 4.8 },
+  { w: 2.5, top: 49, left: 96, op: 0.14, dur: 8.7, delay: 2.0 },
+  { w: 3.0, top: 5, left: 42, op: 0.10, dur: 6.5, delay: 3.0 },
+  { w: 4.3, top: 62, left: 27, op: 0.12, dur: 7.7, delay: 1.1 },
+];
 
 const downloads = [
   {
@@ -44,12 +68,15 @@ export function HeroSection() {
     setUserOS(getOS());
   }, []);
 
-  // Sort to put user's OS first
-  const sortedDownloads = [...downloads].sort((a, b) => {
-    if (a.os === userOS) return -1;
-    if (b.os === userOS) return 1;
-    return 0;
-  });
+  const sortedDownloads = useMemo(
+    () =>
+      [...downloads].sort((a, b) => {
+        if (a.os === userOS) return -1;
+        if (b.os === userOS) return 1;
+        return 0;
+      }),
+    [userOS],
+  );
 
   return (
     <section
@@ -61,18 +88,18 @@ export function HeroSection() {
     >
       {/* Subtle background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((p, i) => (
           <div
             key={i}
             className="absolute rounded-full bg-[#2A8F9D]"
             style={{
-              width: `${2 + Math.random() * 3}px`,
-              height: `${2 + Math.random() * 3}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              opacity: 0.08 + Math.random() * 0.12,
-              animation: `float ${5 + Math.random() * 5}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 5}s`,
+              width: `${p.w}px`,
+              height: `${p.w}px`,
+              top: `${p.top}%`,
+              left: `${p.left}%`,
+              opacity: p.op,
+              animation: `float ${p.dur}s ease-in-out infinite`,
+              animationDelay: `${p.delay}s`,
             }}
           />
         ))}
