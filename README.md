@@ -8,6 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?style=flat&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
@@ -57,6 +58,11 @@ Teki centraliza todas as fontes de informacao em uma interface de chat inteligen
 | **Painel de Contexto** | Adicione informacoes do sistema, versao e erro para respostas precisas |
 | **Interface Minimalista** | Design limpo e responsivo que funciona em desktop e mobile |
 | **Streaming de Respostas** | Respostas em tempo real via Server-Sent Events |
+| **App Desktop (Electron)** | Versao desktop com captura de tela, gato mascote animado e auto-contexto |
+| **Screen Viewer** | Captura e exibicao da tela em tempo real com intervalos configuraveis |
+| **Gato Mascote** | SVG animado com 6 estados que reage ao sistema (idle, watching, thinking, happy, alert, sleeping) |
+| **Command Palette** | Ctrl+K para acesso rapido a comandos e navegacao |
+| **System Tray** | Icone na bandeja com menu de acoes rapidas |
 
 ---
 
@@ -130,11 +136,11 @@ Teki centraliza todas as fontes de informacao em uma interface de chat inteligen
 
 ```bash
 # Clone o repositorio
-git clone https://github.com/seu-usuario/teki.git
+git clone https://github.com/ScryLk/teki.git
 cd teki
 
-# Instale as dependencias
-npm install
+# Instale as dependencias (usa pnpm workspaces)
+pnpm install
 
 # Configure as variaveis de ambiente
 cp .env.example .env.local
@@ -157,15 +163,19 @@ ALGOLIA_ADMIN_KEY=sua_admin_key
 ### Executar
 
 ```bash
-# Desenvolvimento
-npm run dev
+# Desenvolvimento - Web
+pnpm dev:web
+
+# Desenvolvimento - Desktop (Electron)
+pnpm dev:desktop
 
 # Build de producao
-npm run build
-npm start
+pnpm build:web
+pnpm build:desktop
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000)
+Web: Acesse [http://localhost:3000](http://localhost:3000)
+Desktop: A janela Electron abre automaticamente
 
 ---
 
@@ -245,49 +255,51 @@ Apos publicar, copie o **Agent ID** da URL ou das configuracoes do agente e adic
 
 ---
 
-## Estrutura de Pastas
+## Estrutura de Pastas (Monorepo)
 
 ```
 teki/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── chat/
-│   │   │   │   └── route.ts          # Endpoint de chat (Edge)
-│   │   │   ├── solucoes/
-│   │   │   │   ├── route.ts          # CRUD solucoes
-│   │   │   │   └── [id]/route.ts     # Solucao individual
-│   │   │   └── uploads/
-│   │   │       └── [filename]/route.ts
-│   │   ├── base-conhecimento/
-│   │   │   ├── page.tsx              # Listagem
-│   │   │   ├── nova/page.tsx         # Formulario
-│   │   │   └── layout.tsx
-│   │   ├── layout.tsx                # Root layout
-│   │   ├── page.tsx                  # Chat principal
-│   │   └── globals.css
-│   ├── components/
-│   │   ├── ui/                       # shadcn/ui components
-│   │   ├── base-conhecimento/        # Componentes da KB
-│   │   ├── Header.tsx
-│   │   ├── ChatArea.tsx
-│   │   ├── ContextPanel.tsx
-│   │   └── DiagnosticPanel.tsx
-│   ├── hooks/
-│   │   └── use-media-query.ts
-│   └── lib/
-│       ├── algolia-admin.ts          # Cliente admin Algolia
-│       ├── chunking.ts               # Chunking de documentos
-│       ├── process-solution.ts       # Pipeline de indexacao
-│       ├── solutions-store.ts        # Store de metadados
-│       ├── text-extraction.ts        # Extracao PDF/DOC
-│       └── types.ts
-├── public/
-│   └── teki.png                      # Logo
-├── .env.local                        # Variaveis de ambiente
-├── next.config.ts
-├── tailwind.config.ts
-└── package.json
+├── apps/
+│   ├── web/                          # App Web (Next.js) - teki-kappa.vercel.app
+│   │   ├── src/
+│   │   │   ├── app/                  # Next.js App Router
+│   │   │   ├── components/           # React components + shadcn/ui
+│   │   │   ├── hooks/
+│   │   │   └── lib/                  # Algolia, types, utilities
+│   │   ├── public/
+│   │   ├── next.config.ts
+│   │   └── package.json
+│   │
+│   └── desktop/                      # App Desktop (Electron)
+│       ├── src/
+│       │   ├── main/                 # Processo principal Electron
+│       │   │   ├── index.ts          # Entry point, BrowserWindow
+│       │   │   ├── tray.ts           # System tray
+│       │   │   ├── ipc-handlers.ts   # IPC main handlers
+│       │   │   └── services/         # Screen capture, window detector, settings
+│       │   ├── preload/              # contextBridge seguro
+│       │   │   └── index.ts
+│       │   └── renderer/             # UI React
+│       │       ├── App.tsx
+│       │       ├── components/
+│       │       │   ├── layout/       # TitleBar, SplitLayout, StatusBar
+│       │       │   ├── chat/         # ChatPanel, MessageBubble, ChatInput
+│       │       │   ├── screen/       # ScreenViewer, CaptureControls
+│       │       │   ├── cat/          # CatMascot SVG animado
+│       │       │   └── command-palette/
+│       │       ├── hooks/            # useCatState, useScreenCapture, useAlgoliaChat
+│       │       ├── services/         # Algolia Agent Studio client
+│       │       └── stores/           # Zustand state management
+│       ├── electron.vite.config.ts
+│       └── package.json
+│
+├── packages/
+│   └── shared/                       # Tipos e constantes compartilhados
+│       ├── types/                    # ChatMessage, CaptureFrame, TekiAPI, IPC
+│       └── constants/                # Algolia indices, sistemas, ambientes
+│
+├── package.json                      # Workspace root (pnpm)
+└── pnpm-workspace.yaml
 ```
 
 ---
