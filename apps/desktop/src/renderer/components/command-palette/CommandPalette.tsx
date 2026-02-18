@@ -280,6 +280,7 @@ const CommandPalette: React.FC = () => {
   const setLayout = useAppStore((s) => s.setLayout);
   const setCaptureState = useAppStore((s) => s.setCaptureState);
   const isCapturing = useAppStore((s) => s.isCapturing);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -439,7 +440,7 @@ const CommandPalette: React.FC = () => {
         icon: <SettingsIcon className={iconClass} />,
         group: 'App',
         action: () => {
-          // placeholder/future
+          setSettingsOpen(true);
           close();
         },
       },
@@ -453,7 +454,7 @@ const CommandPalette: React.FC = () => {
         },
       },
     ];
-  }, [isCapturing, close, setCaptureState, setLayout]);
+  }, [isCapturing, close, setCaptureState, setLayout, setSettingsOpen]);
 
   // Filter commands by query
   const filteredCommands = useMemo(() => {

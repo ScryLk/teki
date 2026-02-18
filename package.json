@@ -8,7 +8,10 @@
     "build:web": "pnpm --filter @teki/web build",
     "build:desktop": "pnpm --filter @teki/desktop build",
     "build": "pnpm -r build",
-    "start:web": "pnpm --filter @teki/web start"
+    "start:web": "pnpm --filter @teki/web start",
+    "package:desktop": "pnpm --filter @teki/desktop build && pnpm --filter @teki/desktop package",
+    "package:win": "pnpm --filter @teki/desktop build && pnpm --filter @teki/desktop package -- --win",
+    "package:linux": "pnpm --filter @teki/desktop build && pnpm --filter @teki/desktop package -- --linux"
   },
   "engines": {
     "node": ">=18.17.0"

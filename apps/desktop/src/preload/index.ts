@@ -80,6 +80,17 @@ const tekiAPI: TekiAPI = {
   getVersion: (): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION);
   },
+
+  // Tray events
+  onTrayOpenSettings: (callback: () => void): (() => void) => {
+    const listener = () => {
+      callback();
+    };
+    ipcRenderer.on('tray:open-settings', listener);
+    return () => {
+      ipcRenderer.removeListener('tray:open-settings', listener);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('tekiAPI', tekiAPI);

@@ -18,6 +18,9 @@ interface AppState {
   // Command palette
   commandPaletteOpen: boolean;
 
+  // Settings panel
+  settingsOpen: boolean;
+
   // Capture state
   isCapturing: boolean;
   captureInterval: number;
@@ -35,6 +38,7 @@ interface AppState {
   // Actions
   setLayout: (layout: LayoutMode) => void;
   toggleCommandPalette: () => void;
+  setSettingsOpen: (open: boolean) => void;
   setCaptureState: (isCapturing: boolean, captureInterval?: number) => void;
   setCatState: (catState: CatState) => void;
   setActiveWindow: (activeWindow: ActiveWindowInfo | null) => void;
@@ -48,6 +52,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Command palette
   commandPaletteOpen: false,
+
+  // Settings panel
+  settingsOpen: false,
 
   // Capture state
   isCapturing: false,
@@ -68,6 +75,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   toggleCommandPalette: () =>
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+  setSettingsOpen: (open) => set({ settingsOpen: open }),
 
   setCaptureState: (isCapturing, captureInterval) =>
     set((state) => ({

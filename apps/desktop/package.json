@@ -23,6 +23,7 @@
     "electron-vite": "^2.3.0",
     "electron-builder": "^25.0.0",
     "@electron-toolkit/preload": "^3.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "react": "^18.3.0",
@@ -32,5 +33,34 @@
     "postcss": "^8.4.0",
     "autoprefixer": "^10.4.0",
     "@tabler/icons-react": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.teki.app",
+    "productName": "Teki",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "build/icon.png",
+      "category": "Utility"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

@@ -6,13 +6,17 @@ import SplitLayout from './components/layout/SplitLayout';
 import ChatPanel from './components/chat/ChatPanel';
 import ScreenViewer from './components/screen/ScreenViewer';
 import CommandPalette from './components/command-palette/CommandPalette';
+import SettingsPanel from './components/settings/SettingsPanel';
 
 const App: React.FC = () => {
   const layout = useAppStore((s) => s.layout);
   const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
+  const settingsOpen = useAppStore((s) => s.settingsOpen);
   const setLayout = useAppStore((s) => s.setLayout);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrl = e.ctrlKey || e.metaKey;
@@ -29,12 +33,23 @@ const App: React.FC = () => {
       } else if (isCtrl && e.key === 'k') {
         e.preventDefault();
         toggleCommandPalette();
+      } else if (isCtrl && e.key === ',') {
+        e.preventDefault();
+        setSettingsOpen(true);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setLayout, toggleCommandPalette]);
+  }, [setLayout, toggleCommandPalette, setSettingsOpen]);
+
+  // Listen for tray open-settings event
+  useEffect(() => {
+    const unsubscribe = window.tekiAPI.onTrayOpenSettings(() => {
+      setSettingsOpen(true);
+    });
+    return unsubscribe;
+  }, [setSettingsOpen]);
 
   const renderContent = () => {
     switch (layout) {
@@ -75,6 +90,7 @@ const App: React.FC = () => {
       </main>
       <StatusBar />
       {commandPaletteOpen && <CommandPalette />}
+      {settingsOpen && <SettingsPanel />}
     </div>
   );
 };

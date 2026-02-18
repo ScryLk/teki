@@ -55,6 +55,9 @@ export interface TekiAPI {
 
   // App info
   getVersion: () => Promise<string>;
+
+  // Tray events
+  onTrayOpenSettings: (callback: () => void) => () => void;
 }
 
 export interface TekiSettings {
