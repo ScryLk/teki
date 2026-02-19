@@ -34,6 +34,7 @@ import {
   Info,
   MessageSquare,
   BookOpen,
+  Bot,
   PanelRight,
 } from 'lucide-react';
 
@@ -58,6 +59,7 @@ export function Header({
   const navItems = [
     { href: '/chat', label: 'Chat', icon: MessageSquare },
     { href: '/base-conhecimento', label: 'Base de Conhecimento', icon: BookOpen },
+    { href: '/dashboard', label: 'Minha IA', icon: Bot },
   ];
 
   return (
