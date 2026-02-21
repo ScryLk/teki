@@ -1,13 +1,13 @@
-import type { CaptureFrame } from './context';
+import type { WindowSource, WindowFrame } from './context';
 
 // IPC Channel names
 export const IPC_CHANNELS = {
-  // Screen capture
-  CAPTURE_START: 'capture:start',
-  CAPTURE_STOP: 'capture:stop',
-  CAPTURE_FRAME: 'capture:frame',
-  CAPTURE_SCREENSHOT: 'capture:screenshot',
-  CAPTURE_SOURCES: 'capture:sources',
+  // Window watching
+  WATCH_GET_SOURCES: 'watch:getSources',
+  WATCH_START: 'watch:start',
+  WATCH_STOP: 'watch:stop',
+  WATCH_FRAME: 'watch:frame',
+  WATCH_WINDOW_CLOSED: 'watch:windowClosed',
 
   // Window detection
   WINDOW_ACTIVE: 'window:active',
@@ -16,12 +16,6 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
   SETTINGS_GET_ALL: 'settings:getAll',
-
-  // Window controls
-  WINDOW_MINIMIZE: 'window:minimize',
-  WINDOW_MAXIMIZE: 'window:maximize',
-  WINDOW_CLOSE: 'window:close',
-  WINDOW_IS_MAXIMIZED: 'window:isMaximized',
 
   // Tray
   TRAY_UPDATE: 'tray:update',
@@ -32,18 +26,12 @@ export const IPC_CHANNELS = {
 
 // Preload API exposed to renderer
 export interface TekiAPI {
-  // Window controls
-  minimize: () => void;
-  maximize: () => void;
-  close: () => void;
-  isMaximized: () => Promise<boolean>;
-
-  // Screen capture
-  startCapture: (sourceId: string, interval: number) => void;
-  stopCapture: () => void;
-  captureNow: () => Promise<CaptureFrame | null>;
-  getSources: () => Promise<Array<{ id: string; name: string; thumbnail: string }>>;
-  onCaptureFrame: (callback: (frame: CaptureFrame) => void) => () => void;
+  // Window watching
+  getAvailableWindows: () => Promise<WindowSource[]>;
+  startWatching: (sourceId: string) => Promise<void>;
+  stopWatching: () => Promise<void>;
+  onWindowFrame: (callback: (frame: WindowFrame) => void) => () => void;
+  onWindowClosed: (callback: (data: { sourceId: string }) => void) => () => void;
 
   // Settings
   getSetting: <T>(key: string) => Promise<T>;

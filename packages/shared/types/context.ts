@@ -25,9 +25,16 @@ export interface SystemMetrics {
   diskUsage: number;
 }
 
-export interface CaptureFrame {
+export interface WindowSource {
+  id: string;
+  name: string;
+  thumbnail: string;
+  appIcon?: string;
+}
+
+export interface WindowFrame {
+  sourceId: string;
+  windowName: string;
   image: string;
   timestamp: number;
-  source: string;
-  activeWindow: ActiveWindowInfo;
 }

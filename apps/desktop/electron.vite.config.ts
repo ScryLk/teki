@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['@teki/shared'] })],
     resolve: {
       alias: {
         '@teki/shared': resolve(__dirname, '../../packages/shared'),
@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['@teki/shared'] })],
     resolve: {
       alias: {
         '@teki/shared': resolve(__dirname, '../../packages/shared'),

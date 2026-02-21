@@ -2,8 +2,8 @@ import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { registerIPCHandlers } from './ipc-handlers';
-import { createTray, destroyTray } from './tray';
-import { startPolling, stopPolling } from './services/window-detector';
+import { createTray, destroyTray, initTrayIcons } from './tray';
+// import { startPolling, stopPolling } from './services/window-detector';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -14,9 +14,9 @@ function createWindow(): BrowserWindow {
     minWidth: 1024,
     minHeight: 700,
     show: false,
-    ...(process.platform === 'darwin'
-      ? { titleBarStyle: 'hidden' }
-      : { frame: false }),
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 16, y: 12 },
+    backgroundColor: '#09090b',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -71,11 +71,14 @@ if (!gotTheLock) {
     // Register IPC handlers
     registerIPCHandlers(mainWindow);
 
-    // Create system tray
+    // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);
+    mainWindow.webContents.once('did-finish-load', () => {
+      initTrayIcons(mainWindow!);
+    });
 
     // Start active window detection polling
-    startPolling(mainWindow);
+    // startPolling(mainWindow);
 
     // macOS: re-create window when dock icon is clicked and no windows exist
     app.on('activate', () => {
@@ -83,7 +86,7 @@ if (!gotTheLock) {
         mainWindow = createWindow();
         registerIPCHandlers(mainWindow);
         createTray(mainWindow);
-        startPolling(mainWindow);
+        // startPolling(mainWindow);
       } else if (mainWindow) {
         mainWindow.show();
       }
@@ -93,7 +96,7 @@ if (!gotTheLock) {
   // ── Window lifecycle ────────────────────────────────────────────────
 
   app.on('window-all-closed', () => {
-    stopPolling();
+    // stopPolling();
     destroyTray();
 
     // On macOS, apps typically stay active until explicitly quit via Cmd+Q

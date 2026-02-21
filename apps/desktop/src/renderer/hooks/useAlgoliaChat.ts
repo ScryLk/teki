@@ -22,24 +22,17 @@ export function useAlgoliaChat() {
   const buildContext = useCallback(async (): Promise<AlgoliaContext> => {
     const context: AlgoliaContext = {};
 
-    // Attach active window info
-    if (activeWindow) {
+    // Attach watched window name as active window info
+    const { watchedWindowName, currentFrame } = useAppStore.getState();
+    if (watchedWindowName) {
+      context.activeWindow = watchedWindowName;
+    } else if (activeWindow) {
       context.activeWindow = activeWindow.title;
     }
 
-    // Check if auto-attach screenshot is enabled
-    try {
-      const autoAttach = await window.tekiAPI.getSetting<boolean>(
-        'autoAttachScreenshot'
-      );
-      if (autoAttach) {
-        const frame = await window.tekiAPI.captureNow();
-        if (frame) {
-          context.screenshot = frame.image;
-        }
-      }
-    } catch {
-      // Screenshot capture is optional, ignore errors
+    // Attach current frame if a window is being watched
+    if (currentFrame) {
+      context.screenshot = currentFrame;
     }
 
     // Attach default system context from settings

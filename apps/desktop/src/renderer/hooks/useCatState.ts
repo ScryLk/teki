@@ -27,7 +27,7 @@ const SLEEP_INACTIVITY_MS = 5 * 60 * 1_000;
 export function useCatState() {
   const catState = useAppStore((s) => s.catState);
   const setCatState = useAppStore((s) => s.setCatState);
-  const isCapturing = useAppStore((s) => s.isCapturing);
+  const isCapturing = useAppStore((s) => s.isWatching);
 
   // Keeps track of the state to revert to after a transient state expires.
   const previousStateRef = useRef<CatState>('idle');

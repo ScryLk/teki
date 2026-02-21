@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback } from 'react';
 
 interface ChatInputProps {
   value: string;
@@ -8,10 +8,6 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-const MAX_ROWS = 4;
-const LINE_HEIGHT = 20;
-const PADDING = 24; // py-3 = 12px top + 12px bottom
-
 const ChatInput: React.FC<ChatInputProps> = ({
   value,
   onChange,
@@ -20,21 +16,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
   disabled = false,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Auto-resize textarea based on content
-  const adjustHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    textarea.style.height = 'auto';
-    const maxHeight = LINE_HEIGHT * MAX_ROWS + PADDING;
-    const scrollHeight = textarea.scrollHeight;
-    textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-  }, []);
-
-  useEffect(() => {
-    adjustHeight();
-  }, [value, adjustHeight]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -69,7 +50,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, [onScreenshot, disabled]);
 
   return (
-    <div className="flex items-end gap-2 p-3 border-t border-border bg-bg">
+    <div className="flex items-center gap-2 p-3 border-t border-border bg-bg">
       {/* Screenshot button */}
       {onScreenshot && (
         <button
@@ -100,28 +81,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
       )}
 
       {/* Textarea */}
-      <div className="flex-1 relative">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          placeholder="Descreva o problema tecnico..."
-          rows={1}
-          className="w-full resize-none rounded-lg border border-border bg-surface
-                     text-sm text-text-primary placeholder-text-muted
-                     px-4 py-3 pr-12
-                     focus:outline-none focus:border-accent
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     transition-colors"
-          style={{
-            lineHeight: `${LINE_HEIGHT}px`,
-            minHeight: LINE_HEIGHT + PADDING,
-            maxHeight: LINE_HEIGHT * MAX_ROWS + PADDING,
-          }}
-        />
-      </div>
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        placeholder="Descreva o problema tecnico..."
+        rows={1}
+        className="flex-1 resize-none rounded-lg border border-border bg-surface
+                   text-sm text-text-primary placeholder-text-muted
+                   px-4
+                   focus:outline-none focus:border-accent
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   transition-colors
+                   [overflow-y:scroll] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ height: 40, lineHeight: '20px', paddingTop: 10, paddingBottom: 10 }}
+      />
 
       {/* Send button */}
       <button
@@ -136,7 +112,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         type="button"
       >
         {disabled ? (
-          // Loading spinner
           <svg
             width="18"
             height="18"
@@ -149,7 +124,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
           </svg>
         ) : (
-          // Send arrow icon
           <svg
             width="18"
             height="18"

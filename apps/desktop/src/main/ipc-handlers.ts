@@ -1,38 +1,37 @@
 import { ipcMain, app, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
 import settingsStore from './services/settings-store';
-import screenCapture from './services/screen-capture';
+import windowWatcher from './services/window-watcher';
+import { updateTrayState } from './tray';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
-  // ── Window controls ──────────────────────────────────────────────
+  // ── Window watching ───────────────────────────────────────────────
 
-  ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.minimize();
-    }
+  ipcMain.handle(IPC_CHANNELS.WATCH_GET_SOURCES, async () => {
+    return windowWatcher.getAvailableWindows();
   });
 
-  ipcMain.on(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow.maximize();
-      }
-    }
+  ipcMain.handle(IPC_CHANNELS.WATCH_START, async (_event, sourceId: string) => {
+    // Resolve the window name to show in the tray tooltip
+    const windows = await windowWatcher.getAvailableWindows();
+    const windowName = windows.find((w) => w.id === sourceId)?.name ?? 'Janela';
+
+    windowWatcher.startWatching(sourceId, mainWindow, (closedName) => {
+      // Janela foi fechada externamente → ícone de alerta por 10s
+      updateTrayState('alert', mainWindow, closedName);
+      setTimeout(() => {
+        if (!windowWatcher.isWatching()) {
+          updateTrayState('idle', mainWindow);
+        }
+      }, 10_000);
+    });
+
+    updateTrayState('watching', mainWindow, windowName);
   });
 
-  ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.close();
-    }
-  });
-
-  ipcMain.handle(IPC_CHANNELS.WINDOW_IS_MAXIMIZED, () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      return mainWindow.isMaximized();
-    }
-    return false;
+  ipcMain.handle(IPC_CHANNELS.WATCH_STOP, async () => {
+    windowWatcher.stopWatching();
+    updateTrayState('idle', mainWindow);
   });
 
   // ── Settings ─────────────────────────────────────────────────────
@@ -47,24 +46,6 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_ALL, () => {
     return settingsStore.getAll();
-  });
-
-  // ── Screen capture ───────────────────────────────────────────────
-
-  ipcMain.on(IPC_CHANNELS.CAPTURE_START, (_event, sourceId: string, interval: number) => {
-    screenCapture.startCapture(mainWindow, sourceId, interval);
-  });
-
-  ipcMain.on(IPC_CHANNELS.CAPTURE_STOP, () => {
-    screenCapture.stopCapture();
-  });
-
-  ipcMain.handle(IPC_CHANNELS.CAPTURE_SCREENSHOT, async () => {
-    return screenCapture.captureNow();
-  });
-
-  ipcMain.handle(IPC_CHANNELS.CAPTURE_SOURCES, async () => {
-    return screenCapture.getSources();
   });
 
   // ── App ──────────────────────────────────────────────────────────

@@ -1,49 +1,38 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
-import type { CaptureFrame, TekiAPI, TekiSettings } from '@teki/shared';
+import type { TekiAPI, TekiSettings, WindowSource, WindowFrame } from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
-  // Window controls
-  minimize: () => {
-    ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE);
+  // Window watching
+  getAvailableWindows: (): Promise<WindowSource[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WATCH_GET_SOURCES);
   },
 
-  maximize: () => {
-    ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE);
+  startWatching: (sourceId: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WATCH_START, sourceId);
   },
 
-  close: () => {
-    ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE);
+  stopWatching: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WATCH_STOP);
   },
 
-  isMaximized: () => {
-    return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_IS_MAXIMIZED);
-  },
-
-  // Screen capture
-  startCapture: (sourceId: string, interval: number) => {
-    ipcRenderer.send(IPC_CHANNELS.CAPTURE_START, sourceId, interval);
-  },
-
-  stopCapture: () => {
-    ipcRenderer.send(IPC_CHANNELS.CAPTURE_STOP);
-  },
-
-  captureNow: (): Promise<CaptureFrame | null> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_SCREENSHOT);
-  },
-
-  getSources: (): Promise<Array<{ id: string; name: string; thumbnail: string }>> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_SOURCES);
-  },
-
-  onCaptureFrame: (callback: (frame: CaptureFrame) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, frame: CaptureFrame) => {
+  onWindowFrame: (callback: (frame: WindowFrame) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, frame: WindowFrame) => {
       callback(frame);
     };
-    ipcRenderer.on(IPC_CHANNELS.CAPTURE_FRAME, listener);
+    ipcRenderer.on(IPC_CHANNELS.WATCH_FRAME, listener);
     return () => {
-      ipcRenderer.removeListener(IPC_CHANNELS.CAPTURE_FRAME, listener);
+      ipcRenderer.removeListener(IPC_CHANNELS.WATCH_FRAME, listener);
+    };
+  },
+
+  onWindowClosed: (callback: (data: { sourceId: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: { sourceId: string }) => {
+      callback(data);
+    };
+    ipcRenderer.on(IPC_CHANNELS.WATCH_WINDOW_CLOSED, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.WATCH_WINDOW_CLOSED, listener);
     };
   },
 

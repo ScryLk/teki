@@ -24,17 +24,17 @@ const styles = `
   /* ---- Tail gentle sway ---- */
   @keyframes tailSlow {
     0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(8deg); }
-    75% { transform: rotate(-8deg); }
+    25% { transform: rotate(6deg); }
+    75% { transform: rotate(-6deg); }
   }
 
   /* ---- Tail happy wag ---- */
   @keyframes tailFast {
     0%, 100% { transform: rotate(0deg); }
-    15% { transform: rotate(18deg); }
-    35% { transform: rotate(-18deg); }
-    55% { transform: rotate(14deg); }
-    75% { transform: rotate(-14deg); }
+    15% { transform: rotate(12deg); }
+    35% { transform: rotate(-12deg); }
+    55% { transform: rotate(10deg); }
+    75% { transform: rotate(-10deg); }
   }
 
   /* ---- Sleeping float ---- */
@@ -110,8 +110,10 @@ const styles = `
   }
 
   /* ---- Tail styles ---- */
+  /* The tail <g> is wrapped in a translate(85,88) group, so rotating
+     around (0,0) pivots exactly at the tail base — no viewport ambiguity. */
   .cat-tail {
-    transform-origin: 15% 85%;
+    transform-origin: 0 0;
     transition: all 0.3s ease;
   }
   .cat-tail-slow {
@@ -388,16 +390,19 @@ export const CatMascot: React.FC<CatMascotProps> = ({
         {renderBubble}
 
         {/* ---- Tail ---- */}
-        <g className={tailClasses}>
-          <path
-            d="M85,88 Q100,70 95,55 Q92,45 98,38"
-            fill="none"
-            stroke="#2A8F9D"
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-          {/* Tail tip */}
-          <circle cx="98" cy="37" r="3.5" fill="#237a86" />
+        {/* Outer <g> translates to the tail base inside the body right side.
+            The inner animated group rotates around (0,0) = tail base. */}
+        <g transform="translate(76,86)">
+          <g className={tailClasses}>
+            <path
+              d="M0,0 Q18,-14 14,-30 Q11,-42 17,-50"
+              fill="none"
+              stroke="#2A8F9D"
+              strokeWidth="5"
+              strokeLinecap="round"
+            />
+            <circle cx="17" cy="-51" r="3.5" fill="#237a86" />
+          </g>
         </g>
 
         {/* ---- Body ---- */}

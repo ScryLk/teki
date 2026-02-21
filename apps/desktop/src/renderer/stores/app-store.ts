@@ -18,15 +18,16 @@ interface AppState {
   // Command palette
   commandPaletteOpen: boolean;
 
-  // Capture state
-  isCapturing: boolean;
-  captureInterval: number;
+  // Window watching state
+  isWatching: boolean;
+  watchedWindowName: string | null;
   currentFrame: string | null;
+  watchStartTime: number | null;
 
   // Cat state
   catState: CatState;
 
-  // Active window
+  // Active window (for context)
   activeWindow: ActiveWindowInfo | null;
 
   // Connection
@@ -35,7 +36,7 @@ interface AppState {
   // Actions
   setLayout: (layout: LayoutMode) => void;
   toggleCommandPalette: () => void;
-  setCaptureState: (isCapturing: boolean, captureInterval?: number) => void;
+  setWatching: (isWatching: boolean, windowName?: string) => void;
   setCatState: (catState: CatState) => void;
   setActiveWindow: (activeWindow: ActiveWindowInfo | null) => void;
   setCurrentFrame: (frame: string | null) => void;
@@ -49,10 +50,11 @@ export const useAppStore = create<AppState>((set) => ({
   // Command palette
   commandPaletteOpen: false,
 
-  // Capture state
-  isCapturing: false,
-  captureInterval: 5,
+  // Window watching state
+  isWatching: false,
+  watchedWindowName: null,
   currentFrame: null,
+  watchStartTime: null,
 
   // Cat state
   catState: 'idle',
@@ -69,10 +71,12 @@ export const useAppStore = create<AppState>((set) => ({
   toggleCommandPalette: () =>
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
 
-  setCaptureState: (isCapturing, captureInterval) =>
+  setWatching: (isWatching, windowName) =>
     set((state) => ({
-      isCapturing,
-      captureInterval: captureInterval ?? state.captureInterval,
+      isWatching,
+      watchedWindowName: windowName ?? state.watchedWindowName,
+      currentFrame: isWatching ? state.currentFrame : null,
+      watchStartTime: isWatching ? (state.isWatching ? state.watchStartTime : Date.now()) : null,
     })),
 
   setCatState: (catState) => set({ catState }),
