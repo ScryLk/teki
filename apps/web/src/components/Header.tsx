@@ -35,6 +35,7 @@ import {
   MessageSquare,
   BookOpen,
   PanelRight,
+  Settings,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -130,6 +131,21 @@ export function Header({
               )}
             </>
           )}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/settings">
+                <Button
+                  variant={pathname.startsWith('/settings') ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8"
+                >
+                  <Settings size={16} />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Configuracoes</TooltipContent>
+          </Tooltip>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
