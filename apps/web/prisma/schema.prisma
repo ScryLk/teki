@@ -1,0 +1,360 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USERS & AUTH
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  avatarUrl     String?
+  planId        PlanTier  @default(FREE)
+  planExpiresAt DateTime?
+  mpPreapprovalId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  agents           Agent[]
+  channels         Channel[]
+  apiKeys          ApiKey[]
+  usageCounters    UsageCounter[]
+  conversations    Conversation[]
+  providerKeys     ProviderKey[]
+  webhookEndpoints WebhookEndpoint[]
+  sessions         Session[]
+  documents        Document[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API KEYS
+// ═══════════════════════════════════════════════════════════════
+
+model ApiKey {
+  id         String     @id @default(cuid())
+  userId     String
+  keyHash    String     @unique
+  keyPrefix  String
+  name       String
+  type       ApiKeyType
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  isRevoked  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@index([userId])
+}
+
+enum ApiKeyType {
+  LIVE
+  TEST
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROVIDER KEYS (BYOK)
+// ═══════════════════════════════════════════════════════════════
+
+model ProviderKey {
+  id              String    @id @default(cuid())
+  userId          String
+  provider        String
+  encryptedKey    String
+  iv              String
+  status          String    @default("unconfigured")
+  lastValidatedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AGENTS
+// ═══════════════════════════════════════════════════════════════
+
+model Agent {
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  description    String?
+  systemPrompt   String   @db.Text
+  model          String   @default("gemini-flash")
+  welcomeMessage String?  @db.Text
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents Document[]
+  channels  Channel[]
+
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════════════
+
+model Document {
+  id           String         @id @default(cuid())
+  agentId      String
+  userId       String
+  filename     String
+  originalName String
+  fileType     String
+  fileSize     Int
+  fileUrl      String
+  status       DocumentStatus @default(UPLOADING)
+  totalChunks  Int            @default(0)
+  errorMsg     String?
+  createdAt    DateTime       @default(now())
+
+  agent  Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks DocumentChunk[]
+
+  @@index([agentId])
+  @@index([userId])
+}
+
+enum DocumentStatus {
+  UPLOADING
+  EXTRACTING
+  EMBEDDING
+  INDEXED
+  ERROR
+}
+
+model DocumentChunk {
+  id         String                          @id @default(cuid())
+  documentId String
+  chunkIndex Int
+  content    String                          @db.Text
+  embedding  Unsupported("vector(768)")?
+  tokenCount Int                             @default(0)
+  createdAt  DateTime                        @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHANNELS (OpenClaw)
+// ═══════════════════════════════════════════════════════════════
+
+model Channel {
+  id                    String        @id @default(cuid())
+  userId                String
+  agentId               String
+  platform              Platform
+  status                ChannelStatus @default(PENDING)
+  displayName           String
+  platformConfig        Json
+  welcomeMessage        String?       @db.Text
+  modelOverride         String?
+  businessHoursStart    String?
+  businessHoursEnd      String?
+  businessHoursTimezone String        @default("America/Sao_Paulo")
+  respondOutsideHours   Boolean       @default(true)
+  outsideHoursMessage   String?       @db.Text
+  isActive              Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent         Agent                 @relation(fields: [agentId], references: [id])
+  conversations ChannelConversation[]
+
+  @@unique([userId, platform, displayName])
+  @@index([userId])
+  @@index([platform, status])
+}
+
+enum Platform {
+  WHATSAPP
+  TELEGRAM
+  DISCORD
+  SLACK
+}
+
+enum ChannelStatus {
+  PENDING
+  CONNECTING
+  ACTIVE
+  DISCONNECTED
+  ERROR
+}
+
+model ChannelConversation {
+  id               String   @id @default(cuid())
+  channelId        String
+  externalUserId   String
+  externalUserName String?
+  startedAt        DateTime @default(now())
+  lastMessageAt    DateTime @default(now())
+  messageCount     Int      @default(0)
+  isActive         Boolean  @default(true)
+
+  channel  Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  messages ChannelMessage[]
+
+  @@unique([channelId, externalUserId])
+  @@index([channelId, lastMessageAt])
+}
+
+model ChannelMessage {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String      @db.Text
+  imageUrl       String?
+  modelUsed      String?
+  tokensIn       Int?
+  tokensOut      Int?
+  latencyMs      Int?
+  createdAt      DateTime    @default(now())
+
+  conversation ChannelConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONVERSATIONS (Web/Desktop)
+// ═══════════════════════════════════════════════════════════════
+
+model Conversation {
+  id        String             @id @default(cuid())
+  userId    String
+  agentId   String?
+  title     String             @default("Nova conversa")
+  source    ConversationSource @default(WEB)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ConversationMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+enum ConversationSource {
+  WEB
+  DESKTOP
+  API
+}
+
+model ConversationMessage {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String      @db.Text
+  modelUsed      String?
+  tokensIn       Int?
+  tokensOut      Int?
+  latencyMs      Int?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USAGE & BILLING
+// ═══════════════════════════════════════════════════════════════
+
+model UsageCounter {
+  id           String @id @default(cuid())
+  userId       String
+  period       String
+  messages     Int    @default(0)
+  tokensIn     Int    @default(0)
+  tokensOut    Int    @default(0)
+  byokMessages Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period])
+  @@index([userId, period])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OUTGOING WEBHOOKS
+// ═══════════════════════════════════════════════════════════════
+
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  secret    String
+  events    String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs WebhookLog[]
+
+  @@index([userId])
+}
+
+model WebhookLog {
+  id           String    @id @default(cuid())
+  endpointId   String
+  event        String
+  payload      Json
+  statusCode   Int?
+  responseBody String?   @db.Text
+  deliveredAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId, createdAt])
+}

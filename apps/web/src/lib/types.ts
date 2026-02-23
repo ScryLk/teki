@@ -47,21 +47,3 @@ export interface SolutionRecord {
   errorMessage?: string;
 }
 
-export interface AlgoliaSolutionRecord {
-  objectID: string;
-  solution_id: string;
-  title: string;
-  description: string;
-  category: string;
-  tags: string[];
-  related_systems: string[];
-  criticality: string;
-  content: string;
-  chunk_index: number;
-  total_chunks: number;
-  author: string;
-  created_at: string;
-  file_url: string;
-  file_type: string;
-  source_type: 'manual_upload';
-}
