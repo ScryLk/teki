@@ -16,6 +16,7 @@ const sections = [
     items: [
       { label: 'Autenticação', href: '/docs/authentication' },
       { label: 'Chat', href: '/docs/chat' },
+      { label: 'Conversas', href: '/docs/conversations' },
       { label: 'Modelos', href: '/docs/models' },
       { label: 'Agentes', href: '/docs/agents' },
       { label: 'Base de Conhecimento', href: '/docs/knowledge-base' },
@@ -25,12 +26,14 @@ const sections = [
     title: 'Integrações',
     items: [
       { label: 'OpenClaw', href: '/docs/openclaw' },
+      { label: 'Provider Keys', href: '/docs/provider-keys' },
       { label: 'Webhooks', href: '/docs/webhooks' },
     ],
   },
   {
     title: 'Referência',
     items: [
+      { label: 'Planos e Cobrança', href: '/docs/billing' },
       { label: 'Limites', href: '/docs/rate-limits' },
       { label: 'Erros', href: '/docs/errors' },
     ],

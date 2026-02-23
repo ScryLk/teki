@@ -97,7 +97,7 @@ Authorization: Bearer SEU_WEBHOOK_SECRET
 
       <NavPrevNext
         prev={{ label: 'Base de Conhecimento', href: '/docs/knowledge-base' }}
-        next={{ label: 'Webhooks', href: '/docs/webhooks' }}
+        next={{ label: 'Provider Keys', href: '/docs/provider-keys' }}
       />
     </article>
   );

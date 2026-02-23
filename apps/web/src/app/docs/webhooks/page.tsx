@@ -85,8 +85,8 @@ app.post('/webhook', (req, res) => {
       />
 
       <NavPrevNext
-        prev={{ label: 'OpenClaw', href: '/docs/openclaw' }}
-        next={{ label: 'Limites', href: '/docs/rate-limits' }}
+        prev={{ label: 'Provider Keys', href: '/docs/provider-keys' }}
+        next={{ label: 'Planos e Cobrança', href: '/docs/billing' }}
       />
     </article>
   );

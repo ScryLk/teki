@@ -183,7 +183,7 @@ export default function ModelsPage() {
       </div>
 
       <NavPrevNext
-        prev={{ label: 'Chat', href: '/docs/chat' }}
+        prev={{ label: 'Conversas', href: '/docs/conversations' }}
         next={{ label: 'Agentes', href: '/docs/agents' }}
       />
     </article>

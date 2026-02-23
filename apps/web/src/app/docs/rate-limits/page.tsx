@@ -91,7 +91,7 @@ X-RateLimit-Reset: 1740230460`}
       </div>
 
       <NavPrevNext
-        prev={{ label: 'Webhooks', href: '/docs/webhooks' }}
+        prev={{ label: 'Planos e Cobrança', href: '/docs/billing' }}
         next={{ label: 'Erros', href: '/docs/errors' }}
       />
     </article>

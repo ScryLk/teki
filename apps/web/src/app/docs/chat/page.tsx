@@ -115,7 +115,7 @@ console.log(data.content);`}
 
       <NavPrevNext
         prev={{ label: 'Autenticação', href: '/docs/authentication' }}
-        next={{ label: 'Modelos', href: '/docs/models' }}
+        next={{ label: 'Conversas', href: '/docs/conversations' }}
       />
     </article>
   );
