@@ -586,3 +586,73 @@ model KnowledgeBaseArticle {
   @@index([tags])
   @@index([errorCodes])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// PLATFORM LOGS (Audit, AI, Security, System)
+// ═══════════════════════════════════════════════════════════════
+
+enum LogCategory {
+  AUDIT
+  AI
+  SECURITY
+  SYSTEM
+}
+
+enum LogSeverity {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+model PlatformLog {
+  id            String      @id @default(cuid())
+
+  // Classification
+  category      LogCategory
+  eventType     String      @db.VarChar(100)
+  severity      LogSeverity @default(INFO)
+
+  // Context
+  tenantId      String?
+  userId        String?
+  userEmail     String?     @db.VarChar(200)
+  userName      String?     @db.VarChar(200)
+
+  // Event data
+  entityType    String?     @db.VarChar(50)
+  entityId      String?     @db.VarChar(100)
+  action        String?     @db.VarChar(50)
+  summary       String      @db.VarChar(500)
+  details       Json?
+
+  // Request metadata
+  ipAddress     String?
+  userAgent     String?     @db.Text
+  device        String?     @db.VarChar(100)
+  geoCountry    String?     @db.VarChar(5)
+  geoCity       String?     @db.VarChar(100)
+  requestMethod String?     @db.VarChar(10)
+  requestPath   String?     @db.VarChar(500)
+  requestId     String?     @db.VarChar(50)
+  sessionId     String?     @db.VarChar(100)
+
+  // Performance
+  durationMs    Int?
+  statusCode    Int?
+
+  // Timestamps
+  createdAt     DateTime    @default(now())
+
+  // Retention
+  expiresAt     DateTime?
+
+  @@index([category, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+  @@index([severity, createdAt(sort: Desc)])
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+  @@index([expiresAt])
+}
