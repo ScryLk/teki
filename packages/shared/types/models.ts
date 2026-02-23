@@ -1,4 +1,4 @@
-export type AIProviderId = 'gemini' | 'openai' | 'anthropic' | 'ollama';
+export type AIProviderId = 'gemini' | 'openai' | 'anthropic' | 'ollama' | 'deepseek' | 'groq';
 
 export interface AIModel {
   id: string;
@@ -16,4 +16,22 @@ export interface AIModel {
   };
   costTier: 'low' | 'medium' | 'high';
   isDefault: boolean;
+  category?: 'chat' | 'reasoning' | 'fast' | 'vision' | 'code';
+  speedTier?: 'fast' | 'medium' | 'slow';
+  qualityTier?: 'low' | 'medium' | 'high' | 'premium';
+  inputPricePerMtok?: number;
+  outputPricePerMtok?: number;
+  recommended?: boolean;
+}
+
+export interface AIProviderMeta {
+  id: AIProviderId;
+  name: string;
+  icon: string;
+  color: string;
+  keyPlaceholder: string;
+  keyValidationPattern?: string;
+  documentationUrl: string;
+  authType: 'api_key' | 'oauth' | 'none';
+  defaultBaseUrl?: string;
 }

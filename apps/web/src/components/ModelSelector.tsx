@@ -5,9 +5,11 @@ import { ALL_MODELS, getModelsByTier } from '@teki/shared';
 import type { AIModel } from '@teki/shared';
 
 const providerColors: Record<string, string> = {
+  anthropic: '#D4A574',
   gemini: '#4285F4',
   openai: '#10A37F',
-  anthropic: '#D97757',
+  deepseek: '#4D6BFE',
+  groq: '#F55036',
   ollama: '#a1a1aa',
 };
 
@@ -42,9 +44,11 @@ export function ModelSelector({ value, onChange, tier = 'free' }: ModelSelectorP
   }, []);
 
   const groups = [
+    { label: 'Anthropic', providerId: 'anthropic' },
     { label: 'Google', providerId: 'gemini' },
     { label: 'OpenAI', providerId: 'openai' },
-    { label: 'Anthropic', providerId: 'anthropic' },
+    { label: 'DeepSeek', providerId: 'deepseek' },
+    { label: 'Groq', providerId: 'groq' },
     { label: 'Local', providerId: 'ollama' },
   ];
 
@@ -122,9 +126,19 @@ function ModelOption({ model, active, onClick }: { model: AIModel; active: boole
           <span className={`text-sm font-medium truncate ${active ? 'text-[#2A8F9D]' : 'text-[#fafafa]'}`}>
             {model.name}
           </span>
-          {model.costTier === 'high' && (
+          {model.recommended && (
             <span className="text-[9px] font-bold text-[#F59E0B] bg-[#F59E0B]/10 px-1 py-0.5 rounded">
-              PREMIUM
+              REC
+            </span>
+          )}
+          {model.speedTier === 'fast' && (
+            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded">
+              RÁPIDO
+            </span>
+          )}
+          {model.speedTier === 'slow' && (
+            <span className="text-[9px] font-bold text-[#a1a1aa] bg-[#a1a1aa]/10 px-1 py-0.5 rounded">
+              LENTO
             </span>
           )}
           {model.capabilities.vision && (

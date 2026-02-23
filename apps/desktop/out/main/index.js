@@ -22,7 +22,20 @@ const IPC_CHANNELS = {
   // App
   APP_GET_VERSION: "app:getVersion",
   // AI Validation
-  AI_VALIDATE_KEY: "ai:validateKey"
+  AI_VALIDATE_KEY: "ai:validateKey",
+  // AI Provider Management
+  AI_PROVIDERS_LIST: "ai:providers:list",
+  AI_PROVIDERS_SAVE_KEY: "ai:providers:saveKey",
+  AI_PROVIDERS_REMOVE_KEY: "ai:providers:removeKey",
+  AI_CONFIG_GET: "ai:config:get",
+  AI_CONFIG_SAVE: "ai:config:save",
+  // AI Chat
+  AI_CHAT_SEND: "ai:chat:send",
+  AI_CHAT_STREAM_START: "ai:chat:stream:start",
+  AI_CHAT_STREAM_CHUNK: "ai:chat:stream:chunk",
+  AI_CHAT_STREAM_END: "ai:chat:stream:end",
+  AI_CHAT_STREAM_ERROR: "ai:chat:stream:error",
+  AI_CHAT_CANCEL: "ai:chat:cancel"
 };
 const defaults = {
   // Capture
@@ -54,12 +67,27 @@ const defaults = {
   geminiApiKey: "",
   openaiApiKey: "",
   anthropicApiKey: "",
+  deepseekApiKey: "",
+  groqApiKey: "",
   ollamaBaseUrl: "http://localhost:11434",
   // Key validation status
   geminiKeyStatus: "unconfigured",
   openaiKeyStatus: "unconfigured",
   anthropicKeyStatus: "unconfigured",
-  ollamaKeyStatus: "unconfigured"
+  deepseekKeyStatus: "unconfigured",
+  groqKeyStatus: "unconfigured",
+  ollamaKeyStatus: "unconfigured",
+  // AI Config
+  defaultProviderId: "",
+  defaultModelId: "gemini-flash",
+  fallbackProviderId: "",
+  fallbackModelId: "",
+  aiTemperature: 0.3,
+  aiMaxTokens: 2048,
+  aiEnableStreaming: true,
+  aiEnableKbContext: true,
+  aiResponseLanguage: "pt-BR",
+  aiEnableCostTracking: true
 };
 const store = new Store({
   name: "teki-settings",
@@ -544,6 +572,10 @@ async function validateApiKey(provider, key) {
         return await validateAnthropic(key, start);
       case "ollama":
         return await validateOllama(key, start);
+      case "deepseek":
+        return await validateDeepSeek(key, start);
+      case "groq":
+        return await validateGroq(key, start);
       default:
         return result(false, provider, start, `Provider "${provider}" não suportado.`);
     }
@@ -637,6 +669,40 @@ async function validateOllama(baseUrl, start) {
   const data = await response.json();
   const models = (data.models ?? []).map((m) => m.name);
   return result(true, "ollama", start, void 0, models);
+}
+async function validateDeepSeek(apiKey, start) {
+  const response = await fetch("https://api.deepseek.com/v1/models", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(1e4)
+  });
+  if (!response.ok) {
+    if (response.status === 401) return result(false, "deepseek", start, "API key inválida.");
+    if (response.status === 429) return result(true, "deepseek", start);
+    const body = await response.json().catch(() => ({}));
+    const errObj = body?.error;
+    return result(false, "deepseek", start, String(errObj?.message ?? `HTTP ${response.status}`));
+  }
+  const data = await response.json();
+  const models = (data.data ?? []).map((m) => m.id).slice(0, 10);
+  return result(true, "deepseek", start, void 0, models);
+}
+async function validateGroq(apiKey, start) {
+  const response = await fetch("https://api.groq.com/openai/v1/models", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(1e4)
+  });
+  if (!response.ok) {
+    if (response.status === 401) return result(false, "groq", start, "API key inválida.");
+    if (response.status === 429) return result(true, "groq", start);
+    const body = await response.json().catch(() => ({}));
+    const errObj = body?.error;
+    return result(false, "groq", start, String(errObj?.message ?? `HTTP ${response.status}`));
+  }
+  const data = await response.json();
+  const models = (data.data ?? []).map((m) => m.id).slice(0, 10);
+  return result(true, "groq", start, void 0, models);
 }
 function result(valid, provider, start, error, models) {
   return { valid, provider, error, models, latencyMs: Date.now() - start, checkedAt: (/* @__PURE__ */ new Date()).toISOString() };

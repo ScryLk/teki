@@ -42,6 +42,24 @@ const PROVIDER_CONFIG: Record<AiProviderId, ProviderConfig> = {
     settingsKey: 'anthropicApiKey',
     statusKey: 'anthropicKeyStatus',
   },
+  deepseek: {
+    name: 'DeepSeek',
+    color: '#4D6BFE',
+    placeholder: 'sk-...',
+    helpText: 'Obtenha em platform.deepseek.com → API Keys',
+    keyPrefix: 'sk-',
+    settingsKey: 'deepseekApiKey',
+    statusKey: 'deepseekKeyStatus',
+  },
+  groq: {
+    name: 'Groq',
+    color: '#F55036',
+    placeholder: 'gsk_...',
+    helpText: 'Obtenha em console.groq.com → API Keys',
+    keyPrefix: 'gsk_',
+    settingsKey: 'groqApiKey',
+    statusKey: 'groqKeyStatus',
+  },
   ollama: {
     name: 'Ollama (Local)',
     color: '#e5e5e5',
@@ -236,7 +254,7 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ provider }) => {
 
 // ─── All providers panel ──────────────────────────────────────────────────────
 
-const ALL_PROVIDERS: AiProviderId[] = ['gemini', 'openai', 'anthropic', 'ollama'];
+const ALL_PROVIDERS: AiProviderId[] = ['gemini', 'openai', 'anthropic', 'deepseek', 'groq', 'ollama'];
 
 export const AllApiKeys: React.FC = () => (
   <div className="space-y-7">

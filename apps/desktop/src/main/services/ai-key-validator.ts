@@ -20,6 +20,10 @@ export async function validateApiKey(
         return await validateAnthropic(key, start);
       case 'ollama':
         return await validateOllama(key, start);
+      case 'deepseek':
+        return await validateDeepSeek(key, start);
+      case 'groq':
+        return await validateGroq(key, start);
       default:
         return result(false, provider as AiProviderId, start, `Provider "${provider}" não suportado.`);
     }
@@ -147,6 +151,50 @@ async function validateOllama(baseUrl: string, start: number): Promise<ApiKeyVal
   const models = (data.models ?? []).map((m) => m.name);
 
   return result(true, 'ollama', start, undefined, models);
+}
+
+// ─── DeepSeek ─────────────────────────────────────────────────────────────────
+
+async function validateDeepSeek(apiKey: string, start: number): Promise<ApiKeyValidationResult> {
+  const response = await fetch('https://api.deepseek.com/v1/models', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) return result(false, 'deepseek', start, 'API key inválida.');
+    if (response.status === 429) return result(true, 'deepseek', start);
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const errObj = body?.error as Record<string, unknown> | undefined;
+    return result(false, 'deepseek', start, String(errObj?.message ?? `HTTP ${response.status}`));
+  }
+
+  const data = await response.json() as { data?: { id: string }[] };
+  const models = (data.data ?? []).map((m) => m.id).slice(0, 10);
+  return result(true, 'deepseek', start, undefined, models);
+}
+
+// ─── Groq ─────────────────────────────────────────────────────────────────────
+
+async function validateGroq(apiKey: string, start: number): Promise<ApiKeyValidationResult> {
+  const response = await fetch('https://api.groq.com/openai/v1/models', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) return result(false, 'groq', start, 'API key inválida.');
+    if (response.status === 429) return result(true, 'groq', start);
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const errObj = body?.error as Record<string, unknown> | undefined;
+    return result(false, 'groq', start, String(errObj?.message ?? `HTTP ${response.status}`));
+  }
+
+  const data = await response.json() as { data?: { id: string }[] };
+  const models = (data.data ?? []).map((m) => m.id).slice(0, 10);
+  return result(true, 'groq', start, undefined, models);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

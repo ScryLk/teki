@@ -2,7 +2,7 @@ import type { WindowSource, WindowFrame } from './context';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
-export type AiProviderId = 'gemini' | 'openai' | 'anthropic' | 'ollama';
+export type AiProviderId = 'gemini' | 'openai' | 'anthropic' | 'ollama' | 'deepseek' | 'groq';
 
 export type ApiKeyStatus = 'unconfigured' | 'valid' | 'invalid' | 'validating';
 
@@ -41,6 +41,21 @@ export const IPC_CHANNELS = {
 
   // AI Validation
   AI_VALIDATE_KEY: 'ai:validateKey',
+
+  // AI Provider Management
+  AI_PROVIDERS_LIST: 'ai:providers:list',
+  AI_PROVIDERS_SAVE_KEY: 'ai:providers:saveKey',
+  AI_PROVIDERS_REMOVE_KEY: 'ai:providers:removeKey',
+  AI_CONFIG_GET: 'ai:config:get',
+  AI_CONFIG_SAVE: 'ai:config:save',
+
+  // AI Chat
+  AI_CHAT_SEND: 'ai:chat:send',
+  AI_CHAT_STREAM_START: 'ai:chat:stream:start',
+  AI_CHAT_STREAM_CHUNK: 'ai:chat:stream:chunk',
+  AI_CHAT_STREAM_END: 'ai:chat:stream:end',
+  AI_CHAT_STREAM_ERROR: 'ai:chat:stream:error',
+  AI_CHAT_CANCEL: 'ai:chat:cancel',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -109,11 +124,27 @@ export interface TekiSettings {
   geminiApiKey: string;
   openaiApiKey: string;
   anthropicApiKey: string;
+  deepseekApiKey: string;
+  groqApiKey: string;
   ollamaBaseUrl: string;
 
   // Key validation status (set after validation — not user-editable)
   geminiKeyStatus: ApiKeyStatus;
   openaiKeyStatus: ApiKeyStatus;
   anthropicKeyStatus: ApiKeyStatus;
+  deepseekKeyStatus: ApiKeyStatus;
+  groqKeyStatus: ApiKeyStatus;
   ollamaKeyStatus: ApiKeyStatus;
+
+  // AI Config
+  defaultProviderId: string;
+  defaultModelId: string;
+  fallbackProviderId: string;
+  fallbackModelId: string;
+  aiTemperature: number;
+  aiMaxTokens: number;
+  aiEnableStreaming: boolean;
+  aiEnableKbContext: boolean;
+  aiResponseLanguage: string;
+  aiEnableCostTracking: boolean;
 }

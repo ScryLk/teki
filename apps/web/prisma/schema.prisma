@@ -30,6 +30,7 @@ model User {
   usageCounters    UsageCounter[]
   conversations    Conversation[]
   providerKeys     ProviderKey[]
+  tenantAiConfig   TenantAiConfig?
   webhookEndpoints WebhookEndpoint[]
   sessions         Session[]
   documents        Document[]
@@ -100,8 +101,15 @@ model ProviderKey {
   provider        String
   encryptedKey    String
   iv              String
+  keyMasked       String?
+  customBaseUrl   String?
   status          String    @default("unconfigured")
+  isValid         Boolean?
   lastValidatedAt DateTime?
+  lastUsedAt      DateTime?
+  totalRequests   Int       @default(0)
+  totalTokensUsed BigInt    @default(0)
+  monthlyBudgetUsd Float?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -109,6 +117,97 @@ model ProviderKey {
 
   @@unique([userId, provider])
   @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI PROVIDERS & MODELS (multi-provider system)
+// ═══════════════════════════════════════════════════════════════
+
+model AiProvider {
+  id                  String    @id
+  name                String
+  icon                String?
+  baseUrl             String?
+  authType            String    @default("api_key")
+  keyPlaceholder      String?
+  keyValidationPattern String?
+  documentationUrl    String?
+  supportsStreaming   Boolean   @default(true)
+  supportsVision      Boolean   @default(false)
+  supportsTools       Boolean   @default(false)
+  active              Boolean   @default(true)
+  displayOrder        Int       @default(0)
+  createdAt           DateTime  @default(now())
+
+  models AiModel[]
+}
+
+model AiModel {
+  id                  String    @id
+  providerId          String
+  name                String
+  description         String?
+  category            String    @default("chat")
+  contextWindow       Int?
+  maxOutputTokens     Int?
+  inputPricePerMtok   Float?
+  outputPricePerMtok  Float?
+  supportsStreaming   Boolean   @default(true)
+  supportsVision      Boolean   @default(false)
+  supportsTools       Boolean   @default(false)
+  supportsJsonMode    Boolean   @default(false)
+  speedTier           String    @default("medium")
+  qualityTier         String    @default("medium")
+  recommended         Boolean   @default(false)
+  active              Boolean   @default(true)
+  displayOrder        Int       @default(0)
+  createdAt           DateTime  @default(now())
+
+  provider AiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([active])
+}
+
+model TenantAiConfig {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  defaultProviderId     String?
+  defaultModelId        String?
+  fallbackProviderId    String?
+  fallbackModelId       String?
+  temperature           Float     @default(0.30)
+  maxTokens             Int       @default(2048)
+  systemPromptOverride  String?   @db.Text
+  responseLanguage      String    @default("pt-BR")
+  requireJsonResponse   Boolean   @default(true)
+  enableStreaming        Boolean   @default(true)
+  enableKbContext        Boolean   @default(true)
+  maxKbArticles         Int       @default(5)
+  enableTicketHistory   Boolean   @default(true)
+  maxSimilarTickets     Int       @default(3)
+  enableCostTracking    Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String
+  providerId   String
+  modelId      String
+  tokensIn     Int      @default(0)
+  tokensOut    Int      @default(0)
+  costUsd      Float    @default(0)
+  latencyMs    Int      @default(0)
+  success      Boolean  @default(true)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, providerId])
 }
 
 // ═══════════════════════════════════════════════════════════════

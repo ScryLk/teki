@@ -13,6 +13,8 @@ const SETTINGS_KEY: Record<AiProviderId, string> = {
   gemini:    'geminiApiKey',
   openai:    'openaiApiKey',
   anthropic: 'anthropicApiKey',
+  deepseek:  'deepseekApiKey',
+  groq:      'groqApiKey',
   ollama:    'ollamaBaseUrl',
 };
 
@@ -20,6 +22,8 @@ const STATUS_KEY: Record<AiProviderId, string> = {
   gemini:    'geminiKeyStatus',
   openai:    'openaiKeyStatus',
   anthropic: 'anthropicKeyStatus',
+  deepseek:  'deepseekKeyStatus',
+  groq:      'groqKeyStatus',
   ollama:    'ollamaKeyStatus',
 };
 

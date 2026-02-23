@@ -22,7 +22,8 @@ export function getProvider(
   if (!model) throw new Error(`Modelo "${modelId}" não encontrado.`);
 
   const providers = makeProviders(userApiKeys);
-  const provider = providers[model.providerId];
+  const provider = providers[model.providerId as keyof typeof providers];
+  if (!provider) throw new Error(`Provider "${model.providerId}" não suportado no modo legado.`);
 
   return { provider, apiModelId: model.apiModelId };
 }

@@ -36,13 +36,29 @@ const defaults: TekiSettings = {
   geminiApiKey: '',
   openaiApiKey: '',
   anthropicApiKey: '',
+  deepseekApiKey: '',
+  groqApiKey: '',
   ollamaBaseUrl: 'http://localhost:11434',
 
   // Key validation status
   geminiKeyStatus: 'unconfigured',
   openaiKeyStatus: 'unconfigured',
   anthropicKeyStatus: 'unconfigured',
+  deepseekKeyStatus: 'unconfigured',
+  groqKeyStatus: 'unconfigured',
   ollamaKeyStatus: 'unconfigured',
+
+  // AI Config
+  defaultProviderId: '',
+  defaultModelId: 'gemini-flash',
+  fallbackProviderId: '',
+  fallbackModelId: '',
+  aiTemperature: 0.3,
+  aiMaxTokens: 2048,
+  aiEnableStreaming: true,
+  aiEnableKbContext: true,
+  aiResponseLanguage: 'pt-BR',
+  aiEnableCostTracking: true,
 };
 
 const store = new Store<TekiSettings>({
