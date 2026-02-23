@@ -1,0 +1,243 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getModelById } from '@teki/shared';
+import { getProvider } from '@/lib/ai/router';
+import { requireAuth, AuthError } from '@/lib/auth-middleware';
+import {
+  checkMessageLimit,
+  checkModelAccess,
+  incrementUsage,
+} from '@/lib/plan-limits';
+import { getUserProviderKeys } from '@/lib/provider-keys';
+import { searchKnowledgeBase, formatKBContext } from '@/lib/kb/search';
+import { prisma } from '@/lib/prisma';
+import { dispatchWebhook } from '@/lib/webhooks/dispatch';
+import type { ProviderMessage } from '@/lib/ai/types';
+
+export const runtime = 'nodejs';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { user } = await requireAuth(req);
+
+    const body = await req.json();
+    const {
+      messages,
+      model: requestedModel,
+      screenshot,
+      screenshotMimeType,
+      agentId,
+      conversationId,
+      stream = false,
+    } = body;
+
+    const modelId = requestedModel ?? 'gemini-flash';
+
+    // 1. Validate model exists
+    const modelInfo = getModelById(modelId);
+    if (!modelInfo) {
+      return NextResponse.json(
+        { error: { code: 'MODEL_NOT_AVAILABLE', message: `Modelo "${modelId}" não encontrado.` } },
+        { status: 400 }
+      );
+    }
+
+    // 2. Check model access for plan
+    const modelAccess = await checkModelAccess(user.planId, modelId);
+    if (!modelAccess.allowed) {
+      return NextResponse.json(
+        { error: { code: 'MODEL_NOT_AVAILABLE', message: `Modelo "${modelId}" não disponível no seu plano.` } },
+        { status: 403 }
+      );
+    }
+
+    // 3. Check if user has BYOK keys
+    const userKeys = await getUserProviderKeys(user.id);
+    const isByok = !!userKeys[modelInfo.providerId];
+
+    // 4. Check message rate limit
+    const msgLimit = await checkMessageLimit(user.id, user.planId, isByok);
+    if (!msgLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'PLAN_LIMIT_REACHED',
+            message: `Limite de ${msgLimit.limit} mensagens/mês atingido.`,
+            current: msgLimit.current,
+            limit: msgLimit.limit,
+          },
+        },
+        { status: 429 }
+      );
+    }
+
+    // 5. Load agent (if specified)
+    let agent = null;
+    if (agentId) {
+      agent = await prisma.agent.findFirst({
+        where: { id: agentId, userId: user.id },
+      });
+    }
+    if (!agent) {
+      agent = await prisma.agent.findFirst({
+        where: { userId: user.id, isDefault: true },
+      });
+    }
+
+    // 6. RAG: search knowledge base
+    let kbContext = '';
+    if (agent) {
+      const docCount = await prisma.document.count({
+        where: { agentId: agent.id, status: 'INDEXED' },
+      });
+      if (docCount > 0) {
+        const lastUserMsg = [...(messages ?? [])]
+          .reverse()
+          .find((m: { role: string }) => m.role === 'user');
+        if (lastUserMsg) {
+          const results = await searchKnowledgeBase(
+            agent.id,
+            (lastUserMsg as { content: string }).content
+          );
+          kbContext = formatKBContext(results);
+        }
+      }
+    }
+
+    // 7. Build system prompt
+    let systemPrompt = agent?.systemPrompt ??
+      'Você é o Teki, um assistente de suporte técnico de TI. Responda em português brasileiro.';
+    if (kbContext) {
+      systemPrompt += '\n\n' + kbContext;
+    }
+
+    // 8. Build messages
+    const providerMessages: ProviderMessage[] = (messages ?? []).map(
+      (m: { role: string; content: string }) => ({
+        role: m.role as ProviderMessage['role'],
+        content: m.content,
+      })
+    );
+
+    if (screenshot && providerMessages.length > 0) {
+      const lastUser = [...providerMessages].reverse().find((m) => m.role === 'user');
+      if (lastUser) {
+        lastUser.image = {
+          base64: screenshot,
+          mimeType: (screenshotMimeType ?? 'image/png') as 'image/jpeg' | 'image/png',
+        };
+      }
+    }
+
+    // 9. Get or create conversation
+    let convId = conversationId;
+    if (!convId) {
+      const firstMsg = providerMessages.find((m) => m.role === 'user');
+      const title = firstMsg
+        ? (firstMsg.content as string).slice(0, 80)
+        : 'Nova conversa';
+
+      const conv = await prisma.conversation.create({
+        data: {
+          userId: user.id,
+          agentId: agent?.id,
+          title,
+          source: 'WEB',
+        },
+      });
+      convId = conv.id;
+    }
+
+    // 10. Save user message
+    const lastUserMsg = providerMessages[providerMessages.length - 1];
+    if (lastUserMsg?.role === 'user') {
+      await prisma.conversationMessage.create({
+        data: {
+          conversationId: convId,
+          role: 'USER',
+          content: lastUserMsg.content as string,
+        },
+      });
+    }
+
+    // 11. Call AI provider
+    const startTime = Date.now();
+    const { provider, apiModelId } = getProvider(
+      modelId,
+      isByok ? userKeys : undefined
+    );
+
+    if (stream) {
+      const streamResult = await provider.chatStream({
+        model: apiModelId,
+        messages: providerMessages,
+        systemPrompt,
+        stream: true,
+      });
+
+      return new Response(streamResult, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Teki-Model': modelId,
+          'X-Teki-Conversation-Id': convId,
+        },
+      });
+    }
+
+    const result = await provider.chat({
+      model: apiModelId,
+      messages: providerMessages,
+      systemPrompt,
+      stream: false,
+    });
+
+    const latencyMs = Date.now() - startTime;
+    const tokensIn = result.usage?.inputTokens ?? 0;
+    const tokensOut = result.usage?.outputTokens ?? 0;
+
+    // 12. Save assistant message
+    await prisma.conversationMessage.create({
+      data: {
+        conversationId: convId,
+        role: 'ASSISTANT',
+        content: result.content,
+        modelUsed: modelId,
+        tokensIn,
+        tokensOut,
+        latencyMs,
+      },
+    });
+
+    // 13. Increment usage
+    await incrementUsage(user.id, tokensIn, tokensOut, isByok);
+
+    // 14. Dispatch webhook (fire-and-forget)
+    dispatchWebhook(user.id, 'message.created', {
+      conversationId: convId,
+      model: modelId,
+      tokensIn,
+      tokensOut,
+    }).catch(() => {});
+
+    return NextResponse.json(
+      {
+        content: result.content,
+        model: modelId,
+        conversationId: convId,
+        usage: result.usage,
+      },
+      { headers: { 'X-Teki-Model': modelId } }
+    );
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
+    }
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error('[chat route]', message);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message } },
+      { status: 500 }
+    );
+  }
+}
