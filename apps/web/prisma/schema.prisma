@@ -14,6 +14,7 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
+  tenantId      String?
   email         String    @unique
   name          String
   passwordHash  String
@@ -24,6 +25,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  tenant           Tenant?  @relation(fields: [tenantId], references: [id])
   agents           Agent[]
   channels         Channel[]
   apiKeys          ApiKey[]
@@ -33,8 +35,13 @@ model User {
   webhookEndpoints WebhookEndpoint[]
   sessions         Session[]
   documents        Document[]
+  assignedTickets  Ticket[]          @relation("TicketAttendant")
+  resolvedTickets  Ticket[]          @relation("TicketResolver")
+  createdKbArticles  KnowledgeBaseArticle[] @relation("KbCreatedBy")
+  reviewedKbArticles KnowledgeBaseArticle[] @relation("KbReviewedBy")
 
   @@index([email])
+  @@index([tenantId])
 }
 
 model Session {
@@ -357,4 +364,216 @@ model WebhookLog {
   endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
 
   @@index([endpointId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TENANTS (Multi-tenant SaaS)
+// ═══════════════════════════════════════════════════════════════
+
+model Tenant {
+  id                  String   @id @default(cuid())
+  name                String
+  slug                String   @unique
+  softwareName        String?
+  softwareDescription String?  @db.Text
+  aiSystemPrompt      String?  @db.Text
+  plan                String   @default("basic")
+  active              Boolean  @default(true)
+  settings            Json     @default("{}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  users              User[]
+  clients            Client[]
+  tickets            Ticket[]
+  categoryTemplates  CategoryTemplate[]
+  knowledgeBase      KnowledgeBaseArticle[]
+  aiUsageLogs        AiUsageLog[]
+
+  @@index([slug])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLIENTS (End customers of a tenant)
+// ═══════════════════════════════════════════════════════════════
+
+model Client {
+  id              String   @id @default(cuid())
+  tenantId        String
+  name            String
+  document        String?
+  email           String?
+  phone           String?
+  contractPlan    String?
+  softwareVersion String?
+  environmentJson Json?
+  active          Boolean  @default(true)
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CATEGORY TEMPLATES (Dynamic form fields per category)
+// ═══════════════════════════════════════════════════════════════
+
+model CategoryTemplate {
+  id           String   @id @default(cuid())
+  tenantId     String
+  category     String
+  subcategory  String?
+  fieldKey     String
+  fieldLabel   String
+  fieldType    String   @default("text")
+  fieldOptions Json?
+  placeholder  String?
+  required     Boolean  @default(false)
+  aiWeight     String   @default("medium")
+  displayOrder Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, category, fieldKey])
+  @@index([tenantId, category, active])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KNOWLEDGE BASE ARTICLES (Structured KB with full-text search)
+// ═══════════════════════════════════════════════════════════════
+
+model KnowledgeBaseArticle {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  articleNumber      String   @unique
+  title              String
+  category           String
+  subcategory        String?
+  softwareName       String?
+  versionMin         String?
+  versionMax         String?
+  problemDescription String   @db.Text
+  solutionSteps      String   @db.Text
+  solutionType       String?
+  notes              String?  @db.Text
+  tags               String[] @default([])
+  searchVector       Unsupported("tsvector")?
+  embedding          Unsupported("vector(1536)")?
+  usageCount         Int      @default(0)
+  successRate        Decimal  @default(0) @db.Decimal(5, 2)
+  status             String   @default("published")
+  createdById        String?
+  reviewedById       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy  User?  @relation("KbCreatedBy", fields: [createdById], references: [id])
+  reviewedBy User?  @relation("KbReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([tenantId, category])
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKETS (Support tickets with structured context)
+// ═══════════════════════════════════════════════════════════════
+
+model Ticket {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  ticketNumber       String    @unique
+  clientId           String
+  attendantId        String
+  category           String
+  subcategory        String?
+  priority           String    @default("medium")
+  status             String    @default("open")
+  summary            String
+  description        String?   @db.Text
+  contextJson        Json
+  categoryFieldsJson Json?
+  errorJson          Json?
+  stepsToReproduce   String[]  @default([])
+  frequency          String?
+  impact             String?
+  attachments        Json      @default("[]")
+  aiResponseJson     Json?
+  aiConfidence       String?
+  aiSource           String?
+  resolutionNotes    String?   @db.Text
+  resolutionCategory String?
+  resolvedById       String?
+  resolvedAt         DateTime?
+  firstResponseAt    DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client     Client @relation(fields: [clientId], references: [id])
+  attendant  User   @relation("TicketAttendant", fields: [attendantId], references: [id])
+  resolvedBy User?  @relation("TicketResolver", fields: [resolvedById], references: [id])
+  messages   TicketMessage[]
+  aiUsageLogs AiUsageLog[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([clientId])
+  @@index([attendantId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET MESSAGES (Conversation timeline within a ticket)
+// ═══════════════════════════════════════════════════════════════
+
+model TicketMessage {
+  id            String   @id @default(cuid())
+  ticketId      String
+  senderType    String
+  senderId      String?
+  content       String   @db.Text
+  aiPromptUsed  String?  @db.Text
+  aiResponseRaw Json?
+  attachments   Json     @default("[]")
+  internal      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI USAGE LOG (Metrics and audit trail)
+// ═══════════════════════════════════════════════════════════════
+
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  tenantId         String
+  ticketId         String?
+  modelUsed        String
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+  latencyMs        Int?
+  confidence       String?
+  source           String?
+  kbArticlesUsed   String[] @default([])
+  feedback         String?
+  createdAt        DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+
+  @@index([tenantId, createdAt(sort: Desc)])
 }
