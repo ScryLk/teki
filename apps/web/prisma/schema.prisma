@@ -33,6 +33,10 @@ model User {
   webhookEndpoints WebhookEndpoint[]
   sessions         Session[]
   documents        Document[]
+  kbArticles       KnowledgeBaseArticle[]
+  kbArticlesUpdated KnowledgeBaseArticle[] @relation("UpdatedBy")
+  kbArticlesReviewed KnowledgeBaseArticle[] @relation("ReviewedBy")
+  kbCategories     KbCategory[]
 
   @@index([email])
 }
@@ -357,4 +361,129 @@ model WebhookLog {
   endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
 
   @@index([endpointId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KB CATEGORIES (customizable per user/tenant)
+// ═══════════════════════════════════════════════════════════════
+
+model KbCategory {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  slug         String
+  icon         String?
+  color        String?
+  description  String?
+  displayOrder Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articles KnowledgeBaseArticle[]
+
+  @@unique([userId, slug])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KB ARTICLES (knowledge base for AI support)
+// ═══════════════════════════════════════════════════════════════
+
+enum KbArticleStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+  DEPRECATED
+}
+
+enum KbSolutionType {
+  PERMANENT_FIX
+  WORKAROUND
+  CONFIGURATION
+  KNOWN_ISSUE
+  INFORMATIONAL
+}
+
+enum KbVisibility {
+  AI_ONLY
+  AGENTS_ONLY
+  AI_AND_AGENTS
+  PUBLIC
+}
+
+model KnowledgeBaseArticle {
+  id            String   @id @default(cuid())
+  userId        String
+  articleNumber String   @unique
+
+  // IDENTIFICATION
+  title       String
+  categoryId  String
+  subcategory String?
+  tags        String[] @default([])
+
+  // APPLICATION SCOPE
+  softwareName String?
+  versionMin   String?
+  versionMax   String?
+  modules      String[] @default([])
+  environments String[] @default([])
+  databases    String[] @default([])
+
+  // MAIN CONTENT
+  problemDescription String  @db.Text
+  rootCause          String? @db.Text
+  solutionSteps      String  @db.Text
+  solutionType       KbSolutionType @default(PERMANENT_FIX)
+  prevention         String? @db.Text
+  notes              String? @db.Text
+
+  // TECHNICAL FIELDS
+  errorCodes     String[] @default([])
+  errorMessages  String[] @default([])
+  relatedTables  String[] @default([])
+  relatedConfigs String[] @default([])
+  sqlQueries     String?  @db.Text
+  commands       String?  @db.Text
+
+  // RELATIONSHIPS
+  relatedArticleIds String[] @default([])
+  supersededById    String?
+
+  // AI CONTEXT
+  aiContextNote  String? @db.Text
+  priorityWeight Int     @default(50)
+
+  // METRICS
+  usageCount           Int      @default(0)
+  successCount         Int      @default(0)
+  failureCount         Int      @default(0)
+  successRate          Float    @default(0)
+  lastUsedAt           DateTime?
+  avgResolutionMinutes Int?
+
+  // MANAGEMENT
+  status     KbArticleStatus @default(DRAFT)
+  visibility KbVisibility    @default(AI_AND_AGENTS)
+
+  createdById  String
+  updatedById  String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  updatedBy  User?       @relation("UpdatedBy", fields: [updatedById], references: [id])
+  reviewedBy User?       @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  category   KbCategory  @relation(fields: [categoryId], references: [id])
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, categoryId])
+  @@index([userId, softwareName])
+  @@index([tags])
+  @@index([errorCodes])
 }

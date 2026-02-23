@@ -35,6 +35,7 @@ import {
   MessageSquare,
   BookOpen,
   PanelRight,
+  Settings,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -58,6 +59,7 @@ export function Header({
   const navItems = [
     { href: '/chat', label: 'Chat', icon: MessageSquare },
     { href: '/base-conhecimento', label: 'Base de Conhecimento', icon: BookOpen },
+    { href: '/settings/knowledge-base', label: 'KB (Configuracoes)', icon: Settings },
   ];
 
   return (
