@@ -1,89 +1,104 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getModelById } from '@teki/shared';
+import { getProvider } from '@/lib/ai/router';
+import type { ProviderMessage } from '@/lib/ai/types';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
-const ALGOLIA_APP_ID = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!;
-const ALGOLIA_API_KEY = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!;
-const ALGOLIA_AGENT_ID = process.env.NEXT_PUBLIC_ALGOLIA_AGENT_ID!;
+const SYSTEM_PROMPT = `Você é o Teki, um assistente especializado em suporte técnico de TI.
+Responda sempre em português do Brasil. Seja direto, técnico e prático.
+Quando receber uma imagem, analise-a e descreva o problema detectado.
+Baseie suas respostas em boas práticas de TI e forneça passos claros para resolução.`;
 
 export async function POST(req: NextRequest) {
-  const { messages, context } = await req.json();
+  const body = await req.json();
+  const {
+    messages,
+    model: requestedModel,
+    screenshot,
+    screenshotMimeType,
+    context,
+    stream = false,
+  } = body;
 
-  // Convert from { role, content } to Algolia format { role, parts: [{ text }] }
-  const algoliaMessages = toAlgoliaFormat(messages, context);
+  const modelId = requestedModel ?? 'gemini-flash';
+  const modelInfo = getModelById(modelId);
 
-  const response = await fetch(
-    `https://${ALGOLIA_APP_ID}.algolia.net/agent-studio/1/agents/${ALGOLIA_AGENT_ID}/completions?stream=true&compatibilityMode=ai-sdk-5`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-algolia-application-id': ALGOLIA_APP_ID,
-        'X-Algolia-API-Key': ALGOLIA_API_KEY,
-      },
-      body: JSON.stringify({ messages: algoliaMessages }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Algolia Agent Studio error:', response.status, errorText);
-    return new Response(
-      JSON.stringify({ error: 'Erro na comunicação com Algolia Agent Studio', details: errorText }),
-      { status: response.status, headers: { 'Content-Type': 'application/json' } }
+  if (!modelInfo) {
+    return NextResponse.json(
+      { error: { code: 'MODEL_NOT_AVAILABLE', message: `Modelo "${modelId}" não encontrado.` } },
+      { status: 400 }
     );
   }
 
-  return new Response(response.body, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  });
-}
-
-function toAlgoliaFormat(
-  messages: Array<{ role: string; content: string }>,
-  context?: {
-    sistema?: string;
-    versao?: string;
-    ambiente?: string;
-    sistemaOperacional?: string;
-    mensagemErro?: string;
-    nivelTecnico?: string;
-  }
-) {
-  // Build context block
-  const contextBlock = context
-    ? [
-        '[CONTEXTO DO ATENDIMENTO]',
-        context.sistema && `Sistema: ${context.sistema}`,
-        context.versao && `Versão: ${context.versao}`,
-        context.ambiente && `Ambiente: ${context.ambiente}`,
-        context.sistemaOperacional && `S.O.: ${context.sistemaOperacional}`,
-        context.mensagemErro && `Erro reportado: ${context.mensagemErro}`,
-        context.nivelTecnico && `Nível técnico do analista: ${context.nivelTecnico}`,
-        '[FIM DO CONTEXTO]',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : '';
-
-  const lastUserIndex = messages.findLastIndex(
-    (m: { role: string }) => m.role === 'user'
+  const providerMessages: ProviderMessage[] = (messages ?? []).map(
+    (m: { role: string; content: string }) => ({
+      role: m.role as ProviderMessage['role'],
+      content: m.content,
+    })
   );
 
-  // Convert each message to Algolia Agent Studio format: { role, parts: [{ text }] }
-  return messages.map((msg: { role: string; content: string }, i: number) => {
-    const text =
-      i === lastUserIndex && contextBlock
-        ? `${contextBlock}\n\n${msg.content}`
-        : msg.content;
+  if (screenshot && providerMessages.length > 0) {
+    const lastUser = [...providerMessages].reverse().find((m) => m.role === 'user');
+    if (lastUser) {
+      lastUser.image = {
+        base64: screenshot,
+        mimeType: (screenshotMimeType ?? 'image/png') as 'image/jpeg' | 'image/png',
+      };
+    }
+  }
 
-    return {
-      role: msg.role,
-      parts: [{ text }],
-    };
-  });
+  let systemPrompt = SYSTEM_PROMPT;
+  if (context) {
+    const lines = ['\n[CONTEXTO DO ATENDIMENTO]'];
+    if (context.sistema) lines.push(`Sistema: ${context.sistema}`);
+    if (context.versao) lines.push(`Versão: ${context.versao}`);
+    if (context.ambiente) lines.push(`Ambiente: ${context.ambiente}`);
+    if (context.sistemaOperacional) lines.push(`S.O.: ${context.sistemaOperacional}`);
+    if (context.mensagemErro) lines.push(`Erro reportado: ${context.mensagemErro}`);
+    if (context.nivelTecnico) lines.push(`Nível técnico: ${context.nivelTecnico}`);
+    lines.push('[FIM DO CONTEXTO]');
+    systemPrompt += lines.join('\n');
+  }
+
+  try {
+    const { provider, apiModelId } = getProvider(modelId);
+
+    if (stream) {
+      const streamResult = await provider.chatStream({
+        model: apiModelId,
+        messages: providerMessages,
+        systemPrompt,
+        stream: true,
+      });
+
+      return new Response(streamResult, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Teki-Model': modelId,
+        },
+      });
+    }
+
+    const result = await provider.chat({
+      model: apiModelId,
+      messages: providerMessages,
+      systemPrompt,
+      stream: false,
+    });
+
+    return NextResponse.json(
+      { content: result.content, model: modelId, usage: result.usage },
+      { headers: { 'X-Teki-Model': modelId } }
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    console.error('[chat route]', message);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message } },
+      { status: 500 }
+    );
+  }
 }

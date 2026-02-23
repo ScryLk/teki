@@ -18,6 +18,9 @@ interface AppState {
   // Command palette
   commandPaletteOpen: boolean;
 
+  // Settings panel
+  settingsOpen: boolean;
+
   // Window watching state
   isWatching: boolean;
   watchedWindowName: string | null;
@@ -33,14 +36,30 @@ interface AppState {
   // Connection
   connectionStatus: ConnectionStatus;
 
+  // AI model selection
+  selectedModel: string;
+
   // Actions
   setLayout: (layout: LayoutMode) => void;
   toggleCommandPalette: () => void;
+  setSettingsOpen: (open: boolean) => void;
   setWatching: (isWatching: boolean, windowName?: string) => void;
   setCatState: (catState: CatState) => void;
   setActiveWindow: (activeWindow: ActiveWindowInfo | null) => void;
   setCurrentFrame: (frame: string | null) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
+  setSelectedModel: (model: string) => void;
+  requestWindowSelector: boolean;
+  triggerWindowSelector: () => void;
+  clearWindowSelector: () => void;
+}
+
+function getStoredModel(): string {
+  try {
+    return localStorage.getItem('teki-selected-model') ?? 'gemini-flash';
+  } catch {
+    return 'gemini-flash';
+  }
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -49,6 +68,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Command palette
   commandPaletteOpen: false,
+
+  // Settings panel
+  settingsOpen: false,
 
   // Window watching state
   isWatching: false,
@@ -65,11 +87,19 @@ export const useAppStore = create<AppState>((set) => ({
   // Connection
   connectionStatus: 'online',
 
+  // Window selector trigger
+  requestWindowSelector: false,
+
+  // AI model
+  selectedModel: getStoredModel(),
+
   // Actions
   setLayout: (layout) => set({ layout }),
 
   toggleCommandPalette: () =>
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+  setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
 
   setWatching: (isWatching, windowName) =>
     set((state) => ({
@@ -86,4 +116,16 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentFrame: (currentFrame) => set({ currentFrame }),
 
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
+
+  setSelectedModel: (model) => {
+    try {
+      localStorage.setItem('teki-selected-model', model);
+    } catch {
+      // ignore
+    }
+    set({ selectedModel: model });
+  },
+
+  triggerWindowSelector: () => set({ requestWindowSelector: true }),
+  clearWindowSelector: () => set({ requestWindowSelector: false }),
 }));

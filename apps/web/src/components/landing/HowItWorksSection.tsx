@@ -1,26 +1,26 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { IconDownload, IconDatabase, IconHeadset } from '@tabler/icons-react';
+import { IconUserPlus, IconUpload, IconMessageCircle } from '@tabler/icons-react';
 
 const steps = [
   {
     number: 1,
-    icon: IconDownload,
-    title: 'Instale o Teki',
-    description: 'Baixe e instale em 1 minuto. Windows, macOS ou Linux.',
+    icon: IconUserPlus,
+    title: 'Crie sua conta',
+    description: 'Cadastre-se gratuitamente em menos de 1 minuto. Sem cartão de crédito.',
   },
   {
     number: 2,
-    icon: IconDatabase,
-    title: 'Configure sua base',
-    description: 'Conecte com Algolia Agent Studio e importe documentos, tickets e sistemas.',
+    icon: IconUpload,
+    title: 'Suba sua base',
+    description: 'Faça upload dos manuais, runbooks e documentações da empresa. PDF, TXT, MD, DOCX.',
   },
   {
     number: 3,
-    icon: IconHeadset,
-    title: 'Atenda',
-    description: 'O gato observa sua tela, a IA diagnostica e você resolve.',
+    icon: IconMessageCircle,
+    title: 'Pergunte',
+    description: 'Mande sua dúvida pelo chat, desktop ou WhatsApp. O Teki responde com base na sua KB.',
   },
 ];
 

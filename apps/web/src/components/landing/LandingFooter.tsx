@@ -1,18 +1,28 @@
 'use client';
 
-const footerLinks = {
-  Links: [
+type FooterLink = { label: string; href: string; external?: boolean };
+type FooterLinks = Record<string, FooterLink[]>;
+
+const footerLinks: FooterLinks = {
+  Produto: [
     { label: 'Recursos', href: '#recursos' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Planos', href: '#planos' },
+    { label: 'Docs', href: '/docs' },
     { label: 'Changelog', href: 'https://github.com/ScryLk/teki/releases', external: true },
+  ],
+  Empresa: [
+    { label: 'Sobre', href: '/sobre' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Contato', href: 'mailto:contato@teki.com.br' },
+  ],
+  Legal: [
+    { label: 'Termos de Uso', href: '/termos' },
+    { label: 'Privacidade', href: '/privacidade' },
   ],
   Comunidade: [
     { label: 'GitHub', href: 'https://github.com/ScryLk/teki', external: true },
-    { label: 'Contribuir', href: 'https://github.com/ScryLk/teki/blob/main/README.md', external: true },
-    { label: 'Discussions', href: 'https://github.com/ScryLk/teki/discussions', external: true },
-  ],
-  Contato: [
-    { label: 'GitHub Issues', href: 'https://github.com/ScryLk/teki/issues', external: true },
+    { label: 'Discord', href: '#', external: true },
+    { label: 'Twitter', href: '#', external: true },
   ],
 };
 
@@ -20,7 +30,7 @@ export function LandingFooter() {
   return (
     <footer className="bg-[#09090b] border-t border-[#3f3f46] pt-12 pb-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-10">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5 mb-3">
@@ -33,8 +43,8 @@ export function LandingFooter() {
               </svg>
               <span className="text-lg font-bold text-[#fafafa]">Teki</span>
             </div>
-            <p className="text-sm text-[#71717a] max-w-[240px]">
-              Assistente IA para Suporte Técnico
+            <p className="text-sm text-[#71717a] max-w-[200px]">
+              Suporte técnico com IA que vê a tela.
             </p>
           </div>
 
@@ -63,16 +73,7 @@ export function LandingFooter() {
         {/* Bottom bar */}
         <div className="border-t border-[#3f3f46] pt-6">
           <p className="text-xs text-[#71717a] text-center">
-            &copy; {new Date().getFullYear()}{' '}
-            <a
-              href="https://github.com/ScryLk/teki"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#2A8F9D] transition-colors"
-            >
-              Teki by ScryLk
-            </a>
-            . MIT License.
+            &copy; 2026 Teki. Todos os direitos reservados. Feito com ☕ em Panambi, RS.
           </p>
         </div>
       </div>

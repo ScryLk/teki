@@ -7,13 +7,18 @@ const TitleBar: React.FC = () => {
   const setCatState = useAppStore((s) => s.setCatState);
   const connectionStatus = useAppStore((s) => s.connectionStatus);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
+  const triggerWindowSelector = useAppStore((s) => s.triggerWindowSelector);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
-  const handlePauseClick = React.useCallback(async () => {
-    if (!isCapturing) return;
-    await window.tekiAPI.stopWatching();
-    setWatching(false);
-    setCatState('idle');
-  }, [isCapturing, setWatching, setCatState]);
+  const handlePlayPauseClick = React.useCallback(async () => {
+    if (isCapturing) {
+      await window.tekiAPI.stopWatching();
+      setWatching(false);
+      setCatState('idle');
+    } else {
+      triggerWindowSelector();
+    }
+  }, [isCapturing, setWatching, setCatState, triggerWindowSelector]);
 
   return (
     <div
@@ -43,10 +48,9 @@ const TitleBar: React.FC = () => {
       <div className="flex items-center gap-1 pr-2 no-drag">
         {/* Capture status indicator */}
         <button
-          onClick={handlePauseClick}
+          onClick={handlePlayPauseClick}
           className="flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors"
-          title={isCapturing ? 'Parar observação' : 'Pausado'}
-          disabled={!isCapturing}
+          title={isCapturing ? 'Parar observação' : 'Selecionar janela'}
         >
           {isCapturing ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success">
@@ -62,8 +66,9 @@ const TitleBar: React.FC = () => {
 
         {/* Settings gear icon */}
         <button
+          onClick={() => setSettingsOpen(true)}
           className="flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary"
-          title="Configuracoes"
+          title="Configurações"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" />

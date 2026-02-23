@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
-import type { TekiAPI, TekiSettings, WindowSource, WindowFrame } from '@teki/shared';
+import type { TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult } from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
   // Window watching
@@ -65,9 +65,27 @@ const tekiAPI: TekiAPI = {
     };
   },
 
+  // Tray actions
+  onTraySelectWindow: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on('tray-select-window', listener);
+    return () => ipcRenderer.removeListener('tray-select-window', listener);
+  },
+
+  onTrayStopWatching: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on('tray-stop-watching', listener);
+    return () => ipcRenderer.removeListener('tray-stop-watching', listener);
+  },
+
   // App info
   getVersion: (): Promise<string> => {
     return ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION);
+  },
+
+  // AI Key Validation
+  validateApiKey: (provider: AiProviderId, key: string): Promise<ApiKeyValidationResult> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_KEY, provider, key);
   },
 };
 

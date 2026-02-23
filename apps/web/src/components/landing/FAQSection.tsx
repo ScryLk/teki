@@ -8,32 +8,37 @@ const faqs = [
   {
     question: 'O Teki é gratuito?',
     answer:
-      'Sim, o Teki é open source e totalmente gratuito. O código está disponível no GitHub sob licença MIT.',
+      'O Teki tem um plano gratuito com 50 mensagens/mês, 1 agente e 2 documentos na KB. Para mais recursos, temos planos a partir de R$ 29/mês.',
   },
   {
-    question: 'Preciso de conta no Algolia?',
+    question: 'O Teki precisa de internet?',
     answer:
-      'Sim, você precisa de uma conta no Algolia Agent Studio para utilizar a busca inteligente e o agente de IA. O Algolia oferece um plano gratuito que é suficiente para começar.',
-  },
-  {
-    question: 'Quais sistemas operacionais são suportados?',
-    answer:
-      'Windows 10 ou superior, macOS 12 (Monterey) ou superior, e Linux (Ubuntu 20.04+, Debian 11+, Fedora 36+ e outras distribuições baseadas em .deb).',
+      'Sim. O Teki processa mensagens via Gemini API na nuvem. O app desktop funciona offline para inspeção de janelas, mas precisa de internet para respostas da IA.',
   },
   {
     question: 'Meus dados são seguros?',
     answer:
-      'O Teki roda localmente na sua máquina. Os dados só são enviados para o Algolia Agent Studio quando você faz uma consulta. Nenhum dado de tela é armazenado permanentemente.',
+      'Seus documentos ficam na sua conta e não são compartilhados. Screenshots são processados e descartados — não armazenamos imagens das suas telas.',
   },
   {
-    question: 'Posso usar minha própria base de conhecimento?',
+    question: 'O que é OpenClaw?',
     answer:
-      'Sim! Você pode importar documentos (PDF, DOCX), tickets resolvidos e informações de sistemas nos índices do Algolia Agent Studio. A base é totalmente customizável.',
+      'OpenClaw é um gateway open-source que conecta o Teki aos seus apps de mensagens (WhatsApp, Telegram, Discord, Slack). Disponível no plano Pro.',
   },
   {
-    question: 'O gato é obrigatório?',
+    question: 'Quais formatos de documento a KB aceita?',
     answer:
-      'Não, mas ele é o melhor colega de suporte que você vai ter. Sério, ele reage ao estado do sistema e deixa o atendimento mais leve.',
+      'PDF, TXT, Markdown e DOCX. Tamanho máximo por arquivo: 10 MB.',
+  },
+  {
+    question: 'Posso cancelar a qualquer momento?',
+    answer:
+      'Sim. Sem multa, sem burocracia. O cancelamento é feito direto nas configurações da sua conta.',
+  },
+  {
+    question: 'O Teki funciona em português?',
+    answer:
+      'Sim! O Teki foi feito para o mercado brasileiro. Respostas, interface e suporte — tudo em pt-BR.',
   },
 ];
 

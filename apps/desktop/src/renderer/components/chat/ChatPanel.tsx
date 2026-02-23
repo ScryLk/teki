@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
-import { useAlgoliaChat } from '@/hooks/useAlgoliaChat';
+import { useChat } from '@/hooks/useChat';
+import { useAppStore } from '@/stores/app-store';
 
 const QUICK_SUGGESTIONS = [
   'Excel nao abre apos atualizacao do Windows',
@@ -11,8 +12,9 @@ const QUICK_SUGGESTIONS = [
 ];
 
 const ChatPanel: React.FC = () => {
+  const selectedModel = useAppStore((s) => s.selectedModel);
   const { messages, isLoading, error, sendMessage, clearChat } =
-    useAlgoliaChat();
+    useChat(selectedModel);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -38,18 +40,12 @@ const ChatPanel: React.FC = () => {
     [sendMessage]
   );
 
-  const handleScreenshot = useCallback(async () => {
-    try {
-      const frame = await window.tekiAPI.captureNow();
-      if (frame) {
-        // Append screenshot context note to the input
-        setInput(
-          (prev) =>
-            prev + (prev ? '\n' : '') + '[Screenshot da tela anexado]'
-        );
-      }
-    } catch (err) {
-      console.error('Screenshot capture failed:', err);
+  const handleScreenshot = useCallback(() => {
+    const { currentFrame } = useAppStore.getState();
+    if (currentFrame) {
+      setInput(
+        (prev) => prev + (prev ? '\n' : '') + '[Screenshot da tela será incluído]'
+      );
     }
   }, []);
 

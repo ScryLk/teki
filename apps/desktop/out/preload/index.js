@@ -14,7 +14,9 @@ const IPC_CHANNELS = {
   SETTINGS_SET: "settings:set",
   SETTINGS_GET_ALL: "settings:getAll",
   // App
-  APP_GET_VERSION: "app:getVersion"
+  APP_GET_VERSION: "app:getVersion",
+  // AI Validation
+  AI_VALIDATE_KEY: "ai:validateKey"
 };
 const tekiAPI = {
   // Window watching
@@ -65,9 +67,24 @@ const tekiAPI = {
       electron.ipcRenderer.removeListener(IPC_CHANNELS.WINDOW_ACTIVE, listener);
     };
   },
+  // Tray actions
+  onTraySelectWindow: (callback) => {
+    const listener = () => callback();
+    electron.ipcRenderer.on("tray-select-window", listener);
+    return () => electron.ipcRenderer.removeListener("tray-select-window", listener);
+  },
+  onTrayStopWatching: (callback) => {
+    const listener = () => callback();
+    electron.ipcRenderer.on("tray-stop-watching", listener);
+    return () => electron.ipcRenderer.removeListener("tray-stop-watching", listener);
+  },
   // App info
   getVersion: () => {
     return electron.ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION);
+  },
+  // AI Key Validation
+  validateApiKey: (provider, key) => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_KEY, provider, key);
   }
 };
 electron.contextBridge.exposeInMainWorld("tekiAPI", tekiAPI);

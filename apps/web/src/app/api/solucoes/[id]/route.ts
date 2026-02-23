@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { readSolution, deleteSolutionRecord, getUploadsDir } from '@/lib/solutions-store';
-import { getAdminClient, SOLUCOES_INDEX } from '@/lib/algolia-admin';
+
 
 export const runtime = 'nodejs';
 
@@ -31,21 +31,6 @@ export async function DELETE(
 
     if (!solution) {
       return NextResponse.json({ error: 'Solucao nao encontrada' }, { status: 404 });
-    }
-
-    // Delete Algolia records
-    if (solution.totalChunks > 0) {
-      const objectIDs = Array.from({ length: solution.totalChunks }, (_, i) =>
-        `${id}_chunk_${i}`
-      );
-      try {
-        await getAdminClient().deleteObjects({
-          indexName: SOLUCOES_INDEX,
-          objectIDs,
-        });
-      } catch (err) {
-        console.error('Error deleting from Algolia:', err);
-      }
     }
 
     // Delete file from disk

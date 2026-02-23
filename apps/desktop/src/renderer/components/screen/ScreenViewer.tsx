@@ -11,6 +11,8 @@ const ScreenViewer: React.FC = () => {
   const setWatching = useAppStore((s) => s.setWatching);
   const setCurrentFrame = useAppStore((s) => s.setCurrentFrame);
   const setCatState = useAppStore((s) => s.setCatState);
+  const requestWindowSelector = useAppStore((s) => s.requestWindowSelector);
+  const clearWindowSelector = useAppStore((s) => s.clearWindowSelector);
 
   const [viewerState, setViewerState] = useState<ViewerState>('idle');
   const [availableWindows, setAvailableWindows] = useState<WindowSource[]>([]);
@@ -84,6 +86,24 @@ const ScreenViewer: React.FC = () => {
       setViewerState('idle');
     }
   }, [isWatching, viewerState, setCurrentFrame]);
+
+  // Open window selector when triggered from TitleBar play button
+  useEffect(() => {
+    if (requestWindowSelector) {
+      clearWindowSelector();
+      openSelector();
+    }
+  }, [requestWindowSelector, clearWindowSelector, openSelector]);
+
+  // Handle tray menu actions: "Trocar janela" and "Pausar monitoramento"
+  useEffect(() => {
+    const unsubSelect = window.tekiAPI.onTraySelectWindow(() => openSelector());
+    const unsubStop = window.tekiAPI.onTrayStopWatching(() => stopWatching());
+    return () => {
+      unsubSelect();
+      unsubStop();
+    };
+  }, [openSelector, stopWatching]);
 
   useEffect(() => {
     return () => {

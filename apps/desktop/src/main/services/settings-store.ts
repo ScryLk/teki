@@ -31,10 +31,18 @@ const defaults: TekiSettings = {
   globalShortcut: 'CommandOrControl+Shift+T',
   language: 'pt-BR',
 
-  // Algolia
-  algoliaAppId: '',
-  algoliaApiKey: '',
-  algoliaAgentId: '',
+  // AI Providers
+  selectedModel: 'gemini-flash',
+  geminiApiKey: '',
+  openaiApiKey: '',
+  anthropicApiKey: '',
+  ollamaBaseUrl: 'http://localhost:11434',
+
+  // Key validation status
+  geminiKeyStatus: 'unconfigured',
+  openaiKeyStatus: 'unconfigured',
+  anthropicKeyStatus: 'unconfigured',
+  ollamaKeyStatus: 'unconfigured',
 };
 
 const store = new Store<TekiSettings>({

@@ -1,8 +1,10 @@
 import { ipcMain, app, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
+import type { AiProviderId } from '@teki/shared';
 import settingsStore from './services/settings-store';
 import windowWatcher from './services/window-watcher';
 import { updateTrayState } from './tray';
+import { validateApiKey } from './services/ai-key-validator';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   // ── Window watching ───────────────────────────────────────────────
@@ -23,7 +25,7 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
         if (!windowWatcher.isWatching()) {
           updateTrayState('idle', mainWindow);
         }
-      }, 10_000);
+      }, 30_000);
     });
 
     updateTrayState('watching', mainWindow, windowName);
@@ -52,5 +54,11 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => {
     return app.getVersion();
+  });
+
+  // ── AI Validation ─────────────────────────────────────────────────
+
+  ipcMain.handle(IPC_CHANNELS.AI_VALIDATE_KEY, (_event, provider: AiProviderId, key: string) => {
+    return validateApiKey(provider, key);
   });
 }

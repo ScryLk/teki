@@ -1,15 +1,30 @@
-import { Tray, nativeImage, BrowserWindow, Menu, app } from 'electron';
+import { Tray, nativeImage, BrowserWindow } from 'electron';
 import {
   makeCatWatchingDataURL,
   makeCatIdleDataURL,
   makeCatAlertDataURL,
 } from './utils/tray-icons';
 import { encodePNG } from './utils/png-encoder';
+import {
+  startWatchTimer,
+  stopWatchTimer,
+  getElapsed,
+  isTimerRunning,
+} from './services/watch-timer';
+import {
+  createPopupWindow,
+  showPopup,
+  updateMenuState,
+  initMenuVersion,
+  registerPopupIPC,
+  destroyPopup,
+} from './tray-popup';
 
 let tray: Tray | null = null;
 let currentState: TrayState = 'idle';
-let currentWindow: BrowserWindow | null = null;
-let currentWindowName: string | undefined;
+let currentWindowName: string = '';
+let lastSessionDuration: string = '';
+let timerInterval: NodeJS.Timeout | null = null;
 
 export type TrayState = 'idle' | 'watching' | 'alert';
 
@@ -17,11 +32,11 @@ export type TrayState = 'idle' | 'watching' | 'alert';
 
 const iconCache: Partial<Record<TrayState, Electron.NativeImage>> = {};
 
-/** Simple white circle fallback used before the renderer renders the SVG cat icons. */
+/** Small white circle fallback shown before SVG icons load. */
 function createFallbackIcon(): Electron.NativeImage {
   const size = 22;
   const rgba = Buffer.alloc(size * size * 4, 0);
-  const cx = 11, cy = 11, r = 8;
+  const cx = 11, cy = 11, r = 9;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
@@ -51,9 +66,17 @@ async function renderSVGtoPNG(
       new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
+          const IW = 22, IH = 15;
+          const W  = 44, H  = 44;
+          const dw = IW * 2, dh = IH * 2;
+          const dx = 0;
+          const dy = Math.round((H - dh) / 2);
           const canvas = document.createElement('canvas');
-          canvas.width = 22; canvas.height = 22;
-          canvas.getContext('2d').drawImage(img, 0, 0, 22, 22);
+          canvas.width = W; canvas.height = H;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, IW, IH, dx, dy, dw, dh);
           resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = () => resolve('');
@@ -61,19 +84,13 @@ async function renderSVGtoPNG(
       })
     `);
     if (!pngDataURL) return null;
-    const img = nativeImage.createFromDataURL(pngDataURL);
-    if (process.platform === 'darwin') img.setTemplateImage(true);
-    return img;
+    const buffer = Buffer.from(pngDataURL.split(',')[1], 'base64');
+    return nativeImage.createFromBuffer(buffer, { scaleFactor: 2 });
   } catch {
     return null;
   }
 }
 
-/**
- * Renders all three SVG states to PNG using the renderer's canvas.
- * Called after the renderer finishes loading so the browser engine is available.
- * Once icons are ready the current tray icon is refreshed.
- */
 export async function initTrayIcons(mainWindow: BrowserWindow): Promise<void> {
   const states: Array<[TrayState, string]> = [
     ['idle', makeCatIdleDataURL()],
@@ -83,87 +100,45 @@ export async function initTrayIcons(mainWindow: BrowserWindow): Promise<void> {
 
   for (const [state, svgDataURL] of states) {
     const img = await renderSVGtoPNG(mainWindow, svgDataURL);
-    if (img) iconCache[state] = img;
+    if (img) {
+      if (process.platform === 'darwin') img.setTemplateImage(true);
+      iconCache[state] = img;
+    }
   }
 
-  // Refresh the live tray icon with the newly-rendered PNG
-  if (tray) {
-    tray.setImage(getIcon(currentState));
-  }
+  if (tray) tray.setImage(getIcon(currentState));
 }
 
-// ─── Context menu ─────────────────────────────────────────────────────────────
+// ─── Timer live-update ────────────────────────────────────────────────────────
 
-function buildMenu(mainWindow: BrowserWindow, state: TrayState, windowName?: string): Menu {
-  const template: Electron.MenuItemConstructorOptions[] = [
-    {
-      label: 'Abrir Teki',
-      click: () => {
-        if (!mainWindow.isDestroyed()) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      },
-    },
-    { type: 'separator' },
-  ];
+function startTimerUpdate(): void {
+  stopTimerUpdate();
+  timerInterval = setInterval(() => {
+    const elapsed = getElapsed();
+    tray?.setToolTip(`Teki — ${currentWindowName} (${elapsed})`);
+    updateMenuState({ elapsed });
+  }, 1000);
+}
 
-  if (state === 'watching') {
-    template.push(
-      { label: `Observando: ${windowName ?? 'janela'}`, enabled: false },
-      {
-        label: 'Parar de observar',
-        click: () => {
-          if (!mainWindow.isDestroyed()) mainWindow.webContents.send('tray-stop-watching');
-        },
-      }
-    );
-  } else if (state === 'alert') {
-    template.push(
-      { label: `"${windowName ?? ''}" foi fechada`, enabled: false },
-      {
-        label: 'Escolher outra janela',
-        click: () => {
-          if (!mainWindow.isDestroyed()) {
-            mainWindow.show();
-            mainWindow.webContents.send('tray-select-window');
-          }
-        },
-      }
-    );
-  } else {
-    template.push({
-      label: 'Escolher janela para observar',
-      click: () => {
-        if (!mainWindow.isDestroyed()) {
-          mainWindow.show();
-          mainWindow.webContents.send('tray-select-window');
-        }
-      },
-    });
+function stopTimerUpdate(): void {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
   }
-
-  template.push(
-    { type: 'separator' },
-    { label: 'Sair', click: () => app.quit() }
-  );
-
-  return Menu.buildFromTemplate(template);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export function createTray(mainWindow: BrowserWindow): void {
-  currentWindow = mainWindow;
   tray = new Tray(getIcon('idle'));
   tray.setToolTip('Teki — Descansando');
-  tray.setContextMenu(buildMenu(mainWindow, 'idle'));
 
-  tray.on('click', () => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.isVisible() ? mainWindow.focus() : mainWindow.show();
-    }
-  });
+  initMenuVersion();
+  createPopupWindow();
+  registerPopupIPC(mainWindow);
+
+  tray.on('click', () => { if (tray) showPopup(tray); });
+  tray.on('right-click', () => { if (tray) showPopup(tray); });
 }
 
 export function updateTrayState(
@@ -173,19 +148,33 @@ export function updateTrayState(
 ): void {
   if (!tray) return;
 
+  const previousState = currentState;
   currentState = state;
-  currentWindowName = windowName;
-
   tray.setImage(getIcon(state));
-  tray.setToolTip(
-    state === 'watching' ? `Teki — Observando: ${windowName ?? 'janela'}` :
-    state === 'alert'    ? `Teki — "${windowName}" foi fechada`            :
-                           'Teki — Descansando'
-  );
-  tray.setContextMenu(buildMenu(mainWindow, state, windowName));
+
+  if (state === 'watching') {
+    currentWindowName = windowName ?? 'Janela';
+    if (previousState !== 'watching') startWatchTimer();
+    startTimerUpdate();
+    tray.setToolTip(`Teki — ${currentWindowName} (${getElapsed()})`);
+    updateMenuState({ status: 'watching', windowName: currentWindowName, elapsed: getElapsed() });
+  } else if (state === 'alert') {
+    lastSessionDuration = isTimerRunning() ? stopWatchTimer() : lastSessionDuration;
+    stopTimerUpdate();
+    tray.setToolTip(`Teki — "${currentWindowName}" foi fechada`);
+    updateMenuState({ status: 'alert', windowName: currentWindowName, lastDuration: lastSessionDuration });
+  } else {
+    if (isTimerRunning()) lastSessionDuration = stopWatchTimer();
+    currentWindowName = '';
+    stopTimerUpdate();
+    tray.setToolTip('Teki — Descansando');
+    updateMenuState({ status: 'idle', windowName: '', elapsed: '0s' });
+  }
 }
 
 export function destroyTray(): void {
+  stopTimerUpdate();
+  destroyPopup();
   tray?.destroy();
   tray = null;
 }

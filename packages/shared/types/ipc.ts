@@ -1,6 +1,22 @@
 import type { WindowSource, WindowFrame } from './context';
 
-// IPC Channel names
+// ─── AI Provider types ────────────────────────────────────────────────────────
+
+export type AiProviderId = 'gemini' | 'openai' | 'anthropic' | 'ollama';
+
+export type ApiKeyStatus = 'unconfigured' | 'valid' | 'invalid' | 'validating';
+
+export interface ApiKeyValidationResult {
+  valid: boolean;
+  provider: AiProviderId;
+  error?: string;
+  models?: string[];
+  latencyMs: number;
+  checkedAt: string;
+}
+
+// ─── IPC Channel names ────────────────────────────────────────────────────────
+
 export const IPC_CHANNELS = {
   // Window watching
   WATCH_GET_SOURCES: 'watch:getSources',
@@ -22,9 +38,13 @@ export const IPC_CHANNELS = {
 
   // App
   APP_GET_VERSION: 'app:getVersion',
+
+  // AI Validation
+  AI_VALIDATE_KEY: 'ai:validateKey',
 } as const;
 
-// Preload API exposed to renderer
+// ─── Preload API exposed to renderer ─────────────────────────────────────────
+
 export interface TekiAPI {
   // Window watching
   getAvailableWindows: () => Promise<WindowSource[]>;
@@ -41,9 +61,18 @@ export interface TekiAPI {
   // Window detection
   onActiveWindow: (callback: (info: { title: string; processName: string }) => void) => () => void;
 
+  // Tray actions
+  onTraySelectWindow: (callback: () => void) => () => void;
+  onTrayStopWatching: (callback: () => void) => () => void;
+
   // App info
   getVersion: () => Promise<string>;
+
+  // AI Key Validation
+  validateApiKey: (provider: AiProviderId, key: string) => Promise<ApiKeyValidationResult>;
 }
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
 
 export interface TekiSettings {
   // Capture
@@ -75,8 +104,16 @@ export interface TekiSettings {
   globalShortcut: string;
   language: 'pt-BR' | 'en';
 
-  // Algolia
-  algoliaAppId: string;
-  algoliaApiKey: string;
-  algoliaAgentId: string;
+  // AI Providers
+  selectedModel: string;
+  geminiApiKey: string;
+  openaiApiKey: string;
+  anthropicApiKey: string;
+  ollamaBaseUrl: string;
+
+  // Key validation status (set after validation — not user-editable)
+  geminiKeyStatus: ApiKeyStatus;
+  openaiKeyStatus: ApiKeyStatus;
+  anthropicKeyStatus: ApiKeyStatus;
+  ollamaKeyStatus: ApiKeyStatus;
 }

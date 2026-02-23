@@ -6,10 +6,12 @@ import SplitLayout from './components/layout/SplitLayout';
 import ChatPanel from './components/chat/ChatPanel';
 import ScreenViewer from './components/screen/ScreenViewer';
 import CommandPalette from './components/command-palette/CommandPalette';
+import SettingsModal from './components/settings/SettingsModal';
 
 const App: React.FC = () => {
   const layout = useAppStore((s) => s.layout);
   const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
+  const settingsOpen = useAppStore((s) => s.settingsOpen);
   const setLayout = useAppStore((s) => s.setLayout);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
 
@@ -75,6 +77,7 @@ const App: React.FC = () => {
       </main>
       <StatusBar />
       {commandPaletteOpen && <CommandPalette />}
+      {settingsOpen && <SettingsModal />}
     </div>
   );
 };

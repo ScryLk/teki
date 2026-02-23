@@ -18,6 +18,14 @@ export default defineConfig({
         '@teki/shared': resolve(__dirname, '../../packages/shared'),
       },
     },
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/preload/index.ts'),
+          'tray-popup': resolve(__dirname, 'src/preload/tray-popup.ts'),
+        },
+      },
+    },
   },
   renderer: {
     resolve: {
@@ -27,5 +35,13 @@ export default defineConfig({
       },
     },
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/renderer/index.html'),
+          'tray-popup': resolve(__dirname, 'src/renderer/tray-popup.html'),
+        },
+      },
+    },
   },
 });

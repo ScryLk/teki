@@ -1,8 +1,7 @@
 import { extractText } from './text-extraction';
 import { chunkText } from './chunking';
-import { getAdminClient, SOLUCOES_INDEX } from './algolia-admin';
 import { updateSolution } from './solutions-store';
-import type { AlgoliaSolutionRecord, SolutionRecord } from './types';
+import type { SolutionRecord } from './types';
 
 export async function processSolution(
   solution: SolutionRecord,
@@ -31,33 +30,7 @@ export async function processSolution(
       );
     }
 
-    // Step 3: Build Algolia records
-    const records: AlgoliaSolutionRecord[] = chunks.map((chunk) => ({
-      objectID: `${solution.id}_chunk_${chunk.index}`,
-      solution_id: solution.id,
-      title: solution.titulo,
-      description: solution.descricao,
-      category: solution.categoria,
-      tags: solution.tags,
-      related_systems: solution.sistemasRelacionados,
-      criticality: solution.criticidade,
-      content: chunk.content,
-      chunk_index: chunk.index,
-      total_chunks: chunks.length,
-      author: solution.author,
-      created_at: solution.createdAt,
-      file_url: `/api/uploads/${solution.id}.${solution.fileType}`,
-      file_type: solution.fileType,
-      source_type: 'manual_upload',
-    }));
-
-    // Step 4: Index to Algolia
-    await getAdminClient().saveObjects({
-      indexName: SOLUCOES_INDEX,
-      objects: records as unknown as Record<string, unknown>[],
-    });
-
-    // Step 5: Done
+    // Step 3: Done
     await updateSolution(solution.id, {
       status: 'indexed',
       totalChunks: chunks.length,

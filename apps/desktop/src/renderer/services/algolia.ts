@@ -19,11 +19,21 @@ interface AlgoliaCredentials {
 }
 
 async function getCredentials(): Promise<AlgoliaCredentials> {
-  const [appId, apiKey, agentId] = await Promise.all([
-    window.tekiAPI.getSetting<string>('algoliaAppId'),
-    window.tekiAPI.getSetting<string>('algoliaApiKey'),
-    window.tekiAPI.getSetting<string>('algoliaAgentId'),
-  ]);
+  // Prefer build-time env vars (.env), fall back to runtime settings store
+  let appId = import.meta.env.VITE_ALGOLIA_APP_ID as string | undefined;
+  let apiKey = import.meta.env.VITE_ALGOLIA_API_KEY as string | undefined;
+  let agentId = import.meta.env.VITE_ALGOLIA_AGENT_ID as string | undefined;
+
+  if (!appId || !apiKey || !agentId) {
+    const [sAppId, sApiKey, sAgentId] = await Promise.all([
+      window.tekiAPI.getSetting<string>('algoliaAppId'),
+      window.tekiAPI.getSetting<string>('algoliaApiKey'),
+      window.tekiAPI.getSetting<string>('algoliaAgentId'),
+    ]);
+    appId = appId || sAppId;
+    apiKey = apiKey || sApiKey;
+    agentId = agentId || sAgentId;
+  }
 
   if (!appId || !apiKey || !agentId) {
     throw new Error(

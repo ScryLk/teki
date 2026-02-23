@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { IconDownload, IconBrandGithub } from '@tabler/icons-react';
+import Link from 'next/link';
+import { IconMail } from '@tabler/icons-react';
 import { AnimatedCat } from './AnimatedCat';
 
 export function CTASection() {
@@ -34,7 +35,7 @@ export function CTASection() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-3xl sm:text-4xl font-bold text-[#fafafa] mb-4"
         >
-          Pronto para ter o melhor assistente de TI?
+          Pronto para resolver problemas em segundos?
         </motion.h2>
 
         <motion.div
@@ -44,23 +45,18 @@ export function CTASection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
         >
-          <a
-            href="https://github.com/ScryLk/teki/releases/latest"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/register"
             className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#2A8F9D] hover:bg-[#238490] text-white font-medium transition-all shadow-lg shadow-[#2A8F9D]/20 hover:shadow-[#2A8F9D]/30"
           >
-            <IconDownload size={20} />
-            Baixar Teki Grátis
-          </a>
+            Começar grátis
+          </Link>
           <a
-            href="https://github.com/ScryLk/teki"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="mailto:contato@teki.com.br"
             className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#18181b] hover:bg-[#27272a] text-[#fafafa] font-medium border border-[#3f3f46] transition-all"
           >
-            <IconBrandGithub size={20} />
-            GitHub
+            <IconMail size={20} />
+            Falar com vendas
           </a>
         </motion.div>
 
@@ -71,7 +67,7 @@ export function CTASection() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mt-6 text-sm text-[#71717a]"
         >
-          Open source &middot; MIT License &middot; Made in Brasil
+          ✓ 50 mensagens grátis &middot; ✓ Sem cartão de crédito
         </motion.p>
       </div>
     </section>

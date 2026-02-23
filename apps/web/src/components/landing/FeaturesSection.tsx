@@ -1,51 +1,54 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
-  IconMessageChatbot,
+  IconEye,
+  IconDatabase,
+  IconUsers,
   IconDeviceDesktop,
-  IconCat,
-  IconBolt,
-  IconScan,
-  IconClipboardList,
+  IconBrandWhatsapp,
+  IconApi,
 } from '@tabler/icons-react';
 
 const features = [
   {
-    icon: IconMessageChatbot,
-    title: 'Chat IA Contextual',
+    icon: IconEye,
+    title: 'Visão de Tela',
     description:
-      'Diagnósticos estruturados baseados em dados reais da empresa. Respostas com passos numerados e fontes citadas.',
+      'O Teki vê a janela que você está inspecionando. Analisa logs, erros e interfaces visuais com Gemini Vision em tempo real.',
+  },
+  {
+    icon: IconDatabase,
+    title: 'Base de Conhecimento',
+    description:
+      'Suba PDFs, manuais e documentações. O Teki consulta SUA base antes de responder — procedimentos internos, runbooks, tickets resolvidos.',
+  },
+  {
+    icon: IconUsers,
+    title: 'Agentes Personalizados',
+    description:
+      'Crie agentes com instruções e base de dados própria. Um pra rede, outro pro ERP, outro pro atendimento.',
   },
   {
     icon: IconDeviceDesktop,
-    title: 'Screen Viewer',
+    title: 'Desktop Nativo',
     description:
-      'Observa sua tela em tempo real e envia contexto visual para a IA. Captura configurável de 3s a 30s.',
+      'App pra macOS e Windows na barra de tarefas. Inspeciona qualquer janela aberta e dá suporte contextual.',
   },
   {
-    icon: IconCat,
-    title: 'Gato Mascote',
+    icon: IconBrandWhatsapp,
+    title: 'WhatsApp, Telegram & mais',
     description:
-      'Companheiro animado que reage: observando, pensando, feliz ou alertando sobre erros detectados.',
+      'Receba suporte direto no celular. Tire foto do erro e mande pro Teki — ele analisa e responde na hora.',
+    badge: 'PRO',
   },
   {
-    icon: IconBolt,
-    title: 'Busca Ultra-Rápida',
+    icon: IconApi,
+    title: 'API para Desenvolvedores',
     description:
-      'Resultados em menos de 50ms com Algolia. Base de conhecimento indexada e sempre atualizada.',
-  },
-  {
-    icon: IconScan,
-    title: 'Auto Contexto',
-    description:
-      'Detecta automaticamente o app ativo, versão do sistema e mensagens de erro na tela.',
-  },
-  {
-    icon: IconClipboardList,
-    title: 'Base de Conhecimento',
-    description:
-      'SOPs, tickets resolvidos, catálogo de sistemas e soluções validadas pela equipe.',
+      'Integre o Teki no seu sistema interno, ERP ou chatbot. API REST com autenticação, streaming e webhooks.',
+    link: '/docs',
   },
 ];
 
@@ -71,11 +74,24 @@ export function FeaturesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="group rounded-xl bg-[#18181b] border border-[#3f3f46] p-6 transition-all duration-300 hover:border-[#2A8F9D]/40 hover:shadow-lg hover:shadow-[#2A8F9D]/5 hover:scale-[1.02]"
+              className="group relative rounded-xl bg-[#18181b] border border-[#3f3f46] p-6 transition-all duration-300 hover:border-[#2A8F9D]/40 hover:shadow-lg hover:shadow-[#2A8F9D]/5 hover:scale-[1.02] flex flex-col"
             >
+              {feature.badge && (
+                <span className="absolute top-4 right-4 text-[10px] font-bold text-[#2A8F9D] bg-[#2A8F9D]/10 border border-[#2A8F9D]/30 px-2 py-0.5 rounded-full">
+                  {feature.badge}
+                </span>
+              )}
               <feature.icon size={40} className="text-[#2A8F9D] mb-4" stroke={1.5} />
               <h3 className="text-lg font-bold text-[#fafafa] mb-2">{feature.title}</h3>
-              <p className="text-sm text-[#a1a1aa] leading-relaxed">{feature.description}</p>
+              <p className="text-sm text-[#a1a1aa] leading-relaxed flex-1">{feature.description}</p>
+              {feature.link && (
+                <Link
+                  href={feature.link}
+                  className="mt-4 text-xs text-[#2A8F9D] hover:underline"
+                >
+                  Ver documentação →
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>
