@@ -23,6 +23,13 @@ export async function GET(req: NextRequest) {
     const limits = getPlanLimits(user.planId);
     const period = new Date().toISOString().slice(0, 7);
 
+    // Resolve plan expiry from primary tenant
+    const membership = await prisma.tenantMember.findFirst({
+      where: { userId: user.id, status: 'ACTIVE' },
+      include: { tenant: { select: { planExpiresAt: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+
     const [usage, agentCount, docCount, channelCount] = await Promise.all([
       prisma.usageCounter.findUnique({
         where: { userId_period: { userId: user.id, period } },
@@ -39,7 +46,7 @@ export async function GET(req: NextRequest) {
         id: user.planId,
         name: PLAN_NAMES[user.planId],
         price: PLAN_PRICES[user.planId],
-        renewsAt: user.planExpiresAt,
+        renewsAt: membership?.tenant.planExpiresAt ?? null,
       },
       usage: {
         messages: {
