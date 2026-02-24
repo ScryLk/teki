@@ -76,7 +76,7 @@ const styles = `
   }
 
   .cat-svg {
-    transition: transform 0.5s ease, filter 0.5s ease;
+    transition: filter 0.5s ease;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
   }
 
@@ -86,7 +86,7 @@ const styles = `
 
   /* ---- Body animations ---- */
   .cat-body-sitting { }
-  .cat-body-attentive { transform-origin: center bottom; }
+  .cat-body-attentive { transform-origin: 55px 104px; }
   .cat-body-paw-chin { }
   .cat-body-smiling { }
   .cat-body-ears-up { }
@@ -96,29 +96,30 @@ const styles = `
 
   /* ---- Eye styles ---- */
   .cat-eye {
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   .cat-eye-semiclosed .cat-eye {
-    animation: blink 4s ease-in-out infinite;
+    /* Olhos semicerrados são relaxados — sem animação de blink */
   }
 
   .cat-eye-open .cat-eye { }
 
   .cat-eye-blinking .cat-eye {
     animation: blink 2s ease-in-out infinite;
+    transform-origin: 55px 52px;
   }
 
   .cat-eye-wide .cat-eye {
-    transform: scale(1.2);
+    /* Olhos wide já são desenhados maiores no SVG (r=7) — sem scale CSS */
   }
 
   /* ---- Tail styles ---- */
-  /* The tail <g> is wrapped in a translate(85,88) group, so rotating
+  /* The tail <g> is wrapped in a translate(76,86) group, so rotating
      around (0,0) pivots exactly at the tail base — no viewport ambiguity. */
   .cat-tail {
-    transform-origin: 0 0;
-    transition: all 0.3s ease;
+    transform-origin: 0px 0px;
+    /* Sem transition — as animations tailSlow/tailFast já fazem transições suaves */
   }
   .cat-tail-slow {
     animation: tailSlow 3s ease-in-out infinite;
@@ -130,7 +131,7 @@ const styles = `
   /* ---- Ears ---- */
   .cat-ears {
     transition: transform 0.3s ease;
-    transform-origin: center bottom;
+    transform-origin: 55px 35px;
   }
   .cat-ears-alert {
     animation: earsUp 0.4s ease-out forwards;
@@ -144,12 +145,13 @@ const styles = `
 
   /* ---- Paw ---- */
   .cat-paw {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   /* ---- Whiskers ---- */
   .cat-whiskers {
     transition: transform 0.3s ease;
+    transform-origin: 55px 60px;
   }
   .cat-whiskers-alert {
     transform: scaleX(1.1);
@@ -233,10 +235,11 @@ export const CatMascot: React.FC<CatMascotProps> = ({
         );
 
       case 'semiclosed': {
-        // Relaxed half-open eyes with slow blink
+        // Relaxed half-open eyes — pálpebras renderizadas FORA deste grupo
+        // para não serem afetadas por transforms de blink/scale
         const eyeHeight = 5;
         return (
-          <g className="cat-eye" style={{ transformOrigin: `${leftEyeX}px ${eyeY}px` }}>
+          <g className="cat-eye">
             {/* Left eye */}
             <ellipse
               cx={leftEyeX} cy={eyeY}
@@ -255,17 +258,6 @@ export const CatMascot: React.FC<CatMascotProps> = ({
             />
             <circle cx={rightEyeX + 1} cy={eyeY} r="2.5" fill="#0a0a0b" />
             <circle cx={rightEyeX + 2} cy={eyeY - 1.5} r="1" fill="#ffffff" opacity="0.7" />
-            {/* Upper eyelid overlay to create semiclosed effect */}
-            <ellipse
-              cx={leftEyeX} cy={eyeY - 3}
-              rx="6.5" ry="4"
-              fill="#2A8F9D"
-            />
-            <ellipse
-              cx={rightEyeX} cy={eyeY - 3}
-              rx="6.5" ry="4"
-              fill="#2A8F9D"
-            />
           </g>
         );
       }
@@ -463,6 +455,16 @@ export const CatMascot: React.FC<CatMascotProps> = ({
         <g className={eyeClasses}>
           {renderEyes}
         </g>
+
+        {/* ---- Eyelid overlays (semiclosed) ----
+            Renderizadas FORA do grupo animado para não serem afetadas
+            por transforms de blink/scale. */}
+        {config.eyeStyle === 'semiclosed' && (
+          <g>
+            <ellipse cx="42" cy="49" rx="6.5" ry="4" fill="#2A8F9D" />
+            <ellipse cx="68" cy="49" rx="6.5" ry="4" fill="#2A8F9D" />
+          </g>
+        )}
 
         {/* ---- Nose ---- */}
         <polygon
