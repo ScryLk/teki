@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/stores/app-store';
-import { CatMascot } from '@/components/cat/CatMascot';
+import { DevCatWrapper } from '@/components/cat/DevCatWrapper';
 import type { WindowSource } from '@teki/shared';
 
 type ViewerState = 'idle' | 'selecting' | 'watching' | 'closed';
@@ -138,7 +138,7 @@ const ScreenViewer: React.FC = () => {
           </svg>
           Selecionar janela
         </button>
-        <CatMascot state={catState} size="md" />
+        <DevCatWrapper state={catState} size="md" />
       </div>
     );
   }
@@ -244,7 +244,7 @@ const ScreenViewer: React.FC = () => {
           )}
         </div>
 
-        <CatMascot state={catState} size="md" />
+        <DevCatWrapper state={catState} size="md" />
       </div>
     );
   }
@@ -272,7 +272,7 @@ const ScreenViewer: React.FC = () => {
         </svg>
         Selecionar outra janela
       </button>
-      <CatMascot state={catState} size="md" />
+      <DevCatWrapper state={catState} size="md" />
     </div>
   );
 };

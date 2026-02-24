@@ -71,6 +71,10 @@ const styles = `
     z-index: 10;
   }
 
+  .cat-mascot-root.\!pointer-events-auto {
+    pointer-events: auto;
+  }
+
   .cat-svg {
     transition: transform 0.5s ease, filter 0.5s ease;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
