@@ -6,6 +6,7 @@ import { persist } from 'zustand/middleware';
 export type PlanName = 'free' | 'starter' | 'pro' | 'enterprise';
 export type UserRole = 'owner' | 'admin' | 'agent' | 'viewer';
 export type SeedScenario = 'empty' | 'basic' | 'full' | 'limit';
+export type CatState = 'idle' | 'watching' | 'thinking' | 'happy' | 'alert' | 'sleeping';
 export type PanelMode = 'floating' | 'drawer' | 'tab';
 export type DrawerSide = 'left' | 'right';
 export type DevToolsSection =
@@ -50,6 +51,8 @@ interface DevToolsState {
   // Runtime overrides
   planOverride: PlanName | null;
   roleOverride: UserRole | null;
+  catStateOverride: CatState | null;
+  catStateLoop: boolean;
   mockLatency: number;
   mockAiEnabled: boolean;
   forceOffline: boolean;
@@ -79,6 +82,9 @@ interface DevToolsState {
   setMockAiEnabled: (enabled: boolean) => void;
   setForceOffline: (offline: boolean) => void;
   setShowPlanGates: (show: boolean) => void;
+  setCatState: (state: CatState | null) => void;
+  setCatStateLoop: (loop: boolean) => void;
+  resetCatState: () => void;
   resetOverrides: () => void;
   addAiCallLog: (entry: AiCallLogEntry) => void;
   clearAiCallsLog: () => void;
@@ -99,6 +105,8 @@ export const useDevTools = create<DevToolsState>()(
 
       planOverride: null,
       roleOverride: null,
+      catStateOverride: null,
+      catStateLoop: false,
       mockLatency: 0,
       mockAiEnabled: false,
       forceOffline: false,
@@ -125,10 +133,15 @@ export const useDevTools = create<DevToolsState>()(
       setMockAiEnabled: (enabled) => set({ mockAiEnabled: enabled }),
       setForceOffline: (offline) => set({ forceOffline: offline }),
       setShowPlanGates: (show) => set({ showPlanGates: show }),
+      setCatState: (state) => set({ catStateOverride: state }),
+      setCatStateLoop: (loop) => set({ catStateLoop: loop }),
+      resetCatState: () => set({ catStateOverride: null, catStateLoop: false }),
       resetOverrides: () =>
         set({
           planOverride: null,
           roleOverride: null,
+          catStateOverride: null,
+          catStateLoop: false,
           mockLatency: 0,
           mockAiEnabled: false,
           forceOffline: false,

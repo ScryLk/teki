@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDevTools } from '@/stores/dev-tools.store';
+import type { CatState } from '@/stores/dev-tools.store';
 
 interface EventButton {
   label: string;
@@ -69,11 +70,25 @@ const EVENT_CATEGORIES: EventCategory[] = [
   },
 ];
 
+const CAT_STATES: { state: CatState; icon: string; label: string }[] = [
+  { state: 'idle', icon: '\u{1F63A}', label: 'idle' },
+  { state: 'watching', icon: '\u{1F440}', label: 'watch' },
+  { state: 'thinking', icon: '\u{1F914}', label: 'think' },
+  { state: 'alert', icon: '\u{1F6A8}', label: 'alert' },
+  { state: 'sleeping', icon: '\u{1F634}', label: 'sleep' },
+  { state: 'happy', icon: '\u{1F638}', label: 'happy' },
+];
+
 export function EventsTab() {
   const [firing, setFiring] = useState<string | null>(null);
   const eventLog = useDevTools((s) => s.eventLog);
   const addEventLog = useDevTools((s) => s.addEventLog);
   const clearEventLog = useDevTools((s) => s.clearEventLog);
+  const catStateOverride = useDevTools((s) => s.catStateOverride);
+  const catStateLoop = useDevTools((s) => s.catStateLoop);
+  const setCatState = useDevTools((s) => s.setCatState);
+  const setCatStateLoop = useDevTools((s) => s.setCatStateLoop);
+  const resetCatState = useDevTools((s) => s.resetCatState);
 
   const handleSimulate = async (event: string, label: string) => {
     setFiring(event);
@@ -98,6 +113,59 @@ export function EventsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Cat Mascot Controls */}
+      <section className="rounded border border-zinc-700 p-2.5">
+        <h3 className="mb-2 font-semibold text-zinc-300">
+          {'\u{1F431}'} Cat Mascot
+        </h3>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-zinc-500">Real state:</span>
+            <span className="text-zinc-300">watching</span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-zinc-500">Forced state:</span>
+            <span className={catStateOverride ? 'text-amber-400' : 'text-zinc-600 italic'}>
+              {catStateOverride ?? 'none'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap gap-1 mt-1">
+            {CAT_STATES.map((cat) => (
+              <button
+                key={cat.state}
+                onClick={() => setCatState(cat.state)}
+                className={`rounded px-2 py-0.5 text-[10px] transition-colors ${
+                  catStateOverride === cat.state
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                }`}
+              >
+                {cat.icon} {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between mt-1">
+            <label className="flex items-center gap-2 text-[11px] text-zinc-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={catStateLoop}
+                onChange={(e) => setCatStateLoop(e.target.checked)}
+                className="accent-amber-500"
+              />
+              Loop
+            </label>
+            <button
+              onClick={resetCatState}
+              className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors"
+            >
+              {'\u23F9'} Reset to real state
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Simulate Events */}
       <section className="rounded border border-zinc-700 p-2.5">
         <h3 className="mb-2 font-semibold text-zinc-300">Simulate Events</h3>
