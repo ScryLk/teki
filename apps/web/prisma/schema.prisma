@@ -23,23 +23,23 @@ model Tenant {
   website String? @db.VarChar(500)
 
   // Localizacao (timezone padrao e compliance por jurisdicao)
-  country         String @default("BR") @db.VarChar(2)
+  country         String  @default("BR") @db.VarChar(2)
   state           String? @db.VarChar(100)
   city            String? @db.VarChar(100)
-  defaultTimezone String @default("America/Sao_Paulo") @map("default_timezone") @db.VarChar(50)
-  defaultLocale   String @default("pt-BR") @map("default_locale") @db.VarChar(10)
+  defaultTimezone String  @default("America/Sao_Paulo") @map("default_timezone") @db.VarChar(50)
+  defaultLocale   String  @default("pt-BR") @map("default_locale") @db.VarChar(10)
 
   // Documentos fiscais
   taxId     String? @map("tax_id") @db.VarChar(20)
   taxIdType String? @map("tax_id_type") @db.VarChar(10)
 
   // Plano e billing
-  plan              PlanTier  @default(FREE)
-  planStartedAt     DateTime? @map("plan_started_at")
-  planExpiresAt     DateTime? @map("plan_expires_at")
-  billingEmail      String?   @map("billing_email") @db.VarChar(255)
-  stripeCustomerId  String?   @map("stripe_customer_id") @db.VarChar(255)
-  mpPreapprovalId   String?   @map("mp_preapproval_id")
+  plan             PlanTier  @default(FREE)
+  planStartedAt    DateTime? @map("plan_started_at")
+  planExpiresAt    DateTime? @map("plan_expires_at")
+  billingEmail     String?   @map("billing_email") @db.VarChar(255)
+  stripeCustomerId String?   @map("stripe_customer_id") @db.VarChar(255)
+  mpPreapprovalId  String?   @map("mp_preapproval_id")
 
   // Estado
   status      TenantStatus @default(ACTIVE)
@@ -52,12 +52,28 @@ model Tenant {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  members    TenantMember[]
-  dataPolicy TenantDataPolicy?
-  sessions   UserSession[]
-  preferences UserPreference[]
-  conversations Conversation[]
+  members          TenantMember[]
+  dataPolicy       TenantDataPolicy?
+  sessions         UserSession[]
+  preferences      UserPreference[]
+  conversations    Conversation[]
   conversationTags ConversationTag[]
+
+  // Relations - Tickets
+  tickets     Ticket[]
+  slaPolicies SlaPolicy[]
+
+  // Relations - Notifications
+  notifications             Notification[]
+  notificationPrefOverrides NotificationPreferencesOverride[]
+
+  // Relations - AI Config
+  aiProviderConfigs AiProviderConfig[]
+  aiUsageDaily      AiUsageDaily[]
+  aiRoutingRules    AiRoutingRules?
+
+  // Relations - Templates
+  responseTemplates ResponseTemplate[]
 
   @@index([slug])
   @@index([plan, status])
@@ -95,8 +111,8 @@ model User {
   lastName    String? @map("last_name") @db.VarChar(100)
   displayName String? @map("display_name") @db.VarChar(200)
 
-  phone         String?  @unique @db.VarChar(20)
-  phoneVerified Boolean  @default(false) @map("phone_verified")
+  phone         String? @unique @db.VarChar(20)
+  phoneVerified Boolean @default(false) @map("phone_verified")
 
   avatarUrl String? @map("avatar_url") @db.VarChar(500)
 
@@ -124,8 +140,8 @@ model User {
   authProviders UserAuthProvider[]
 
   // Relations - Operational
-  memberships TenantMember[]    @relation("UserMemberships")
-  invitations TenantMember[]    @relation("UserInvitations")
+  memberships TenantMember[]   @relation("UserMemberships")
+  invitations TenantMember[]   @relation("UserInvitations")
   preferences UserPreference[]
   sessions    UserSession[]
   consents    UserConsent[]
@@ -153,6 +169,29 @@ model User {
   uploadedAttachments  MessageAttachment[]       @relation("AttachmentUploader")
   createdTags          ConversationTag[]         @relation("TagCreator")
   tagLinks             ConversationTagLink[]     @relation("TagLinkUser")
+
+  // Relations - Tickets
+  ticketsCreated        Ticket[]         @relation("TicketCreator")
+  ticketsAssigned       Ticket[]         @relation("TicketAssignee")
+  ticketsAssignedBy     Ticket[]         @relation("TicketAssigner")
+  ticketsEscalatedBy    Ticket[]         @relation("TicketEscalator")
+  ticketsRequested      Ticket[]         @relation("TicketRequester")
+  ticketTimelineActions TicketTimeline[] @relation("TimelineActor")
+  ticketWatches         TicketWatcher[]
+
+  // Relations - Notifications
+  notificationsReceived     Notification[]                    @relation("NotificationRecipient")
+  notificationsCaused       Notification[]                    @relation("NotificationActor")
+  notificationPrefOverrides NotificationPreferencesOverride[]
+
+  // Relations - AI Config
+  aiProviderConfigsConfigured AiProviderConfig[] @relation("AiConfigConfigurator")
+
+  // Relations - Templates
+  responseTemplatesCreated  ResponseTemplate[] @relation("TemplateCreator")
+  responseTemplatesUpdated  ResponseTemplate[] @relation("TemplateUpdater")
+  responseTemplatesLastUsed ResponseTemplate[] @relation("TemplateLastUser")
+  templateUsageLogs         TemplateUsageLog[]
 
   @@index([email])
   @@index([status])
@@ -184,10 +223,10 @@ model UserCredential {
   hashAlgorithm HashAlgorithm @default(ARGON2ID) @map("hash_algorithm")
 
   // Politica de senha
-  passwordChangedAt DateTime  @default(now()) @map("password_changed_at")
-  passwordExpiresAt DateTime? @map("password_expires_at")
-  mustChangePassword Boolean  @default(false) @map("must_change_password")
-  failedAttempts     Int      @default(0) @map("failed_attempts")
+  passwordChangedAt  DateTime  @default(now()) @map("password_changed_at")
+  passwordExpiresAt  DateTime? @map("password_expires_at")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  failedAttempts     Int       @default(0) @map("failed_attempts")
   lockedUntil        DateTime? @map("locked_until")
 
   // MFA
@@ -315,9 +354,9 @@ model TenantMember {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user      User   @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
-  invitedByUser User? @relation("UserInvitations", fields: [invitedBy], references: [id])
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User   @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser User?  @relation("UserInvitations", fields: [invitedBy], references: [id])
 
   @@unique([tenantId, userId])
   @@index([tenantId, status])
@@ -551,8 +590,8 @@ model TenantDataPolicy {
   personalDataRetentionMonths Int @default(24) @map("personal_data_retention_months")
 
   // Notificacoes
-  notifyUserOnDataDeletion  Boolean @default(true) @map("notify_user_on_data_deletion")
-  notifyAdminOnDataRequest  Boolean @default(true) @map("notify_admin_on_data_request")
+  notifyUserOnDataDeletion Boolean @default(true) @map("notify_user_on_data_deletion")
+  notifyAdminOnDataRequest Boolean @default(true) @map("notify_admin_on_data_request")
 
   // DPO (Data Protection Officer)
   dpoName  String? @map("dpo_name") @db.VarChar(200)
@@ -592,11 +631,11 @@ model UserSession {
   refreshTokenHash String? @unique @map("refresh_token_hash") @db.VarChar(255)
 
   // Device info
-  deviceFingerprint String?    @map("device_fingerprint") @db.VarChar(255)
+  deviceFingerprint String?     @map("device_fingerprint") @db.VarChar(255)
   deviceType        DeviceType? @map("device_type")
-  deviceName        String?    @map("device_name") @db.VarChar(100)
-  os                String?    @db.VarChar(50)
-  browser           String?    @db.VarChar(50)
+  deviceName        String?     @map("device_name") @db.VarChar(100)
+  os                String?     @db.VarChar(50)
+  browser           String?     @db.VarChar(50)
 
   // Localizacao
   ipAddress  String  @map("ip_address")
@@ -605,12 +644,12 @@ model UserSession {
   geoCity    String? @map("geo_city") @db.VarChar(100)
 
   // Estado
-  isActive       Boolean   @default(true) @map("is_active")
-  lastActivityAt DateTime  @default(now()) @map("last_activity_at")
-  expiresAt      DateTime  @map("expires_at")
+  isActive       Boolean  @default(true) @map("is_active")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  expiresAt      DateTime @map("expires_at")
 
-  revokedAt    DateTime?       @map("revoked_at")
-  revokedBy    String?         @map("revoked_by") @db.Uuid
+  revokedAt    DateTime?            @map("revoked_at")
+  revokedBy    String?              @map("revoked_by") @db.Uuid
   revokeReason SessionRevokeReason? @map("revoke_reason")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -748,13 +787,13 @@ enum DocumentStatus {
 }
 
 model DocumentChunk {
-  id         String                          @id @default(cuid())
+  id         String                      @id @default(cuid())
   documentId String
   chunkIndex Int
-  content    String                          @db.Text
+  content    String                      @db.Text
   embedding  Unsupported("vector(768)")?
-  tokenCount Int                             @default(0)
-  createdAt  DateTime                        @default(now())
+  tokenCount Int                         @default(0)
+  createdAt  DateTime                    @default(now())
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
@@ -875,8 +914,8 @@ model Conversation {
   status ConversationStatus @default(ACTIVE)
 
   // Contadores desnormalizados
-  messageCount     Int @default(0) @map("message_count")
-  participantCount Int @default(0) @map("participant_count")
+  messageCount     Int  @default(0) @map("message_count")
+  participantCount Int  @default(0) @map("participant_count")
   unreadCount      Json @default("{}") @map("unread_count")
 
   // Resumo IA
@@ -900,11 +939,12 @@ model Conversation {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  creator      User                      @relation("ConversationCreator", fields: [createdBy], references: [id])
-  tenant       Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  participants ConversationParticipant[]
-  messages     Message[]
-  tagLinks     ConversationTagLink[]
+  creator           User                      @relation("ConversationCreator", fields: [createdBy], references: [id])
+  tenant            Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  participants      ConversationParticipant[]
+  messages          Message[]
+  tagLinks          ConversationTagLink[]
+  templateUsageLogs TemplateUsageLog[]
 
   @@index([tenantId, status, lastMessageAt(sort: Desc)])
   @@index([tenantId, type, status])
@@ -950,8 +990,8 @@ model ConversationParticipant {
   lastReadMessageId String?   @map("last_read_message_id") @db.Uuid
 
   // Preferencias por conversa
-  isPinned          Boolean @default(false) @map("is_pinned")
-  isMuted           Boolean @default(false) @map("is_muted")
+  isPinned          Boolean           @default(false) @map("is_pinned")
+  isMuted           Boolean           @default(false) @map("is_muted")
   notificationLevel NotificationLevel @default(ALL) @map("notification_level")
 
   // Timestamps
@@ -979,9 +1019,9 @@ enum ParticipantRole {
 }
 
 enum ParticipantStatus {
-  ACTIVE       @map("ACTIVE")
-  LEFT         @map("LEFT")
-  REMOVED      @map("REMOVED")
+  ACTIVE            @map("ACTIVE")
+  LEFT              @map("LEFT")
+  REMOVED           @map("REMOVED")
   PARTICIPANT_MUTED @map("MUTED")
 }
 
@@ -1006,9 +1046,9 @@ model Message {
   senderId   String?    @map("sender_id") @db.Uuid
 
   // Conteudo
-  contentType MessageContentType @default(TEXT) @map("content_type")
-  content     String?            @db.Text
-  contentBlocks Json?            @map("content_blocks")
+  contentType   MessageContentType @default(TEXT) @map("content_type")
+  content       String?            @db.Text
+  contentBlocks Json?              @map("content_blocks")
 
   // Threading
   parentMessageId    String? @map("parent_message_id") @db.Uuid
@@ -1038,14 +1078,15 @@ model Message {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  conversation  Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender        User?              @relation("MessageSender", fields: [senderId], references: [id])
-  parentMessage Message?           @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: SetNull)
-  childMessages Message[]          @relation("MessageThread")
-  aiMetadata    MessageAiMetadata?
-  sources       MessageSource[]
-  feedback      MessageFeedback[]
-  attachments   MessageAttachment[]
+  conversation      Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender            User?               @relation("MessageSender", fields: [senderId], references: [id])
+  parentMessage     Message?            @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  childMessages     Message[]           @relation("MessageThread")
+  aiMetadata        MessageAiMetadata?
+  sources           MessageSource[]
+  feedback          MessageFeedback[]
+  attachments       MessageAttachment[]
+  templateUsageLogs TemplateUsageLog[]
 
   @@index([conversationId, sequenceNumber])
   @@index([conversationId, createdAt(sort: Desc)])
@@ -1058,10 +1099,10 @@ model Message {
 }
 
 enum SenderType {
-  USER_SENDER  @map("user")
-  AI_SENDER    @map("ai")
+  USER_SENDER   @map("user")
+  AI_SENDER     @map("ai")
   SYSTEM_SENDER @map("system")
-  BOT_SENDER   @map("bot")
+  BOT_SENDER    @map("bot")
 }
 
 enum MessageContentType {
@@ -1120,9 +1161,9 @@ model MessageAiMetadata {
   tokensPerSecond    Decimal? @map("tokens_per_second") @db.Decimal(8, 2)
 
   // Contexto do prompt
-  systemPromptHash          String? @map("system_prompt_hash") @db.VarChar(64)
-  systemPromptTokens        Int?    @map("system_prompt_tokens")
-  conversationHistoryTokens Int?    @map("conversation_history_tokens")
+  systemPromptHash          String?  @map("system_prompt_hash") @db.VarChar(64)
+  systemPromptTokens        Int?     @map("system_prompt_tokens")
+  conversationHistoryTokens Int?     @map("conversation_history_tokens")
   contextWindowUsage        Decimal? @map("context_window_usage") @db.Decimal(5, 2)
 
   // Streaming
@@ -1315,14 +1356,14 @@ model MessageAttachment {
 }
 
 enum AttachmentCategory {
-  IMAGE_FILE    @map("IMAGE")
+  IMAGE_FILE   @map("IMAGE")
   SCREENSHOT
   DOCUMENT
-  AUDIO_FILE    @map("AUDIO")
-  VIDEO_FILE    @map("VIDEO")
+  AUDIO_FILE   @map("AUDIO")
+  VIDEO_FILE   @map("VIDEO")
   LOG_FILE
-  CODE_FILE     @map("CODE")
-  GENERIC_FILE  @map("FILE")
+  CODE_FILE    @map("CODE")
+  GENERIC_FILE @map("FILE")
 }
 
 enum AttachmentProcessingStatus {
@@ -1357,9 +1398,9 @@ model ConversationTag {
 }
 
 model ConversationTagLink {
-  conversationId String @map("conversation_id") @db.Uuid
-  tagId          String @map("tag_id") @db.Uuid
-  addedBy        String @map("added_by") @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  tagId          String   @map("tag_id") @db.Uuid
+  addedBy        String   @map("added_by") @db.Uuid
   addedAt        DateTime @default(now()) @map("added_at")
 
   // Relations
@@ -1441,9 +1482,9 @@ model KbCategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent   KbCategory?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children KbCategory[]  @relation("CategoryHierarchy")
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   KbCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children KbCategory[] @relation("CategoryHierarchy")
   articles KbArticle[]
 
   @@unique([userId, slug])
@@ -1452,26 +1493,26 @@ model KbCategory {
 }
 
 model KbArticle {
-  id              String          @id @default(cuid())
-  userId          String          @db.Uuid
+  id              String           @id @default(cuid())
+  userId          String           @db.Uuid
   categoryId      String?
   title           String
   slug            String
-  summary         String?         @db.Text
-  content         String          @db.Text
-  status          KbArticleStatus @default(DRAFT)
-  difficulty      KbDifficulty    @default(BASIC)
-  targetAudience  KbAudience      @default(TECHNICIAN)
+  summary         String?          @db.Text
+  content         String           @db.Text
+  status          KbArticleStatus  @default(DRAFT)
+  difficulty      KbDifficulty     @default(BASIC)
+  targetAudience  KbAudience       @default(TECHNICIAN)
   tags            String[]
-  viewCount       Int             @default(0)
-  helpfulCount    Int             @default(0)
-  notHelpfulCount Int             @default(0)
+  viewCount       Int              @default(0)
+  helpfulCount    Int              @default(0)
+  notHelpfulCount Int              @default(0)
   insertionMode   KbInsertionMode?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
-  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category      KbCategory?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      KbCategory?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   attachments   KbArticleAttachment[]
   insertionLogs KbInsertionLog[]
 
@@ -1553,4 +1594,731 @@ model KbInsertionLog {
 
   @@index([userId, createdAt])
   @@index([insertionMode, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKETS — Caso de suporte tecnico (entidade central)
+// Tudo orbita ao redor: conversas, KB, logs, IA
+// ═══════════════════════════════════════════════════════════════
+
+model Ticket {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Identificacao
+  ticketNumber String  @map("ticket_number") @db.VarChar(20)
+  title        String  @db.VarChar(500)
+  description  String? @db.Text
+
+  // Classificacao
+  type        TicketType @default(ISSUE)
+  category    String?    @db.VarChar(100)
+  subcategory String?    @db.VarChar(100)
+  tags        Json       @default("[]")
+
+  // Prioridade
+  priority TicketPriority @default(MEDIUM)
+  severity String?        @db.VarChar(20)
+
+  // Status (maquina de estados)
+  status          TicketStatus @default(OPEN)
+  previousStatus  String?      @map("previous_status") @db.VarChar(30)
+  statusChangedAt DateTime?    @map("status_changed_at")
+  holdReason      String?      @map("hold_reason") @db.Text
+
+  // Resolucao
+  resolution     String?         @db.Text
+  resolutionType ResolutionType? @map("resolution_type")
+  duplicateOfId  String?         @map("duplicate_of_id") @db.Uuid
+  resolvedAt     DateTime?       @map("resolved_at")
+  closedAt       DateTime?       @map("closed_at")
+
+  // Atribuicao
+  assignedTo       String?   @map("assigned_to") @db.Uuid
+  assignedAt       DateTime? @map("assigned_at")
+  assignedBy       String?   @map("assigned_by") @db.Uuid
+  team             String?   @db.VarChar(100)
+  escalationLevel  Int       @default(0) @map("escalation_level")
+  escalatedAt      DateTime? @map("escalated_at")
+  escalatedBy      String?   @map("escalated_by") @db.Uuid
+  escalationReason String?   @map("escalation_reason") @db.Text
+
+  // Solicitante
+  requesterId    String? @map("requester_id") @db.Uuid
+  requesterName  String? @map("requester_name") @db.VarChar(200)
+  requesterEmail String? @map("requester_email") @db.VarChar(255)
+  requesterPhone String? @map("requester_phone") @db.VarChar(20)
+
+  // Ambiente tecnico (JSONB extensivel)
+  environment Json @default("{}")
+
+  // Vinculo com conversas (sem FK direta)
+  primaryConversationId String? @map("primary_conversation_id") @db.Uuid
+
+  // Contadores desnormalizados
+  conversationCount Int @default(0) @map("conversation_count")
+  attachmentCount   Int @default(0) @map("attachment_count")
+  internalNoteCount Int @default(0) @map("internal_note_count")
+  aiSuggestionCount Int @default(0) @map("ai_suggestion_count")
+
+  // Custom fields (JSONB extensivel)
+  customFields Json @default("{}") @map("custom_fields")
+
+  // IA
+  aiAutoCategorized   Boolean  @default(false) @map("ai_auto_categorized")
+  aiSuggestedSolution String?  @map("ai_suggested_solution") @db.Text
+  aiConfidenceScore   Decimal? @map("ai_confidence_score") @db.Decimal(5, 4)
+
+  // Origem
+  source TicketSource @default(WEB)
+
+  // Timestamps
+  firstResponseAt DateTime? @map("first_response_at")
+  createdBy       String    @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator     User     @relation("TicketCreator", fields: [createdBy], references: [id])
+  assignee    User?    @relation("TicketAssignee", fields: [assignedTo], references: [id])
+  assigner    User?    @relation("TicketAssigner", fields: [assignedBy], references: [id])
+  escalator   User?    @relation("TicketEscalator", fields: [escalatedBy], references: [id])
+  requester   User?    @relation("TicketRequester", fields: [requesterId], references: [id])
+  duplicateOf Ticket?  @relation("TicketDuplicate", fields: [duplicateOfId], references: [id])
+  duplicates  Ticket[] @relation("TicketDuplicate")
+
+  timeline          TicketTimeline[]
+  watchers          TicketWatcher[]
+  sla               TicketSla?
+  templateUsageLogs TemplateUsageLog[]
+
+  @@unique([tenantId, ticketNumber])
+  @@index([tenantId, status, createdAt(sort: Desc)])
+  @@index([tenantId, status, priority])
+  @@index([assignedTo, status])
+  @@index([requesterId, status])
+  @@index([tenantId, priority, status])
+  @@index([tenantId, category, status])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, resolvedAt(sort: Desc)])
+  @@map("tickets")
+}
+
+enum TicketType {
+  ISSUE
+  QUESTION
+  TASK
+  BUG
+  FEATURE_REQUEST
+  CHANGE_REQUEST
+  MAINTENANCE
+}
+
+enum TicketPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_INFO
+  WAITING_VENDOR
+  ON_HOLD
+  RESOLVED
+  CLOSED
+  CANCELLED
+  REOPENED
+}
+
+enum ResolutionType {
+  SOLVED
+  WORKAROUND
+  CANNOT_REPRODUCE
+  DUPLICATE
+  NOT_A_BUG
+  WONT_FIX
+  DEFERRED
+}
+
+enum TicketSource {
+  WEB
+  DESKTOP_APP
+  FLOATING
+  EMAIL
+  API
+  CHAT
+  AUTO
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET_TIMELINE — Historico imutavel de eventos do ticket
+// Cada entrada = algo aconteceu com o ticket
+// NUNCA update/delete — append-only
+// ═══════════════════════════════════════════════════════════════
+
+model TicketTimeline {
+  id       String @id @default(uuid()) @db.Uuid
+  ticketId String @map("ticket_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Evento (extensivel: created, status_changed, priority_changed,
+  // assigned, reassigned, unassigned, escalated, category_changed,
+  // title_changed, description_changed, tag_added, tag_removed,
+  // comment_added, attachment_added, sla_breached, sla_warning,
+  // ai_suggestion, ai_categorized, conversation_linked,
+  // kb_article_created, duplicate_marked, merged, watcher_added,
+  // watcher_removed, custom_field_changed, resolved, reopened,
+  // closed, cancelled)
+  eventType String @map("event_type") @db.VarChar(40)
+
+  // Quem
+  actorId   String?           @map("actor_id") @db.Uuid
+  actorType TimelineActorType @default(USER) @map("actor_type")
+
+  // O que mudou (JSONB com estrutura por event_type)
+  changes Json @default("{}")
+
+  // Descricao do evento (para exibicao na timeline)
+  description String? @db.Text
+
+  // Metadata
+  isPublic    Boolean @default(true) @map("is_public")
+  isAutomated Boolean @default(false) @map("is_automated")
+
+  // Imutavel — sem updated_at
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actor  User?  @relation("TimelineActor", fields: [actorId], references: [id])
+
+  @@index([ticketId, createdAt])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([ticketId, eventType])
+  @@index([actorId, createdAt(sort: Desc)])
+  @@map("ticket_timeline")
+}
+
+enum TimelineActorType {
+  USER
+  SYSTEM
+  AI
+  AUTOMATION
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET_WATCHERS — Quem esta acompanhando o ticket
+// Recebe notificacoes de atualizacoes sem ser assignee
+// ═══════════════════════════════════════════════════════════════
+
+model TicketWatcher {
+  id       String @id @default(uuid()) @db.Uuid
+  ticketId String @map("ticket_id") @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+
+  watchType         WatchType                @default(MANUAL) @map("watch_type")
+  notificationLevel WatcherNotificationLevel @default(WATCH_ALL) @map("notification_level")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, userId])
+  @@index([ticketId])
+  @@index([userId])
+  @@map("ticket_watchers")
+}
+
+enum WatchType {
+  MANUAL
+  MENTIONED
+  AUTO
+  REQUESTER
+}
+
+enum WatcherNotificationLevel {
+  WATCH_ALL      @map("ALL")
+  STATUS_ONLY
+  WATCH_MENTIONS @map("MENTIONS")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SLA_POLICIES — Definicoes de SLA por tenant
+// Cada tenant define seus tempos de resposta por prioridade
+// ═══════════════════════════════════════════════════════════════
+
+model SlaPolicy {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  name      String  @db.VarChar(100)
+  isDefault Boolean @default(false) @map("is_default")
+
+  // Tempos por prioridade (em minutos, JSONB)
+  // { "critical": { "first_response": 60, "resolution": 240 }, ... }
+  targets Json
+
+  // Horario de atendimento (JSONB)
+  // { "timezone": "America/Sao_Paulo", "schedule": { ... }, "holidays": [...] }
+  businessHours Json @default("{\"timezone\":\"America/Sao_Paulo\",\"schedule\":{\"monday\":{\"start\":\"08:00\",\"end\":\"18:00\"},\"tuesday\":{\"start\":\"08:00\",\"end\":\"18:00\"},\"wednesday\":{\"start\":\"08:00\",\"end\":\"18:00\"},\"thursday\":{\"start\":\"08:00\",\"end\":\"18:00\"},\"friday\":{\"start\":\"08:00\",\"end\":\"18:00\"},\"saturday\":null,\"sunday\":null},\"holidays\":[]}") @map("business_hours")
+
+  // Alertas
+  warningThresholdPct Int @default(75) @map("warning_threshold_pct")
+
+  status String @default("active") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ticketSlas TicketSla[]
+
+  @@index([tenantId, isDefault])
+  @@map("sla_policies")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET_SLA — Tracking de SLA por ticket
+// Calcula tempos em tempo real, detecta breach
+// ═══════════════════════════════════════════════════════════════
+
+model TicketSla {
+  id          String @id @default(uuid()) @db.Uuid
+  ticketId    String @unique @map("ticket_id") @db.Uuid
+  slaPolicyId String @map("sla_policy_id") @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+
+  // First response
+  firstResponseTargetAt      DateTime? @map("first_response_target_at")
+  firstResponseActualAt      DateTime? @map("first_response_actual_at")
+  firstResponseBreached      Boolean   @default(false) @map("first_response_breached")
+  firstResponseBreachMinutes Int?      @map("first_response_breach_minutes")
+
+  // Resolution
+  resolutionTargetAt      DateTime? @map("resolution_target_at")
+  resolutionActualAt      DateTime? @map("resolution_actual_at")
+  resolutionBreached      Boolean   @default(false) @map("resolution_breached")
+  resolutionBreachMinutes Int?      @map("resolution_breach_minutes")
+
+  // Clock
+  clockStatus        SlaClockStatus @default(RUNNING) @map("clock_status")
+  totalPausedMinutes Int            @default(0) @map("total_paused_minutes")
+  lastPausedAt       DateTime?      @map("last_paused_at")
+  lastResumedAt      DateTime?      @map("last_resumed_at")
+
+  // Warning
+  firstResponseWarningSent Boolean @default(false) @map("first_response_warning_sent")
+  resolutionWarningSent    Boolean @default(false) @map("resolution_warning_sent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ticket    Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id])
+
+  @@index([ticketId])
+  @@index([tenantId, firstResponseBreached, resolutionBreached])
+  @@index([firstResponseTargetAt, resolutionTargetAt])
+  @@map("ticket_sla")
+}
+
+enum SlaClockStatus {
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS — Fila central de notificacoes
+// Cada notificacao e um evento entregue por multiplos canais
+// ═══════════════════════════════════════════════════════════════
+
+model Notification {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Destinatario
+  recipientId String @map("recipient_id") @db.Uuid
+
+  // Tipo (extensivel: ticket_created, ticket_assigned, ticket_status_changed,
+  // ticket_resolved, ticket_reopened, ticket_escalated, ticket_sla_warning,
+  // ticket_sla_breached, new_message, mention, reply_to_thread,
+  // ai_suggestion, ai_error, ai_cost_warning, kb_article_published,
+  // kb_suggestion_from_chat, team_member_joined, team_member_removed,
+  // role_changed, plan_limit_warning, plan_limit_reached, plan_upgraded,
+  // plan_expiring, login_new_device, password_changed, suspicious_activity,
+  // system_maintenance, system_update)
+  type String @db.VarChar(50)
+
+  // Conteudo
+  title   String  @db.VarChar(200)
+  body    String? @db.Text
+  summary String? @db.VarChar(500)
+
+  // Referencia
+  resourceType String? @map("resource_type") @db.VarChar(30)
+  resourceId   String? @map("resource_id") @db.Uuid
+  actionUrl    String? @map("action_url") @db.VarChar(500)
+
+  // Ator
+  actorId        String? @map("actor_id") @db.Uuid
+  actorName      String? @map("actor_name") @db.VarChar(200)
+  actorAvatarUrl String? @map("actor_avatar_url") @db.VarChar(500)
+
+  // Prioridade
+  priority NotificationPriority @default(NORMAL)
+
+  // Agrupamento
+  groupKey   String? @map("group_key") @db.VarChar(200)
+  groupCount Int     @default(1) @map("group_count")
+
+  // Canais de entrega (JSONB com status por canal)
+  channels Json @default("{\"in_app\":{\"status\":\"pending\"},\"email\":{\"status\":\"pending\"},\"desktop\":{\"status\":\"pending\"},\"websocket\":{\"status\":\"pending\"}}")
+
+  // Estado
+  isRead     Boolean   @default(false) @map("is_read")
+  readAt     DateTime? @map("read_at")
+  isArchived Boolean   @default(false) @map("is_archived")
+  archivedAt DateTime? @map("archived_at")
+
+  // Expiracao
+  expiresAt DateTime? @map("expires_at")
+
+  // Metadata extensivel (JSONB com dados extras por tipo)
+  data Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  recipient User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User?  @relation("NotificationActor", fields: [actorId], references: [id])
+
+  @@index([recipientId, isRead, createdAt(sort: Desc)])
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([recipientId, type, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@index([recipientId, groupKey, createdAt(sort: Desc)])
+  @@index([expiresAt])
+  @@map("notifications")
+}
+
+enum NotificationPriority {
+  URGENT
+  HIGH
+  NORMAL
+  LOW
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATION_PREFERENCES_OVERRIDE — Override por tipo
+// Mais granular que user_preferences.notification_settings
+// ═══════════════════════════════════════════════════════════════
+
+model NotificationPreferencesOverride {
+  id       String @id @default(uuid()) @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  notificationType String @map("notification_type") @db.VarChar(50)
+
+  // Override por canal (NULL = usar padrao do user_preferences)
+  inAppEnabled     Boolean? @map("in_app_enabled")
+  emailEnabled     Boolean? @map("email_enabled")
+  desktopEnabled   Boolean? @map("desktop_enabled")
+  websocketEnabled Boolean? @map("websocket_enabled")
+
+  // Digest
+  emailDigest String? @map("email_digest") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId, notificationType])
+  @@index([userId, tenantId])
+  @@map("notification_preferences_override")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI_PROVIDER_CONFIGS — Configuracao de providers de IA por tenant
+// Cada tenant tem N providers com suas API keys e preferencias
+// ═══════════════════════════════════════════════════════════════
+
+model AiProviderConfig {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Provider
+  provider    String  @db.VarChar(50)
+  displayName String? @map("display_name") @db.VarChar(100)
+
+  // Credenciais (criptografadas AES-256-GCM)
+  apiKeyEncrypted       String    @map("api_key_encrypted") @db.VarChar(1000)
+  apiKeyPrefix          String?   @map("api_key_prefix") @db.VarChar(10)
+  apiKeyAddedAt         DateTime  @default(now()) @map("api_key_added_at")
+  apiKeyLastValidatedAt DateTime? @map("api_key_last_validated_at")
+  apiKeyValid           Boolean   @default(true) @map("api_key_valid")
+
+  // Modelo preferido
+  defaultModel    String @map("default_model") @db.VarChar(100)
+  availableModels Json   @default("[]") @map("available_models")
+
+  // Configuracoes (JSONB: temperature, max_tokens, timeout, etc.)
+  settings Json @default("{}")
+
+  // Estado
+  isActive      Boolean @default(true) @map("is_active")
+  priorityOrder Int     @default(0) @map("priority_order")
+  isFallback    Boolean @default(false) @map("is_fallback")
+
+  // Limites
+  monthlyCostLimitUsd Decimal? @map("monthly_cost_limit_usd") @db.Decimal(10, 2)
+  dailyRequestLimit   Int?     @map("daily_request_limit")
+  rateLimitRpm        Int?     @map("rate_limit_rpm")
+
+  // Contadores do mes atual
+  currentMonthCostUsd   Decimal  @default(0) @map("current_month_cost_usd") @db.Decimal(10, 4)
+  currentMonthRequests  Int      @default(0) @map("current_month_requests")
+  currentMonthTokensIn  Int      @default(0) @map("current_month_tokens_in")
+  currentMonthTokensOut Int      @default(0) @map("current_month_tokens_out")
+  currentMonthResetAt   DateTime @default(now()) @map("current_month_reset_at")
+
+  // Metadata
+  configuredBy String @map("configured_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  configurator User   @relation("AiConfigConfigurator", fields: [configuredBy], references: [id])
+
+  @@unique([tenantId, provider])
+  @@unique([tenantId, priorityOrder])
+  @@index([tenantId, isActive, priorityOrder])
+  @@map("ai_provider_configs")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI_USAGE_DAILY — Uso diario de IA por tenant/provider
+// Agregado por dia para queries rapidas e analytics
+// ═══════════════════════════════════════════════════════════════
+
+model AiUsageDaily {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  provider  String   @db.VarChar(50)
+  model     String   @db.VarChar(100)
+  usageDate DateTime @map("usage_date") @db.Date
+
+  // Contadores
+  requestCount Int     @default(0) @map("request_count")
+  tokensInput  Int     @default(0) @map("tokens_input")
+  tokensOutput Int     @default(0) @map("tokens_output")
+  tokensCached Int     @default(0) @map("tokens_cached")
+  costUsd      Decimal @default(0) @map("cost_usd") @db.Decimal(10, 6)
+
+  // Performance
+  avgLatencyMs  Int? @map("avg_latency_ms")
+  p95LatencyMs  Int? @map("p95_latency_ms")
+  errorCount    Int  @default(0) @map("error_count")
+  fallbackCount Int  @default(0) @map("fallback_count")
+  timeoutCount  Int  @default(0) @map("timeout_count")
+
+  // Feedback
+  feedbackPositive Int @default(0) @map("feedback_positive")
+  feedbackNegative Int @default(0) @map("feedback_negative")
+
+  // Breakdown por tipo de uso (JSONB)
+  usageBreakdown Json @default("{}") @map("usage_breakdown")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider, model, usageDate])
+  @@index([tenantId, usageDate(sort: Desc)])
+  @@index([provider, model, usageDate(sort: Desc)])
+  @@map("ai_usage_daily")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI_ROUTING_RULES — Regras de roteamento de IA por tenant
+// Como o ProviderRouter decide qual provider usar
+// ═══════════════════════════════════════════════════════════════
+
+model AiRoutingRules {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Estrategia
+  strategy RoutingStrategy @default(PRIORITY)
+
+  // Fallback
+  fallbackEnabled     Boolean @default(true) @map("fallback_enabled")
+  maxFallbackAttempts Int     @default(2) @map("max_fallback_attempts")
+  fallbackOn          Json    @default("[\"rate_limit\",\"timeout\",\"error_500\"]") @map("fallback_on")
+
+  // Limites globais
+  monthlyBudgetUsd        Decimal? @map("monthly_budget_usd") @db.Decimal(10, 2)
+  budgetAlertThresholdPct Int      @default(80) @map("budget_alert_threshold_pct")
+  budgetHardStop          Boolean  @default(false) @map("budget_hard_stop")
+
+  // Regras por tipo de uso (JSONB override de provider por tipo)
+  typeRules Json @default("{}") @map("type_rules")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("ai_routing_rules")
+}
+
+enum RoutingStrategy {
+  PRIORITY
+  ROUND_ROBIN
+  COST_OPTIMIZED
+  LATENCY_OPTIMIZED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESPONSE_TEMPLATES — Respostas prontas reutilizaveis
+// Inseridas em conversas, notas internas, resolucoes de tickets
+// ═══════════════════════════════════════════════════════════════
+
+model ResponseTemplate {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Identificacao
+  title       String  @db.VarChar(200)
+  slug        String? @db.VarChar(200)
+  description String? @db.Text
+
+  // Conteudo (Markdown com variaveis: "Ola {{requester_name}}, ...")
+  content     String  @db.Text
+  contentHtml String? @map("content_html") @db.Text
+
+  // Variaveis disponiveis (JSONB)
+  variables Json @default("[]")
+
+  // Classificacao
+  category String? @db.VarChar(100)
+  tags     Json    @default("[]")
+
+  // Escopo
+  scope        TemplateScope @default(TEAM)
+  applicableTo Json          @default("[\"conversation\",\"ticket_resolution\",\"internal_note\"]") @map("applicable_to")
+
+  // Atalho (ex: "/reinicio", "/saudacao")
+  shortcut String? @db.VarChar(50)
+
+  // Estado
+  status  TemplateStatus @default(ACTIVE)
+  version Int            @default(1)
+
+  // Metricas
+  usageCount       Int       @default(0) @map("usage_count")
+  lastUsedAt       DateTime? @map("last_used_at")
+  lastUsedBy       String?   @map("last_used_by") @db.Uuid
+  avgFeedbackScore Decimal?  @map("avg_feedback_score") @db.Decimal(3, 2)
+
+  // IA
+  aiGenerated Boolean @default(false) @map("ai_generated")
+  aiImproved  Boolean @default(false) @map("ai_improved")
+
+  // Metadata
+  createdBy String  @map("created_by") @db.Uuid
+  updatedBy String? @map("updated_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator   User               @relation("TemplateCreator", fields: [createdBy], references: [id])
+  updater   User?              @relation("TemplateUpdater", fields: [updatedBy], references: [id])
+  lastUser  User?              @relation("TemplateLastUser", fields: [lastUsedBy], references: [id])
+  usageLogs TemplateUsageLog[]
+
+  @@unique([tenantId, shortcut])
+  @@index([tenantId, status, category])
+  @@index([tenantId, scope, status])
+  @@index([tenantId, shortcut])
+  @@index([tenantId, usageCount(sort: Desc)])
+  @@map("response_templates")
+}
+
+enum TemplateScope {
+  PERSONAL
+  TEAM
+  PUBLIC
+}
+
+enum TemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEMPLATE_USAGE_LOG — Registro de cada uso de template
+// Para analytics: quais templates sao usados, onde, resultado
+// ═══════════════════════════════════════════════════════════════
+
+model TemplateUsageLog {
+  id         String @id @default(uuid()) @db.Uuid
+  templateId String @map("template_id") @db.Uuid
+  tenantId   String @map("tenant_id") @db.Uuid
+  userId     String @map("user_id") @db.Uuid
+
+  // Contexto de uso
+  usedIn         String  @map("used_in") @db.VarChar(30)
+  conversationId String? @map("conversation_id") @db.Uuid
+  messageId      String? @map("message_id") @db.Uuid
+  ticketId       String? @map("ticket_id") @db.Uuid
+
+  // Modificacao
+  wasModified     Boolean  @default(false) @map("was_modified")
+  modificationPct Decimal? @map("modification_pct") @db.Decimal(5, 2)
+
+  // Variaveis
+  variablesFilled      Json? @map("variables_filled")
+  variablesManualCount Int   @default(0) @map("variables_manual_count")
+
+  templateVersion Int @map("template_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  template     ResponseTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id])
+  conversation Conversation?    @relation(fields: [conversationId], references: [id])
+  message      Message?         @relation(fields: [messageId], references: [id])
+  ticket       Ticket?          @relation(fields: [ticketId], references: [id])
+
+  @@index([templateId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("template_usage_log")
 }
