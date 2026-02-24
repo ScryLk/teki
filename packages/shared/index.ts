@@ -3,4 +3,8 @@ export * from './types/context';
 export * from './types/ipc';
 export * from './types/models';
 export * from './types/plans';
+export * from './types/user';
 export * from './constants/ai-models';
+export * from './config/permissions';
+export * from './services/preferences.service';
+export * from './services/anonymization.service';
