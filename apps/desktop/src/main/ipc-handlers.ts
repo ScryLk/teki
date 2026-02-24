@@ -1,10 +1,11 @@
 import { ipcMain, app, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
-import type { AiProviderId } from '@teki/shared';
+import type { AiProviderId, UserActionType } from '@teki/shared';
 import settingsStore from './services/settings-store';
 import windowWatcher from './services/window-watcher';
 import { updateTrayState } from './tray';
 import { validateApiKey } from './services/ai-key-validator';
+import { screenInspector } from './services/screen-inspector';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   // ── Window watching ───────────────────────────────────────────────
@@ -61,4 +62,41 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle(IPC_CHANNELS.AI_VALIDATE_KEY, (_event, provider: AiProviderId, key: string) => {
     return validateApiKey(provider, key);
   });
+
+  // ── Screen Inspection ─────────────────────────────────────────────
+
+  screenInspector.setMainWindow(mainWindow);
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_START, async () => {
+    await screenInspector.start();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_STOP, async () => {
+    screenInspector.stop();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_PAUSE, async () => {
+    screenInspector.pause();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_RESUME, async () => {
+    screenInspector.resume();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_GET_STATS, () => {
+    return screenInspector.getStats();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSPECTION_GET_STATE, () => {
+    return screenInspector.getState();
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.INSPECTION_FEEDBACK,
+    (_event, alertId: string, action: UserActionType, wasHelpful?: boolean) => {
+      // Feedback is logged for analytics — the pipeline tracks it
+      // In production, this would send to the backend API
+      return { received: true, alertId, action, wasHelpful };
+    }
+  );
 }

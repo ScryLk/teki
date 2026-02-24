@@ -1,4 +1,5 @@
 import type { WindowSource, WindowFrame } from './context';
+import type { InspectionAlert, InspectionState, InspectionStats, UserActionType } from './screen-inspection';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
@@ -41,6 +42,17 @@ export const IPC_CHANNELS = {
 
   // AI Validation
   AI_VALIDATE_KEY: 'ai:validateKey',
+
+  // Screen Inspection
+  INSPECTION_START: 'inspection:start',
+  INSPECTION_STOP: 'inspection:stop',
+  INSPECTION_PAUSE: 'inspection:pause',
+  INSPECTION_RESUME: 'inspection:resume',
+  INSPECTION_GET_STATS: 'inspection:getStats',
+  INSPECTION_GET_STATE: 'inspection:getState',
+  INSPECTION_ALERT: 'inspection:alert',
+  INSPECTION_FEEDBACK: 'inspection:feedback',
+  INSPECTION_STATUS_CHANGED: 'inspection:statusChanged',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -70,6 +82,17 @@ export interface TekiAPI {
 
   // AI Key Validation
   validateApiKey: (provider: AiProviderId, key: string) => Promise<ApiKeyValidationResult>;
+
+  // Screen Inspection
+  startInspection: () => Promise<void>;
+  stopInspection: () => Promise<void>;
+  pauseInspection: () => Promise<void>;
+  resumeInspection: () => Promise<void>;
+  getInspectionStats: () => Promise<InspectionStats>;
+  getInspectionState: () => Promise<InspectionState>;
+  onInspectionAlert: (callback: (alert: InspectionAlert) => void) => () => void;
+  sendInspectionFeedback: (alertId: string, action: UserActionType, wasHelpful?: boolean) => Promise<void>;
+  onInspectionStatusChanged: (callback: (state: InspectionState) => void) => () => void;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

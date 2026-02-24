@@ -5,6 +5,7 @@ export * from './types/ipc';
 export * from './types/models';
 export * from './types/plans';
 export * from './types/user';
+export * from './types/screen-inspection';
 export * from './constants/ai-models';
 export * from './config/permissions';
 export * from './services/preferences.service';

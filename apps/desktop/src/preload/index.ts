@@ -1,6 +1,17 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
-import type { TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult } from '@teki/shared';
+import type {
+  TekiAPI,
+  TekiSettings,
+  WindowSource,
+  WindowFrame,
+  AiProviderId,
+  ApiKeyValidationResult,
+  InspectionAlert,
+  InspectionStats,
+  InspectionState,
+  UserActionType,
+} from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
   // Window watching
@@ -86,6 +97,59 @@ const tekiAPI: TekiAPI = {
   // AI Key Validation
   validateApiKey: (provider: AiProviderId, key: string): Promise<ApiKeyValidationResult> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_KEY, provider, key);
+  },
+
+  // Screen Inspection
+  startInspection: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_START);
+  },
+
+  stopInspection: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_STOP);
+  },
+
+  pauseInspection: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_PAUSE);
+  },
+
+  resumeInspection: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_RESUME);
+  },
+
+  getInspectionStats: (): Promise<InspectionStats> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_GET_STATS);
+  },
+
+  getInspectionState: (): Promise<InspectionState> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_GET_STATE);
+  },
+
+  onInspectionAlert: (callback: (alert: InspectionAlert) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, alert: InspectionAlert) => {
+      callback(alert);
+    };
+    ipcRenderer.on(IPC_CHANNELS.INSPECTION_ALERT, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.INSPECTION_ALERT, listener);
+    };
+  },
+
+  sendInspectionFeedback: (
+    alertId: string,
+    action: UserActionType,
+    wasHelpful?: boolean
+  ): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSPECTION_FEEDBACK, alertId, action, wasHelpful);
+  },
+
+  onInspectionStatusChanged: (callback: (state: InspectionState) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: InspectionState) => {
+      callback(state);
+    };
+    ipcRenderer.on(IPC_CHANNELS.INSPECTION_STATUS_CHANGED, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.INSPECTION_STATUS_CHANGED, listener);
+    };
   },
 };
 

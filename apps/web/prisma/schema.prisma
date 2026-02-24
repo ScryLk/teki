@@ -75,6 +75,10 @@ model Tenant {
   // Relations - Templates
   responseTemplates ResponseTemplate[]
 
+  // Relations - Screen Inspection
+  errorPatternLibrary  ErrorPatternLibrary[]
+  screenInspectionLogs ScreenInspectionLog[]
+
   @@index([slug])
   @@index([plan, status])
   @@index([status])
@@ -187,6 +191,9 @@ model User {
   responseTemplatesUpdated  ResponseTemplate[] @relation("TemplateUpdater")
   responseTemplatesLastUsed ResponseTemplate[] @relation("TemplateLastUser")
   templateUsageLogs         TemplateUsageLog[]
+
+  // Relations - Screen Inspection
+  screenInspectionLogs ScreenInspectionLog[]
 
   @@index([email])
   @@index([status])
@@ -2427,4 +2434,108 @@ enum SyncLogStatus {
   SUCCESS
   PARTIAL
   SYNC_ERROR @map("ERROR")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ERROR_PATTERN_LIBRARY — Padroes de erro customizaveis por tenant
+// Complementa os padroes built-in do Screen Inspection Engine
+// ═══════════════════════════════════════════════════════════════
+
+model ErrorPatternLibrary {
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String? @map("tenant_id") @db.Uuid // NULL = built-in
+
+  // Identificacao
+  name        String  @db.VarChar(200)
+  description String? @db.Text
+  category    String  @db.VarChar(50) // sefaz, certificate, database, network, printing, windows, generic
+
+  // Deteccao
+  softwareIds    Json   @default("[]") @map("software_ids")    // string[] de software IDs
+  regexPattern   String @map("regex_pattern") @db.Text
+  regexFlags     String @default("i") @map("regex_flags") @db.VarChar(10)
+  codeExtractRegex String? @map("code_extract_regex") @db.Text
+
+  // Severidade e classificacao
+  defaultSeverity String @default("medium") @map("default_severity") @db.VarChar(20)
+  knownCodes      Json   @default("{}") @map("known_codes")    // Record<string, string>
+  kbSearchTerms   Json   @default("[]") @map("kb_search_terms") // string[]
+
+  // Estado
+  isBuiltin     Boolean @default(false) @map("is_builtin")
+  isActive      Boolean @default(true) @map("is_active")
+  priorityOrder Int     @default(100) @map("priority_order")
+
+  // Metricas
+  totalDetections Int       @default(0) @map("total_detections")
+  lastDetectedAt  DateTime? @map("last_detected_at")
+  totalKbMatches  Int       @default(0) @map("total_kb_matches")
+
+  // Auditoria
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isActive, priorityOrder])
+  @@index([isBuiltin, isActive])
+  @@index([category, isActive])
+  @@map("error_pattern_library")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREEN_INSPECTION_LOG — Historico de deteccoes do motor de inspecao
+// Para analytics, feedback loop e melhoria continua dos padroes
+// ═══════════════════════════════════════════════════════════════
+
+model ScreenInspectionLog {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+
+  // Software detectado
+  detectedSoftware        String? @map("detected_software") @db.VarChar(100)
+  detectedSoftwareVersion String? @map("detected_software_version") @db.VarChar(50)
+  windowTitle             String? @map("window_title") @db.VarChar(500)
+
+  // Erros detectados
+  errorsDetected Json @default("[]") @map("errors_detected") // PotentialError[]
+  errorCount     Int  @default(0) @map("error_count")
+  detectionSource String @default("ocr") @map("detection_source") @db.VarChar(20) // ocr, vision_api, both
+
+  // KB matches
+  kbMatches    Json @default("[]") @map("kb_matches") // KbMatchResult[]
+  kbMatchCount Int  @default(0) @map("kb_match_count")
+
+  // Feedback do usuario
+  userAction   String?   @map("user_action") @db.VarChar(50)
+  userActionAt DateTime? @map("user_action_at")
+  wasHelpful   Boolean?  @map("was_helpful")
+
+  // Performance
+  pipelineDurationMs Int  @map("pipeline_duration_ms")
+  ocrDurationMs      Int  @default(0) @map("ocr_duration_ms")
+  diffChangePct      Float @default(0) @map("diff_change_pct")
+
+  // Vision API
+  visionApiUsed    Boolean @default(false) @map("vision_api_used")
+  visionApiCostUsd Float   @default(0) @map("vision_api_cost_usd")
+
+  // Integracao com ticket
+  externalTicketId String? @map("external_ticket_id") @db.VarChar(100)
+  connectorId      String? @map("connector_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([detectedSoftware, createdAt(sort: Desc)])
+  @@index([userAction, createdAt(sort: Desc)])
+  @@map("screen_inspection_log")
 }
