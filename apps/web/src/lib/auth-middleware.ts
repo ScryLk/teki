@@ -1,12 +1,48 @@
 import { NextRequest } from 'next/server';
+import type { PlanTier } from '@prisma/client';
 import { auth } from './auth';
 import { authenticateApiKey } from './api-keys';
-import type { User } from '@prisma/client';
+import { prisma } from './prisma';
+import { resolvePermissions, hasPermission } from '@teki/shared';
+import type { Permissions, MemberRole } from '@teki/shared';
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string | null;
+  displayName: string | null;
+  status: string;
+  avatarUrl: string | null;
+  /** @deprecated Use tenant context instead. Resolved from primary tenant membership for backward compatibility. */
+  planId: PlanTier;
+}
+
+export interface TenantContext {
+  tenantId: string;
+  role: MemberRole;
+  permissions: Permissions;
+  tenantPlan: string;
+}
 
 export interface AuthenticatedRequest {
-  user: User;
+  user: AuthenticatedUser;
   isTest: boolean;
   authMethod: 'session' | 'apikey';
+  tenant?: TenantContext;
+}
+
+/**
+ * Resolve planId from the user's first active tenant membership.
+ * Falls back to FREE if user has no active memberships.
+ */
+async function resolvePlanId(userId: string): Promise<PlanTier> {
+  const membership = await prisma.tenantMember.findFirst({
+    where: { userId, status: 'ACTIVE' },
+    include: { tenant: { select: { plan: true } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  return membership?.tenant.plan ?? 'FREE';
 }
 
 export async function getAuthenticatedUser(
@@ -18,8 +54,27 @@ export async function getAuthenticatedUser(
     const key = authHeader.slice(7);
     const result = await authenticateApiKey(key);
     if (result) {
+      const user = await prisma.user.findUnique({
+        where: { id: result.user.id },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          displayName: true,
+          status: true,
+          avatarUrl: true,
+        },
+      });
+
+      if (!user || user.status === 'ANONYMIZED' || user.status === 'SUSPENDED') {
+        return null;
+      }
+
+      const planId = await resolvePlanId(user.id);
+
       return {
-        user: result.user,
+        user: { ...user, planId },
         isTest: result.isTest,
         authMethod: 'apikey',
       };
@@ -30,27 +85,105 @@ export async function getAuthenticatedUser(
   // 2. Try session cookie (NextAuth)
   const session = await auth();
   if (session?.user?.id) {
-    const { prisma } = await import('./prisma');
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        status: true,
+        avatarUrl: true,
+      },
     });
-    if (user) {
-      return { user, isTest: false, authMethod: 'session' };
+
+    if (!user || user.status === 'ANONYMIZED' || user.status === 'SUSPENDED') {
+      return null;
     }
+
+    const planId = await resolvePlanId(user.id);
+
+    return { user: { ...user, planId }, isTest: false, authMethod: 'session' };
   }
 
   return null;
 }
 
+/**
+ * Get authenticated user with tenant context.
+ * Resolves the user's role and permissions in the specified tenant.
+ */
+export async function getAuthenticatedUserWithTenant(
+  req: NextRequest,
+  tenantId: string
+): Promise<AuthenticatedRequest | null> {
+  const result = await getAuthenticatedUser(req);
+  if (!result) return null;
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: {
+      tenantId_userId: {
+        tenantId,
+        userId: result.user.id,
+      },
+    },
+    include: { tenant: { select: { plan: true } } },
+  });
+
+  if (!membership || membership.status !== 'ACTIVE') return null;
+
+  const role = membership.role.toLowerCase() as MemberRole;
+  const permissions = resolvePermissions(
+    role,
+    membership.permissions as Permissions | null
+  );
+
+  result.tenant = {
+    tenantId,
+    role,
+    permissions,
+    tenantPlan: membership.tenant.plan,
+  };
+
+  return result;
+}
+
+/**
+ * Require authentication — throws AuthError if not authenticated.
+ */
 export async function requireAuth(
   req: NextRequest
 ): Promise<AuthenticatedRequest> {
   const result = await getAuthenticatedUser(req);
   if (!result) {
     throw new AuthError(
-      'Não autenticado. Envie um header Authorization: Bearer tk_live_...'
+      'Nao autenticado. Envie um header Authorization: Bearer tk_live_...'
     );
   }
+  return result;
+}
+
+/**
+ * Require authentication with tenant context and permission check.
+ */
+export async function requireTenantAuth(
+  req: NextRequest,
+  tenantId: string,
+  resource?: keyof Permissions,
+  action?: string
+): Promise<AuthenticatedRequest> {
+  const result = await getAuthenticatedUserWithTenant(req, tenantId);
+  if (!result) {
+    throw new AuthError('Nao autenticado ou sem acesso a este tenant');
+  }
+
+  if (resource && action && result.tenant) {
+    if (!hasPermission(result.tenant.permissions, resource, action)) {
+      throw new AuthError(`Sem permissao: ${resource}.${action}`);
+    }
+  }
+
   return result;
 }
 

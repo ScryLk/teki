@@ -16,36 +16,44 @@ export async function POST(req: NextRequest) {
       const subscription = await getSubscriptionStatus(preapprovalId);
       const status = subscription.status;
 
-      // Find user by preapproval ID
-      let user = await prisma.user.findFirst({
+      // Find tenant by preapproval ID
+      let tenant = await prisma.tenant.findFirst({
         where: { mpPreapprovalId: preapprovalId },
       });
 
-      // If not found by preapprovalId, try by email (first-time subscription)
-      if (!user && subscription.payer_email) {
-        user = await prisma.user.findUnique({
+      // If not found by preapprovalId, try to find user by email and their primary tenant
+      if (!tenant && subscription.payer_email) {
+        const user = await prisma.user.findUnique({
           where: { email: subscription.payer_email },
+          include: {
+            memberships: {
+              where: { status: 'ACTIVE', role: 'OWNER' },
+              include: { tenant: true },
+              take: 1,
+            },
+          },
         });
+        tenant = user?.memberships[0]?.tenant ?? null;
       }
 
-      if (!user) {
-        console.warn(`[MP webhook] User not found for preapproval ${preapprovalId}`);
-        return NextResponse.json({ status: 'user not found' });
+      if (!tenant) {
+        console.warn(`[MP webhook] Tenant not found for preapproval ${preapprovalId}`);
+        return NextResponse.json({ status: 'tenant not found' });
       }
 
       // Determine plan from subscription reason
-      let planId: PlanTier = 'FREE';
+      let plan: PlanTier = 'FREE';
       const reason = (subscription.reason ?? '').toLowerCase();
-      if (reason.includes('pro')) planId = 'PRO';
-      else if (reason.includes('starter')) planId = 'STARTER';
+      if (reason.includes('pro')) plan = 'PRO';
+      else if (reason.includes('starter')) plan = 'STARTER';
 
-      // Update user based on subscription status
+      // Update tenant based on subscription status
       switch (status) {
         case 'authorized':
-          await prisma.user.update({
-            where: { id: user.id },
+          await prisma.tenant.update({
+            where: { id: tenant.id },
             data: {
-              planId,
+              plan,
               mpPreapprovalId: preapprovalId,
               planExpiresAt: subscription.next_payment_date
                 ? new Date(subscription.next_payment_date)
@@ -56,10 +64,10 @@ export async function POST(req: NextRequest) {
 
         case 'paused':
         case 'cancelled':
-          await prisma.user.update({
-            where: { id: user.id },
+          await prisma.tenant.update({
+            where: { id: tenant.id },
             data: {
-              planId: 'FREE',
+              plan: 'FREE',
               mpPreapprovalId: null,
               planExpiresAt: null,
             },
@@ -68,8 +76,8 @@ export async function POST(req: NextRequest) {
 
         case 'pending':
           // Keep current plan, just save preapproval ID
-          await prisma.user.update({
-            where: { id: user.id },
+          await prisma.tenant.update({
+            where: { id: tenant.id },
             data: { mpPreapprovalId: preapprovalId },
           });
           break;

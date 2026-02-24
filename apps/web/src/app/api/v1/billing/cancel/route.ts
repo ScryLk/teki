@@ -7,19 +7,31 @@ export async function POST(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
-    if (!user.mpPreapprovalId) {
+    // Find the user's primary tenant
+    const membership = await prisma.tenantMember.findFirst({
+      where: { userId: user.id, status: 'ACTIVE' },
+      include: {
+        tenant: {
+          select: { id: true, mpPreapprovalId: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (!membership?.tenant.mpPreapprovalId) {
       return NextResponse.json(
         { error: { code: 'BAD_REQUEST', message: 'Nenhuma assinatura ativa.' } },
         { status: 400 }
       );
     }
 
-    await cancelSubscription(user.mpPreapprovalId);
+    await cancelSubscription(membership.tenant.mpPreapprovalId);
 
-    await prisma.user.update({
-      where: { id: user.id },
+    // Update tenant (not user) — plan is on tenant
+    await prisma.tenant.update({
+      where: { id: membership.tenant.id },
       data: {
-        planId: 'FREE',
+        plan: 'FREE',
         mpPreapprovalId: null,
         planExpiresAt: null,
       },
