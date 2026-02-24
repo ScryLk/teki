@@ -59,9 +59,9 @@ model Tenant {
   conversations    Conversation[]
   conversationTags ConversationTag[]
 
-  // Relations - Tickets
-  tickets     Ticket[]
-  slaPolicies SlaPolicy[]
+  // Relations - External Connectors
+  externalConnectors ExternalConnector[]
+  slaPolicies        SlaPolicy[]
 
   // Relations - Notifications
   notifications             Notification[]
@@ -170,14 +170,9 @@ model User {
   createdTags          ConversationTag[]         @relation("TagCreator")
   tagLinks             ConversationTagLink[]     @relation("TagLinkUser")
 
-  // Relations - Tickets
-  ticketsCreated        Ticket[]         @relation("TicketCreator")
-  ticketsAssigned       Ticket[]         @relation("TicketAssignee")
-  ticketsAssignedBy     Ticket[]         @relation("TicketAssigner")
-  ticketsEscalatedBy    Ticket[]         @relation("TicketEscalator")
-  ticketsRequested      Ticket[]         @relation("TicketRequester")
-  ticketTimelineActions TicketTimeline[] @relation("TimelineActor")
-  ticketWatches         TicketWatcher[]
+  // Relations - External Connectors
+  configuredConnectors  ExternalConnector[]    @relation("ConnectorConfigurator")
+  connectorUserMappings ConnectorUserMapping[]
 
   // Relations - Notifications
   notificationsReceived     Notification[]                    @relation("NotificationRecipient")
@@ -1597,259 +1592,6 @@ model KbInsertionLog {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TICKETS — Caso de suporte tecnico (entidade central)
-// Tudo orbita ao redor: conversas, KB, logs, IA
-// ═══════════════════════════════════════════════════════════════
-
-model Ticket {
-  id       String @id @default(uuid()) @db.Uuid
-  tenantId String @map("tenant_id") @db.Uuid
-
-  // Identificacao
-  ticketNumber String  @map("ticket_number") @db.VarChar(20)
-  title        String  @db.VarChar(500)
-  description  String? @db.Text
-
-  // Classificacao
-  type        TicketType @default(ISSUE)
-  category    String?    @db.VarChar(100)
-  subcategory String?    @db.VarChar(100)
-  tags        Json       @default("[]")
-
-  // Prioridade
-  priority TicketPriority @default(MEDIUM)
-  severity String?        @db.VarChar(20)
-
-  // Status (maquina de estados)
-  status          TicketStatus @default(OPEN)
-  previousStatus  String?      @map("previous_status") @db.VarChar(30)
-  statusChangedAt DateTime?    @map("status_changed_at")
-  holdReason      String?      @map("hold_reason") @db.Text
-
-  // Resolucao
-  resolution     String?         @db.Text
-  resolutionType ResolutionType? @map("resolution_type")
-  duplicateOfId  String?         @map("duplicate_of_id") @db.Uuid
-  resolvedAt     DateTime?       @map("resolved_at")
-  closedAt       DateTime?       @map("closed_at")
-
-  // Atribuicao
-  assignedTo       String?   @map("assigned_to") @db.Uuid
-  assignedAt       DateTime? @map("assigned_at")
-  assignedBy       String?   @map("assigned_by") @db.Uuid
-  team             String?   @db.VarChar(100)
-  escalationLevel  Int       @default(0) @map("escalation_level")
-  escalatedAt      DateTime? @map("escalated_at")
-  escalatedBy      String?   @map("escalated_by") @db.Uuid
-  escalationReason String?   @map("escalation_reason") @db.Text
-
-  // Solicitante
-  requesterId    String? @map("requester_id") @db.Uuid
-  requesterName  String? @map("requester_name") @db.VarChar(200)
-  requesterEmail String? @map("requester_email") @db.VarChar(255)
-  requesterPhone String? @map("requester_phone") @db.VarChar(20)
-
-  // Ambiente tecnico (JSONB extensivel)
-  environment Json @default("{}")
-
-  // Vinculo com conversas (sem FK direta)
-  primaryConversationId String? @map("primary_conversation_id") @db.Uuid
-
-  // Contadores desnormalizados
-  conversationCount Int @default(0) @map("conversation_count")
-  attachmentCount   Int @default(0) @map("attachment_count")
-  internalNoteCount Int @default(0) @map("internal_note_count")
-  aiSuggestionCount Int @default(0) @map("ai_suggestion_count")
-
-  // Custom fields (JSONB extensivel)
-  customFields Json @default("{}") @map("custom_fields")
-
-  // IA
-  aiAutoCategorized   Boolean  @default(false) @map("ai_auto_categorized")
-  aiSuggestedSolution String?  @map("ai_suggested_solution") @db.Text
-  aiConfidenceScore   Decimal? @map("ai_confidence_score") @db.Decimal(5, 4)
-
-  // Origem
-  source TicketSource @default(WEB)
-
-  // Timestamps
-  firstResponseAt DateTime? @map("first_response_at")
-  createdBy       String    @map("created_by") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  creator     User     @relation("TicketCreator", fields: [createdBy], references: [id])
-  assignee    User?    @relation("TicketAssignee", fields: [assignedTo], references: [id])
-  assigner    User?    @relation("TicketAssigner", fields: [assignedBy], references: [id])
-  escalator   User?    @relation("TicketEscalator", fields: [escalatedBy], references: [id])
-  requester   User?    @relation("TicketRequester", fields: [requesterId], references: [id])
-  duplicateOf Ticket?  @relation("TicketDuplicate", fields: [duplicateOfId], references: [id])
-  duplicates  Ticket[] @relation("TicketDuplicate")
-
-  timeline          TicketTimeline[]
-  watchers          TicketWatcher[]
-  sla               TicketSla?
-  templateUsageLogs TemplateUsageLog[]
-
-  @@unique([tenantId, ticketNumber])
-  @@index([tenantId, status, createdAt(sort: Desc)])
-  @@index([tenantId, status, priority])
-  @@index([assignedTo, status])
-  @@index([requesterId, status])
-  @@index([tenantId, priority, status])
-  @@index([tenantId, category, status])
-  @@index([tenantId, createdAt(sort: Desc)])
-  @@index([tenantId, resolvedAt(sort: Desc)])
-  @@map("tickets")
-}
-
-enum TicketType {
-  ISSUE
-  QUESTION
-  TASK
-  BUG
-  FEATURE_REQUEST
-  CHANGE_REQUEST
-  MAINTENANCE
-}
-
-enum TicketPriority {
-  CRITICAL
-  HIGH
-  MEDIUM
-  LOW
-}
-
-enum TicketStatus {
-  OPEN
-  ASSIGNED
-  IN_PROGRESS
-  WAITING_INFO
-  WAITING_VENDOR
-  ON_HOLD
-  RESOLVED
-  CLOSED
-  CANCELLED
-  REOPENED
-}
-
-enum ResolutionType {
-  SOLVED
-  WORKAROUND
-  CANNOT_REPRODUCE
-  DUPLICATE
-  NOT_A_BUG
-  WONT_FIX
-  DEFERRED
-}
-
-enum TicketSource {
-  WEB
-  DESKTOP_APP
-  FLOATING
-  EMAIL
-  API
-  CHAT
-  AUTO
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TICKET_TIMELINE — Historico imutavel de eventos do ticket
-// Cada entrada = algo aconteceu com o ticket
-// NUNCA update/delete — append-only
-// ═══════════════════════════════════════════════════════════════
-
-model TicketTimeline {
-  id       String @id @default(uuid()) @db.Uuid
-  ticketId String @map("ticket_id") @db.Uuid
-  tenantId String @map("tenant_id") @db.Uuid
-
-  // Evento (extensivel: created, status_changed, priority_changed,
-  // assigned, reassigned, unassigned, escalated, category_changed,
-  // title_changed, description_changed, tag_added, tag_removed,
-  // comment_added, attachment_added, sla_breached, sla_warning,
-  // ai_suggestion, ai_categorized, conversation_linked,
-  // kb_article_created, duplicate_marked, merged, watcher_added,
-  // watcher_removed, custom_field_changed, resolved, reopened,
-  // closed, cancelled)
-  eventType String @map("event_type") @db.VarChar(40)
-
-  // Quem
-  actorId   String?           @map("actor_id") @db.Uuid
-  actorType TimelineActorType @default(USER) @map("actor_type")
-
-  // O que mudou (JSONB com estrutura por event_type)
-  changes Json @default("{}")
-
-  // Descricao do evento (para exibicao na timeline)
-  description String? @db.Text
-
-  // Metadata
-  isPublic    Boolean @default(true) @map("is_public")
-  isAutomated Boolean @default(false) @map("is_automated")
-
-  // Imutavel — sem updated_at
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  actor  User?  @relation("TimelineActor", fields: [actorId], references: [id])
-
-  @@index([ticketId, createdAt])
-  @@index([tenantId, createdAt(sort: Desc)])
-  @@index([ticketId, eventType])
-  @@index([actorId, createdAt(sort: Desc)])
-  @@map("ticket_timeline")
-}
-
-enum TimelineActorType {
-  USER
-  SYSTEM
-  AI
-  AUTOMATION
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TICKET_WATCHERS — Quem esta acompanhando o ticket
-// Recebe notificacoes de atualizacoes sem ser assignee
-// ═══════════════════════════════════════════════════════════════
-
-model TicketWatcher {
-  id       String @id @default(uuid()) @db.Uuid
-  ticketId String @map("ticket_id") @db.Uuid
-  userId   String @map("user_id") @db.Uuid
-
-  watchType         WatchType                @default(MANUAL) @map("watch_type")
-  notificationLevel WatcherNotificationLevel @default(WATCH_ALL) @map("notification_level")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([ticketId, userId])
-  @@index([ticketId])
-  @@index([userId])
-  @@map("ticket_watchers")
-}
-
-enum WatchType {
-  MANUAL
-  MENTIONED
-  AUTO
-  REQUESTER
-}
-
-enum WatcherNotificationLevel {
-  WATCH_ALL      @map("ALL")
-  STATUS_ONLY
-  WATCH_MENTIONS @map("MENTIONS")
-}
-
-// ═══════════════════════════════════════════════════════════════
 // SLA_POLICIES — Definicoes de SLA por tenant
 // Cada tenant define seus tempos de resposta por prioridade
 // ═══════════════════════════════════════════════════════════════
@@ -1886,15 +1628,17 @@ model SlaPolicy {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TICKET_SLA — Tracking de SLA por ticket
-// Calcula tempos em tempo real, detecta breach
+// TICKET_SLA — Tracking de SLA por ticket externo
+// Calcula tempos baseado nos timestamps do cache
+// Teki pode calcular SLA mesmo que o sistema externo nao tenha
 // ═══════════════════════════════════════════════════════════════
 
 model TicketSla {
-  id          String @id @default(uuid()) @db.Uuid
-  ticketId    String @unique @map("ticket_id") @db.Uuid
-  slaPolicyId String @map("sla_policy_id") @db.Uuid
-  tenantId    String @map("tenant_id") @db.Uuid
+  id               String @id @default(uuid()) @db.Uuid
+  connectorId      String @map("connector_id") @db.Uuid
+  externalTicketId String @map("external_ticket_id") @db.VarChar(255)
+  slaPolicyId      String @map("sla_policy_id") @db.Uuid
+  tenantId         String @map("tenant_id") @db.Uuid
 
   // First response
   firstResponseTargetAt      DateTime? @map("first_response_target_at")
@@ -1922,10 +1666,10 @@ model TicketSla {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  ticket    Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  slaPolicy SlaPolicy @relation(fields: [slaPolicyId], references: [id])
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  slaPolicy SlaPolicy         @relation(fields: [slaPolicyId], references: [id])
 
-  @@index([ticketId])
+  @@unique([connectorId, externalTicketId])
   @@index([tenantId, firstResponseBreached, resolutionBreached])
   @@index([firstResponseTargetAt, resolutionTargetAt])
   @@map("ticket_sla")
@@ -2293,10 +2037,10 @@ model TemplateUsageLog {
   userId     String @map("user_id") @db.Uuid
 
   // Contexto de uso
-  usedIn         String  @map("used_in") @db.VarChar(30)
-  conversationId String? @map("conversation_id") @db.Uuid
-  messageId      String? @map("message_id") @db.Uuid
-  ticketId       String? @map("ticket_id") @db.Uuid
+  usedIn           String  @map("used_in") @db.VarChar(30)
+  conversationId   String? @map("conversation_id") @db.Uuid
+  messageId        String? @map("message_id") @db.Uuid
+  externalTicketId String? @map("external_ticket_id") @db.VarChar(255)
 
   // Modificacao
   wasModified     Boolean  @default(false) @map("was_modified")
@@ -2315,10 +2059,372 @@ model TemplateUsageLog {
   user         User             @relation(fields: [userId], references: [id])
   conversation Conversation?    @relation(fields: [conversationId], references: [id])
   message      Message?         @relation(fields: [messageId], references: [id])
-  ticket       Ticket?          @relation(fields: [ticketId], references: [id])
 
   @@index([templateId, createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("template_usage_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXTERNAL_CONNECTORS — Sistemas de chamados conectados
+// Cada tenant pode ter 1+ connectors (GLPI, Zendesk, Freshdesk, OTRS)
+// O sistema externo e a fonte de verdade dos tickets.
+// O Teki NUNCA duplica dados — consulta em tempo real.
+// ═══════════════════════════════════════════════════════════════
+
+model ExternalConnector {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Sistema
+  platform    ConnectorPlatform
+  displayName String?           @map("display_name") @db.VarChar(100)
+
+  // Conexao
+  baseUrl String @map("base_url") @db.VarChar(500)
+
+  // Autenticacao (credenciais criptografadas AES-256-GCM)
+  authType                 ConnectorAuthType @map("auth_type")
+  authCredentialsEncrypted String            @map("auth_credentials_encrypted") @db.Text
+
+  // Sincronizacao
+  syncDirection SyncDirection @default(READ_ONLY) @map("sync_direction")
+  syncConfig    Json          @default("{}") @map("sync_config")
+
+  // Webhook (alternativa a polling)
+  webhookSecretEncrypted String? @map("webhook_secret_encrypted") @db.VarChar(500)
+  webhookUrl             String? @map("webhook_url") @db.VarChar(500)
+
+  // Mapeamento de usuarios
+  userMappingStrategy String @default("email") @map("user_mapping_strategy") @db.VarChar(20)
+
+  // Estado
+  status ConnectorStatus @default(CONFIGURING)
+
+  lastSyncAt          DateTime? @map("last_sync_at")
+  lastSyncStatus      String?   @map("last_sync_status") @db.VarChar(20)
+  lastSyncError       String?   @map("last_sync_error") @db.Text
+  lastSyncTicketCount Int?      @map("last_sync_ticket_count")
+
+  consecutiveErrors Int @default(0) @map("consecutive_errors")
+  errorThreshold    Int @default(5) @map("error_threshold")
+
+  // Health
+  healthCheckAt     DateTime?    @map("health_check_at")
+  healthStatus      HealthStatus @default(UNKNOWN) @map("health_status")
+  avgResponseTimeMs Int?         @map("avg_response_time_ms")
+
+  // Metadata
+  platformVersion String? @map("platform_version") @db.VarChar(50)
+  capabilities    Json    @default("[]")
+
+  configuredBy String @map("configured_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  configurator User   @relation("ConnectorConfigurator", fields: [configuredBy], references: [id])
+
+  fieldMappings ConnectorFieldMapping[]
+  userMappings  ConnectorUserMapping[]
+  ticketCaches  TicketCache[]
+  annotations   TicketAnnotation[]
+  syncLogs      ConnectorSyncLog[]
+  ticketSlas    TicketSla[]
+
+  @@index([tenantId, status])
+  @@index([platform, status])
+  @@map("external_connectors")
+}
+
+enum ConnectorPlatform {
+  GLPI
+  ZENDESK
+  FRESHDESK
+  OTRS
+}
+
+enum ConnectorAuthType {
+  API_TOKEN
+  BASIC_AUTH
+  OAUTH2
+  API_KEY_HEADER
+}
+
+enum SyncDirection {
+  READ_ONLY
+  BIDIRECTIONAL
+  WRITE_BACK_NOTES
+}
+
+enum ConnectorStatus {
+  CONFIGURING
+  TESTING
+  ACTIVE
+  PAUSED
+  ERROR
+  DISCONNECTED
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+  UNKNOWN
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONNECTOR_FIELD_MAPPINGS — Traducao de campos entre sistemas
+// GLPI "urgencia" 5 = Teki "priority" "critical"
+// ═══════════════════════════════════════════════════════════════
+
+model ConnectorFieldMapping {
+  id          String @id @default(uuid()) @db.Uuid
+  connectorId String @map("connector_id") @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+
+  // Campo normalizado do Teki
+  tekiField String @map("teki_field") @db.VarChar(50)
+
+  // Campo no sistema externo
+  externalField String @map("external_field") @db.VarChar(100)
+
+  // Mapeamento de valores (externo → Teki, JSONB)
+  valueMappings   Json  @map("value_mappings")
+  reverseMappings Json? @map("reverse_mappings")
+
+  // Transformacao
+  transformType   String @default("direct") @map("transform_type") @db.VarChar(20)
+  transformConfig Json?  @map("transform_config")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, tekiField])
+  @@index([connectorId])
+  @@map("connector_field_mappings")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONNECTOR_USER_MAPPINGS — Vinculo user Teki <-> user externo
+// Preenchido automaticamente por email ou manualmente
+// ═══════════════════════════════════════════════════════════════
+
+model ConnectorUserMapping {
+  id          String @id @default(uuid()) @db.Uuid
+  connectorId String @map("connector_id") @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+
+  tekiUserId        String  @map("teki_user_id") @db.Uuid
+  externalUserId    String  @map("external_user_id") @db.VarChar(255)
+  externalUserName  String? @map("external_user_name") @db.VarChar(200)
+  externalUserEmail String? @map("external_user_email") @db.VarChar(255)
+
+  mappingMethod String  @default("email") @map("mapping_method") @db.VarChar(20)
+  isVerified    Boolean @default(false) @map("is_verified")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  tekiUser  User              @relation(fields: [tekiUserId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, tekiUserId])
+  @@unique([connectorId, externalUserId])
+  @@index([connectorId])
+  @@index([tekiUserId])
+  @@index([connectorId, externalUserId])
+  @@map("connector_user_mappings")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET_CACHE — Cache efemero de tickets externos
+// TTL curto (5-15 min). NAO e fonte de verdade.
+// Proposito: contexto rapido para IA, listagem sem latencia,
+// busca full-text que o sistema externo nao oferece.
+// ═══════════════════════════════════════════════════════════════
+
+model TicketCache {
+  id          String @id @default(uuid()) @db.Uuid
+  connectorId String @map("connector_id") @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+
+  // Referencia externa
+  externalTicketId     String  @map("external_ticket_id") @db.VarChar(255)
+  externalTicketNumber String? @map("external_ticket_number") @db.VarChar(50)
+  externalUrl          String? @map("external_url") @db.VarChar(500)
+
+  // Dados normalizados (traduzidos via field_mappings)
+  title       String? @db.VarChar(500)
+  description String? @db.Text
+  status      String? @db.VarChar(30)
+  priority    String? @db.VarChar(20)
+  type        String? @db.VarChar(30)
+  category    String? @db.VarChar(100)
+  tags        Json    @default("[]")
+
+  // Pessoas
+  requesterName   String? @map("requester_name") @db.VarChar(200)
+  requesterEmail  String? @map("requester_email") @db.VarChar(255)
+  assignedToName  String? @map("assigned_to_name") @db.VarChar(200)
+  assignedToEmail String? @map("assigned_to_email") @db.VarChar(255)
+  groupName       String? @map("group_name") @db.VarChar(100)
+
+  // Datas do sistema externo
+  externalCreatedAt  DateTime? @map("external_created_at")
+  externalUpdatedAt  DateTime? @map("external_updated_at")
+  externalResolvedAt DateTime? @map("external_resolved_at")
+  externalClosedAt   DateTime? @map("external_closed_at")
+
+  // Dados extras
+  rawData      Json? @map("raw_data")
+  customFields Json  @default("{}") @map("custom_fields")
+
+  // Cache control
+  cachedAt    DateTime    @default(now()) @map("cached_at")
+  expiresAt   DateTime    @map("expires_at")
+  cacheSource CacheSource @default(POLL) @map("cache_source")
+  isStale     Boolean     @default(false) @map("is_stale")
+
+  // Relations
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, externalTicketId])
+  @@index([tenantId, status, priority])
+  @@index([connectorId, cachedAt(sort: Desc)])
+  @@index([expiresAt])
+  @@index([connectorId, externalTicketId])
+  @@index([assignedToEmail, status])
+  @@index([tenantId, status])
+  @@map("ticket_cache")
+}
+
+enum CacheSource {
+  POLL
+  WEBHOOK
+  ON_DEMAND
+  AI_CONTEXT
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKET_ANNOTATIONS — Dados que o Teki adiciona ao ticket
+// O sistema externo tem o ticket. O Teki tem a INTELIGENCIA.
+// Um annotation por ticket externo por connector.
+// ═══════════════════════════════════════════════════════════════
+
+model TicketAnnotation {
+  id               String @id @default(uuid()) @db.Uuid
+  connectorId      String @map("connector_id") @db.Uuid
+  tenantId         String @map("tenant_id") @db.Uuid
+  externalTicketId String @map("external_ticket_id") @db.VarChar(255)
+
+  // Sugestoes de IA (JSONB array)
+  aiSuggestions Json @default("[]") @map("ai_suggestions")
+
+  // Artigos KB vinculados (JSONB array)
+  linkedKbArticles Json @default("[]") @map("linked_kb_articles")
+
+  // Notas internas rapidas do Teki (JSONB array)
+  quickNotes Json @default("[]") @map("quick_notes")
+
+  // Tags do Teki (separadas das tags do sistema externo)
+  tekiTags Json @default("[]") @map("teki_tags")
+
+  // Classificacao IA
+  aiCategorySuggestion String?  @map("ai_category_suggestion") @db.VarChar(100)
+  aiCategoryConfidence Decimal? @map("ai_category_confidence") @db.Decimal(5, 4)
+  aiPrioritySuggestion String?  @map("ai_priority_suggestion") @db.VarChar(20)
+  aiPriorityConfidence Decimal? @map("ai_priority_confidence") @db.Decimal(5, 4)
+  aiAutoClassified     Boolean  @default(false) @map("ai_auto_classified")
+
+  // Conversas vinculadas (conversations.context.external_ticket_id)
+  conversationCount Int @default(0) @map("conversation_count")
+
+  // Write-back status (JSONB log do que foi enviado ao externo)
+  writeBackLog Json @default("[]") @map("write_back_log")
+
+  // Metricas
+  firstAiSuggestionAt DateTime? @map("first_ai_suggestion_at")
+  totalAiSuggestions  Int       @default(0) @map("total_ai_suggestions")
+  totalAiCostUsd      Decimal   @default(0) @map("total_ai_cost_usd") @db.Decimal(10, 6)
+  suggestionsAccepted Int       @default(0) @map("suggestions_accepted")
+  suggestionsRejected Int       @default(0) @map("suggestions_rejected")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, externalTicketId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([connectorId, externalTicketId])
+  @@index([tenantId, totalAiSuggestions(sort: Desc)])
+  @@map("ticket_annotations")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONNECTOR_SYNC_LOG — Registro de cada sincronizacao
+// Para debug, auditoria e analise de performance
+// ═══════════════════════════════════════════════════════════════
+
+model ConnectorSyncLog {
+  id          String @id @default(uuid()) @db.Uuid
+  connectorId String @map("connector_id") @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+
+  // Tipo
+  syncType SyncType @map("sync_type")
+
+  // Resultado
+  status SyncLogStatus
+
+  ticketsFetched Int @default(0) @map("tickets_fetched")
+  ticketsCreated Int @default(0) @map("tickets_created")
+  ticketsUpdated Int @default(0) @map("tickets_updated")
+  ticketsStale   Int @default(0) @map("tickets_stale")
+
+  // Performance
+  durationMs       Int    @map("duration_ms")
+  apiCallsMade     Int    @default(0) @map("api_calls_made")
+  bytesTransferred BigInt @default(0) @map("bytes_transferred")
+
+  // Erro
+  errorMessage String? @map("error_message") @db.Text
+  errorDetails Json?   @map("error_details")
+
+  // Write-back
+  writeBackCount  Int @default(0) @map("write_back_count")
+  writeBackErrors Int @default(0) @map("write_back_errors")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  connector ExternalConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([connectorId, createdAt(sort: Desc)])
+  @@index([connectorId, status, createdAt(sort: Desc)])
+  @@map("connector_sync_log")
+}
+
+enum SyncType {
+  FULL
+  INCREMENTAL
+  SINGLE
+  SYNC_WEBHOOK @map("WEBHOOK")
+  WRITE_BACK
+}
+
+enum SyncLogStatus {
+  SUCCESS
+  PARTIAL
+  SYNC_ERROR @map("ERROR")
 }
