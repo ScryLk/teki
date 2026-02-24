@@ -3,8 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "cross-env NODE_ENV=development tsx scripts/dev.ts",
     "dev:web": "pnpm --filter @teki/web dev",
-    "dev:desktop": "pnpm --filter @teki/desktop dev",
+    "dev:desktop": "cross-env NODE_ENV=development tsx scripts/dev.ts --target=desktop",
+    "dev:free": "pnpm dev --plan=free --seed=basic",
+    "dev:starter": "pnpm dev --plan=starter --seed=basic",
+    "dev:pro": "pnpm dev --plan=pro --seed=full",
+    "dev:enterprise": "pnpm dev --plan=enterprise --seed=full",
+    "dev:onboarding": "pnpm dev --plan=free --seed=empty",
+    "dev:limits": "pnpm dev --plan=starter --seed=limit",
+    "seed": "tsx scripts/seed.ts",
+    "seed:reset": "tsx scripts/seed.ts --reset",
     "build:web": "pnpm --filter @teki/web build",
     "build:desktop": "pnpm --filter @teki/desktop build",
     "build": "pnpm -r build",
@@ -13,10 +22,14 @@
   "engines": {
     "node": ">=18.17.0"
   },
-    "pnpm": {
-    "onlyBuiltDependencies": ["*"]
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "*"
+    ]
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.4"
+    "@vitejs/plugin-react": "^5.1.4",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.21.0"
   }
 }
