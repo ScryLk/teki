@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { recordSignupConsents } from '@/lib/services/consent.service';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
 
@@ -38,6 +39,13 @@ export async function POST(req: NextRequest) {
     const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
     const userAgent = req.headers.get('user-agent') ?? undefined;
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
+
     // Create user + credentials + default agent in a transaction
     const user = await prisma.$transaction(async (tx) => {
       // 1. Create user (Layer 1 — Identity)
@@ -48,6 +56,7 @@ export async function POST(req: NextRequest) {
           lastName: lastName || undefined,
           displayName: lastName ? `${firstName} ${lastName}` : firstName,
           status: 'PENDING_VERIFICATION',
+          emailVerificationTokenHash: verificationTokenHash,
           // Layer 2 — Authentication (separate table)
           credentials: {
             create: {
@@ -94,6 +103,11 @@ export async function POST(req: NextRequest) {
       ipAddress,
       userAgent,
     });
+
+    // TODO: Send verification email with the raw token
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[register] Verification token for ${normalizedEmail}: ${verificationToken}`);
+    }
 
     return NextResponse.json(
       { id: user.id, email: user.email },

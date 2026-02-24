@@ -134,7 +134,7 @@ export async function revokeSession(
 export async function revokeAllSessions(
   userId: string,
   revokedBy: string,
-  reason: 'PASSWORD_CHANGED' | 'ADMIN_REVOKE' | 'ACCOUNT_SUSPENDED' | 'ACCOUNT_ANONYMIZED',
+  reason: 'USER_LOGOUT' | 'PASSWORD_CHANGED' | 'ADMIN_REVOKE' | 'ACCOUNT_SUSPENDED' | 'ACCOUNT_ANONYMIZED',
   excludeSessionId?: string
 ) {
   await prisma.userSession.updateMany({

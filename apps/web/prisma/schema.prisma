@@ -98,6 +98,9 @@ model User {
 
   avatarUrl String? @map("avatar_url") @db.VarChar(500)
 
+  // Verificacao de email
+  emailVerificationTokenHash String? @map("email_verification_token_hash") @db.VarChar(255)
+
   // Estado do ciclo de vida
   status UserStatus @default(PENDING_VERIFICATION)
 
