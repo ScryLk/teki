@@ -1,7 +1,12 @@
+import type { MemberRole, UserStatus, AuthProvider } from '@teki/shared';
+
 export interface SeedUser {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  role: 'owner' | 'admin' | 'agent' | 'viewer';
+  status: UserStatus;
+  role: MemberRole;
+  authProvider?: AuthProvider;
 }
 
 const FIRST_NAMES = [
@@ -40,24 +45,60 @@ const LAST_NAMES = [
   'Araujo',
 ];
 
+const DEPARTMENTS = [
+  'Suporte N1',
+  'Suporte N2',
+  'Engenharia',
+  'Produto',
+  'Comercial',
+  'Financeiro',
+  'RH',
+];
+
+const JOB_TITLES = [
+  'Analista de Suporte',
+  'Coordenador de TI',
+  'Desenvolvedor',
+  'Gerente de Produto',
+  'Atendente',
+  'Supervisor',
+  'Diretor de Operacoes',
+];
+
 export function generateUser(index: number): SeedUser {
   const firstName = FIRST_NAMES[index % FIRST_NAMES.length];
   const lastName = LAST_NAMES[index % LAST_NAMES.length];
-  const roles: SeedUser['role'][] = [
+  const roles: MemberRole[] = [
     'owner',
     'admin',
     'agent',
     'agent',
     'viewer',
+    'billing',
   ];
 
   return {
-    name: `${firstName} ${lastName}`,
+    firstName,
+    lastName,
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@dev.teki`,
+    status: 'active',
     role: index === 0 ? 'owner' : roles[index % roles.length],
   };
 }
 
 export function generateUsers(count: number): SeedUser[] {
   return Array.from({ length: count }, (_, i) => generateUser(i));
+}
+
+export function generateUserWithAuth(index: number): SeedUser & {
+  department: string;
+  jobTitle: string;
+} {
+  const user = generateUser(index);
+  return {
+    ...user,
+    authProvider: index % 3 === 0 ? 'google' : undefined,
+    department: DEPARTMENTS[index % DEPARTMENTS.length],
+    jobTitle: JOB_TITLES[index % JOB_TITLES.length],
+  };
 }

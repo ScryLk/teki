@@ -1,5 +1,5 @@
 export type PlanName = 'free' | 'starter' | 'pro' | 'enterprise';
-export type UserRole = 'owner' | 'admin' | 'agent' | 'viewer';
+export type UserRole = 'owner' | 'admin' | 'agent' | 'viewer' | 'billing' | 'custom';
 export type SeedScenario = 'empty' | 'basic' | 'full' | 'limit';
 
 export interface DevConfig {

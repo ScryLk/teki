@@ -9,50 +9,65 @@ datasource db {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// USERS & AUTH
+// TENANTS — Empresas/organizacoes na plataforma
 // ═══════════════════════════════════════════════════════════════
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  passwordHash  String
-  avatarUrl     String?
-  planId        PlanTier  @default(FREE)
-  planExpiresAt DateTime?
-  mpPreapprovalId String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model Tenant {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(200)
+  slug String @unique @db.VarChar(100)
 
-  agents           Agent[]
-  channels         Channel[]
-  apiKeys          ApiKey[]
-  usageCounters    UsageCounter[]
-  conversations    Conversation[]
-  providerKeys     ProviderKey[]
-  webhookEndpoints WebhookEndpoint[]
-  sessions         Session[]
-  documents        Document[]
-  kbArticles       KbArticle[]
-  kbCategories     KbCategory[]
-  kbInsertionLogs  KbInsertionLog[]
+  // Contato da empresa
+  email   String? @db.VarChar(255)
+  phone   String? @db.VarChar(20)
+  website String? @db.VarChar(500)
 
-  @@index([email])
+  // Localizacao (timezone padrao e compliance por jurisdicao)
+  country         String @default("BR") @db.VarChar(2)
+  state           String? @db.VarChar(100)
+  city            String? @db.VarChar(100)
+  defaultTimezone String @default("America/Sao_Paulo") @map("default_timezone") @db.VarChar(50)
+  defaultLocale   String @default("pt-BR") @map("default_locale") @db.VarChar(10)
+
+  // Documentos fiscais
+  taxId     String? @map("tax_id") @db.VarChar(20)
+  taxIdType String? @map("tax_id_type") @db.VarChar(10)
+
+  // Plano e billing
+  plan              PlanTier  @default(FREE)
+  planStartedAt     DateTime? @map("plan_started_at")
+  planExpiresAt     DateTime? @map("plan_expires_at")
+  billingEmail      String?   @map("billing_email") @db.VarChar(255)
+  stripeCustomerId  String?   @map("stripe_customer_id") @db.VarChar(255)
+  mpPreapprovalId   String?   @map("mp_preapproval_id")
+
+  // Estado
+  status      TenantStatus @default(ACTIVE)
+  trialEndsAt DateTime?    @map("trial_ends_at")
+
+  // Settings (branding, security, features)
+  settings Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  members    TenantMember[]
+  dataPolicy TenantDataPolicy?
+  sessions   UserSession[]
+  preferences UserPreference[]
+
+  @@index([slug])
+  @@index([plan, status])
+  @@index([status])
+  @@map("tenants")
 }
 
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  userAgent String?
-  ipAddress String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([userId])
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
 }
 
 enum PlanTier {
@@ -63,12 +78,564 @@ enum PlanTier {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// USERS — Identidade central (LGPD Art. 7, II)
+// Dados minimos: id, email, nome, status
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id    String @id @default(uuid()) @db.Uuid
+  email String @unique @db.VarChar(255)
+
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+
+  firstName   String  @map("first_name") @db.VarChar(100)
+  lastName    String? @map("last_name") @db.VarChar(100)
+  displayName String? @map("display_name") @db.VarChar(200)
+
+  phone         String?  @unique @db.VarChar(20)
+  phoneVerified Boolean  @default(false) @map("phone_verified")
+
+  avatarUrl String? @map("avatar_url") @db.VarChar(500)
+
+  // Estado do ciclo de vida
+  status UserStatus @default(PENDING_VERIFICATION)
+
+  // Metadata do ciclo
+  lastLoginAt        DateTime? @map("last_login_at")
+  lastLoginIp        String?   @map("last_login_ip")
+  lastLoginUserAgent String?   @map("last_login_user_agent") @db.Text
+
+  deactivatedAt     DateTime? @map("deactivated_at")
+  deactivatedReason String?   @map("deactivated_reason") @db.VarChar(500)
+  anonymizedAt      DateTime? @map("anonymized_at")
+  anonymizedBy      String?   @map("anonymized_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations - Auth
+  credentials   UserCredential?
+  authProviders UserAuthProvider[]
+
+  // Relations - Operational
+  memberships TenantMember[]    @relation("UserMemberships")
+  invitations TenantMember[]    @relation("UserInvitations")
+  preferences UserPreference[]
+  sessions    UserSession[]
+  consents    UserConsent[]
+
+  // Relations - Data access (as subject)
+  dataAccessAsSubject DataAccessLog[] @relation("DataAccessSubject")
+
+  // Relations - Existing features (preserved)
+  agents           Agent[]
+  channels         Channel[]
+  apiKeys          ApiKey[]
+  usageCounters    UsageCounter[]
+  conversations    Conversation[]
+  providerKeys     ProviderKey[]
+  webhookEndpoints WebhookEndpoint[]
+  documents        Document[]
+  kbArticles       KbArticle[]
+  kbCategories     KbCategory[]
+  kbInsertionLogs  KbInsertionLog[]
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([lastLoginAt(sort: Desc)])
+  @@map("users")
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+  ANONYMIZED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USER_CREDENTIALS — Hash de senhas (auth local)
+// Base legal LGPD: Art. 7, II + Art. 46 (seguranca)
+// Separada do users por isolamento de seguranca
+// ═══════════════════════════════════════════════════════════════
+
+model UserCredential {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+
+  // Hash: argon2id ou bcrypt
+  passwordHash  String        @map("password_hash") @db.VarChar(255)
+  hashAlgorithm HashAlgorithm @default(ARGON2ID) @map("hash_algorithm")
+
+  // Politica de senha
+  passwordChangedAt DateTime  @default(now()) @map("password_changed_at")
+  passwordExpiresAt DateTime? @map("password_expires_at")
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
+  failedAttempts     Int      @default(0) @map("failed_attempts")
+  lockedUntil        DateTime? @map("locked_until")
+
+  // MFA
+  mfaEnabled              Boolean    @default(false) @map("mfa_enabled")
+  mfaMethod               MfaMethod? @map("mfa_method")
+  mfaSecretEncrypted      String?    @map("mfa_secret_encrypted") @db.VarChar(500)
+  mfaBackupCodesEncrypted String?    @map("mfa_backup_codes_encrypted") @db.Text
+  mfaVerifiedAt           DateTime?  @map("mfa_verified_at")
+
+  // Recovery
+  recoveryTokenHash      String?   @map("recovery_token_hash") @db.VarChar(255)
+  recoveryTokenExpiresAt DateTime? @map("recovery_token_expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_credentials")
+}
+
+enum HashAlgorithm {
+  ARGON2ID
+  BCRYPT
+}
+
+enum MfaMethod {
+  TOTP
+  SMS
+  EMAIL
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USER_AUTH_PROVIDERS — Conexoes OAuth e SSO
+// Base legal LGPD: Art. 7, II (execucao de contrato)
+// Um user pode ter N providers vinculados
+// ═══════════════════════════════════════════════════════════════
+
+model UserAuthProvider {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  // Provider
+  provider       AuthProvider @default(GOOGLE)
+  providerUserId String       @map("provider_user_id") @db.VarChar(255)
+
+  // Tokens (criptografados AES-256-GCM)
+  accessTokenEncrypted  String?   @map("access_token_encrypted") @db.Text
+  refreshTokenEncrypted String?   @map("refresh_token_encrypted") @db.Text
+  tokenExpiresAt        DateTime? @map("token_expires_at")
+
+  // Dados do provider (snapshot do ultimo login)
+  providerEmail     String? @map("provider_email") @db.VarChar(255)
+  providerName      String? @map("provider_name") @db.VarChar(200)
+  providerAvatarUrl String? @map("provider_avatar_url") @db.VarChar(500)
+
+  // SSO especifico (SAML/OIDC)
+  ssoTenantId  String? @map("sso_tenant_id") @db.VarChar(255)
+  ssoIssuerUrl String? @map("sso_issuer_url") @db.VarChar(500)
+  ssoMetadata  Json?   @map("sso_metadata")
+
+  // Estado
+  isPrimary  Boolean   @default(false) @map("is_primary")
+  linkedAt   DateTime  @default(now()) @map("linked_at")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Um user nao pode vincular o mesmo provider duas vezes
+  @@unique([userId, provider, providerUserId])
+  // Garante que o provider_user_id nao esta vinculado a outro user
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@index([ssoTenantId])
+  @@map("user_auth_providers")
+}
+
+enum AuthProvider {
+  GOOGLE
+  GITHUB
+  MICROSOFT
+  SAML
+  OIDC
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TENANT_MEMBERS — Vinculo user <-> tenant
+// Base legal LGPD: Art. 7, II (execucao de contrato)
+// Um user pode pertencer a N tenants com roles diferentes
+// ═══════════════════════════════════════════════════════════════
+
+model TenantMember {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+
+  // Role no tenant
+  role MemberRole @default(AGENT)
+
+  // Permissoes granulares (para role CUSTOM ou override)
+  permissions Json?
+
+  // Contexto no tenant
+  jobTitle   String? @map("job_title") @db.VarChar(100)
+  department String? @db.VarChar(100)
+
+  // Estado do vinculo
+  status MemberStatus @default(ACTIVE)
+
+  // Convite
+  invitedBy       String?   @map("invited_by") @db.Uuid
+  invitedAt       DateTime? @map("invited_at")
+  inviteTokenHash String?   @map("invite_token_hash") @db.VarChar(255)
+  inviteExpiresAt DateTime? @map("invite_expires_at")
+  acceptedAt      DateTime? @map("accepted_at")
+
+  // Metadata operacional
+  lastActiveAt DateTime? @map("last_active_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User   @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser User? @relation("UserInvitations", fields: [invitedBy], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([tenantId, status])
+  @@index([userId, status])
+  @@index([tenantId, role])
+  @@index([inviteTokenHash])
+  @@index([tenantId, lastActiveAt(sort: Desc)])
+  @@map("tenant_members")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  AGENT
+  VIEWER
+  BILLING
+  CUSTOM
+}
+
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USER_PREFERENCES — Preferencias por user + tenant
+// Base legal LGPD: Art. 7, I (consentimento) para dados opcionais
+// ═══════════════════════════════════════════════════════════════
+
+model UserPreference {
+  id       String  @id @default(uuid()) @db.Uuid
+  userId   String  @map("user_id") @db.Uuid
+  tenantId String? @map("tenant_id") @db.Uuid
+
+  // Preferencias estruturadas
+  timezone             String  @default("America/Sao_Paulo") @db.VarChar(50)
+  timezoneAutoDetected Boolean @default(true) @map("timezone_auto_detected")
+  locale               String  @default("pt-BR") @db.VarChar(10)
+  theme                Theme   @default(DARK)
+
+  // Preferencias extensiveis (JSONB)
+  notificationSettings Json @default("{\"email\":{\"enabled\":true,\"digest\":\"daily\",\"types\":[\"ticket_assigned\",\"ticket_resolved\",\"mention\"]},\"desktop\":{\"enabled\":true,\"sound\":true,\"types\":[\"ticket_assigned\",\"new_message\",\"alert\"]},\"in_app\":{\"enabled\":true,\"types\":[\"all\"]}}") @map("notification_settings")
+  aiSettings           Json @default("{\"preferred_provider\":null,\"preferred_model\":null,\"auto_suggest\":true,\"suggestion_language\":\"pt-BR\",\"show_cost\":true,\"show_tokens\":false}") @map("ai_settings")
+
+  floatingAssistantSettings Json @default("{\"side\":\"right\",\"width\":320,\"collapsed\":false,\"always_on_top\":true,\"opacity\":0.85,\"stealth_mode\":true,\"shortcuts\":{\"toggle\":\"CommandOrControl+Shift+Space\",\"capture\":\"CommandOrControl+Shift+S\",\"audio\":\"CommandOrControl+Shift+A\",\"quick_input\":\"CommandOrControl+Shift+Q\"}}") @map("floating_assistant_settings")
+
+  uiSettings Json @default("{\"sidebar_collapsed\":false,\"density\":\"comfortable\",\"font_size\":\"medium\",\"animations\":true,\"cat_mascot_visible\":true,\"keyboard_shortcuts_enabled\":true,\"default_kb_view\":\"list\",\"default_ticket_view\":\"kanban\"}") @map("ui_settings")
+
+  // Bucket generico para features futuras
+  customSettings Json @default("{}") @map("custom_settings")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([userId, tenantId])
+  @@map("user_preferences")
+}
+
+enum Theme {
+  DARK
+  LIGHT
+  SYSTEM
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USER_CONSENTS — Registros de consentimento (LGPD Art. 8)
+// IMUTAVEL: cada mudanca cria novo registro, nunca UPDATE
+// ═══════════════════════════════════════════════════════════════
+
+model UserConsent {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  // Tipo de consentimento
+  purpose ConsentPurpose
+
+  // Decisao
+  granted Boolean
+
+  // Contexto legal
+  legalBasis LegalBasis @map("legal_basis")
+
+  // Versao do documento aceito
+  policyVersion String  @map("policy_version") @db.VarChar(20)
+  policyUrl     String? @map("policy_url") @db.VarChar(500)
+
+  // Como foi coletado
+  collectionMethod ConsentCollectionMethod @map("collection_method")
+
+  // Metadados do momento da coleta (prova)
+  ipAddress  String? @map("ip_address")
+  userAgent  String? @map("user_agent") @db.Text
+  geoCountry String? @map("geo_country") @db.VarChar(2)
+
+  // Validade
+  expiresAt DateTime? @map("expires_at")
+
+  // Imutavel - sem updated_at
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt(sort: Desc)])
+  @@index([purpose, granted])
+  @@index([createdAt(sort: Desc)])
+  @@map("user_consents")
+}
+
+enum ConsentPurpose {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+  DATA_PROCESSING
+  AI_DATA_USAGE
+  MARKETING_EMAIL
+  ANALYTICS_TRACKING
+  THIRD_PARTY_SHARING
+  AUDIO_RECORDING
+  SCREEN_CAPTURE
+  COOKIE_ANALYTICS
+  COOKIE_MARKETING
+}
+
+enum LegalBasis {
+  CONSENT
+  CONTRACT
+  LEGAL_OBLIGATION
+  LEGITIMATE_INTEREST
+}
+
+enum ConsentCollectionMethod {
+  SIGNUP_FORM
+  BANNER
+  SETTINGS
+  PROMPT
+  API
+  MIGRATION
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA_ACCESS_LOG — Quem acessou dados pessoais de quem
+// LGPD: Art. 37 (registro de tratamento) + Art. 46 (seguranca)
+// RETENCAO MINIMA: 5 anos (prazo prescricional LGPD)
+// ═══════════════════════════════════════════════════════════════
+
+model DataAccessLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Quem acessou
+  accessorId       String       @map("accessor_id") @db.Uuid
+  accessorType     AccessorType @map("accessor_type")
+  accessorTenantId String?      @map("accessor_tenant_id") @db.Uuid
+
+  // De quem foram os dados acessados
+  subjectId String @map("subject_id") @db.Uuid
+
+  // O que foi acessado
+  action DataAccessAction
+
+  // Quais dados foram acessados
+  dataCategories String[] @map("data_categories")
+
+  // Detalhes
+  details Json?
+
+  // Justificativa legal
+  legalBasis    String? @map("legal_basis") @db.VarChar(50)
+  justification String? @db.Text
+
+  // Metadados
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent") @db.Text
+
+  // Imutavel - sem updated_at
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subject User @relation("DataAccessSubject", fields: [subjectId], references: [id])
+
+  @@index([subjectId, createdAt(sort: Desc)])
+  @@index([accessorId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@map("data_access_log")
+}
+
+enum AccessorType {
+  USER
+  ADMIN
+  SYSTEM
+  API_ACCESSOR
+  SUPPORT
+}
+
+enum DataAccessAction {
+  VIEW
+  EXPORT
+  MODIFY
+  DELETE
+  ANONYMIZE
+  SHARE
+  PROCESS
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TENANT_DATA_POLICIES — Configuracao de retencao e exclusao
+// Configuravel pelo owner do tenant
+// ═══════════════════════════════════════════════════════════════
+
+model TenantDataPolicy {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Comportamento ao remover usuario do tenant
+  memberRemovalPolicy MemberRemovalPolicy @default(ANONYMIZE) @map("member_removal_policy")
+
+  // Se RETAIN: quantos dias manter antes de aplicar
+  retentionDays Int @default(30) @map("retention_days")
+
+  // Dados operacionais: manter ou apagar junto?
+  keepTickets      Boolean @default(true) @map("keep_tickets")
+  keepKbArticles   Boolean @default(true) @map("keep_kb_articles")
+  keepActivityLogs Boolean @default(true) @map("keep_activity_logs")
+  keepAiHistory    Boolean @default(false) @map("keep_ai_history")
+
+  // LGPD: tempo de retencao geral de dados pessoais no tenant
+  personalDataRetentionMonths Int @default(24) @map("personal_data_retention_months")
+
+  // Notificacoes
+  notifyUserOnDataDeletion  Boolean @default(true) @map("notify_user_on_data_deletion")
+  notifyAdminOnDataRequest  Boolean @default(true) @map("notify_admin_on_data_request")
+
+  // DPO (Data Protection Officer)
+  dpoName  String? @map("dpo_name") @db.VarChar(200)
+  dpoEmail String? @map("dpo_email") @db.VarChar(255)
+
+  // Termos aceitos pelo owner
+  termsAcceptedAt DateTime? @map("terms_accepted_at")
+  termsAcceptedBy String?   @map("terms_accepted_by") @db.Uuid
+  termsVersion    String?   @map("terms_version") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_data_policies")
+}
+
+enum MemberRemovalPolicy {
+  ANONYMIZE
+  HARD_DELETE
+  RETAIN
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USER_SESSIONS — Sessoes ativas
+// Multi-device, revogacao remota, deteccao de anomalia
+// ═══════════════════════════════════════════════════════════════
+
+model UserSession {
+  id       String  @id @default(uuid()) @db.Uuid
+  userId   String  @map("user_id") @db.Uuid
+  tenantId String? @map("tenant_id") @db.Uuid
+
+  // Token
+  tokenHash        String  @unique @map("token_hash") @db.VarChar(255)
+  refreshTokenHash String? @unique @map("refresh_token_hash") @db.VarChar(255)
+
+  // Device info
+  deviceFingerprint String?    @map("device_fingerprint") @db.VarChar(255)
+  deviceType        DeviceType? @map("device_type")
+  deviceName        String?    @map("device_name") @db.VarChar(100)
+  os                String?    @db.VarChar(50)
+  browser           String?    @db.VarChar(50)
+
+  // Localizacao
+  ipAddress  String  @map("ip_address")
+  geoCountry String? @map("geo_country") @db.VarChar(2)
+  geoRegion  String? @map("geo_region") @db.VarChar(100)
+  geoCity    String? @map("geo_city") @db.VarChar(100)
+
+  // Estado
+  isActive       Boolean   @default(true) @map("is_active")
+  lastActivityAt DateTime  @default(now()) @map("last_activity_at")
+  expiresAt      DateTime  @map("expires_at")
+
+  revokedAt    DateTime?       @map("revoked_at")
+  revokedBy    String?         @map("revoked_by") @db.Uuid
+  revokeReason SessionRevokeReason? @map("revoke_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([tenantId, isActive])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+enum DeviceType {
+  DESKTOP_APP
+  WEB_BROWSER
+  MOBILE_APP
+  API_CLIENT
+}
+
+enum SessionRevokeReason {
+  USER_LOGOUT
+  ADMIN_REVOKE
+  PASSWORD_CHANGED
+  SUSPICIOUS_ACTIVITY
+  SESSION_LIMIT
+  ACCOUNT_SUSPENDED
+  ACCOUNT_ANONYMIZED
+}
+
+// ═══════════════════════════════════════════════════════════════
 // API KEYS
 // ═══════════════════════════════════════════════════════════════
 
 model ApiKey {
   id         String     @id @default(cuid())
-  userId     String
+  userId     String     @db.Uuid
   keyHash    String     @unique
   keyPrefix  String
   name       String
@@ -95,7 +662,7 @@ enum ApiKeyType {
 
 model ProviderKey {
   id              String    @id @default(cuid())
-  userId          String
+  userId          String    @db.Uuid
   provider        String
   encryptedKey    String
   iv              String
@@ -116,7 +683,7 @@ model ProviderKey {
 
 model Agent {
   id             String   @id @default(cuid())
-  userId         String
+  userId         String   @db.Uuid
   name           String
   description    String?
   systemPrompt   String   @db.Text
@@ -140,7 +707,7 @@ model Agent {
 model Document {
   id           String         @id @default(cuid())
   agentId      String
-  userId       String
+  userId       String         @db.Uuid
   filename     String
   originalName String
   fileType     String
@@ -187,7 +754,7 @@ model DocumentChunk {
 
 model Channel {
   id                    String        @id @default(cuid())
-  userId                String
+  userId                String        @db.Uuid
   agentId               String
   platform              Platform
   status                ChannelStatus @default(PENDING)
@@ -274,7 +841,7 @@ enum MessageRole {
 
 model Conversation {
   id        String             @id @default(cuid())
-  userId    String
+  userId    String             @db.Uuid
   agentId   String?
   title     String             @default("Nova conversa")
   source    ConversationSource @default(WEB)
@@ -315,7 +882,7 @@ model ConversationMessage {
 
 model UsageCounter {
   id           String @id @default(cuid())
-  userId       String
+  userId       String @db.Uuid
   period       String
   messages     Int    @default(0)
   tokensIn     Int    @default(0)
@@ -334,7 +901,7 @@ model UsageCounter {
 
 model WebhookEndpoint {
   id        String   @id @default(cuid())
-  userId    String
+  userId    String   @db.Uuid
   url       String
   secret    String
   events    String[]
@@ -368,7 +935,7 @@ model WebhookLog {
 
 model KbCategory {
   id          String   @id @default(cuid())
-  userId      String
+  userId      String   @db.Uuid
   name        String
   slug        String
   description String?
@@ -388,27 +955,27 @@ model KbCategory {
 }
 
 model KbArticle {
-  id             String          @id @default(cuid())
-  userId         String
-  categoryId     String?
-  title          String
-  slug           String
-  summary        String?         @db.Text
-  content        String          @db.Text
-  status         KbArticleStatus @default(DRAFT)
-  difficulty     KbDifficulty    @default(BASIC)
-  targetAudience KbAudience      @default(TECHNICIAN)
-  tags           String[]
-  viewCount      Int             @default(0)
-  helpfulCount   Int             @default(0)
-  notHelpfulCount Int            @default(0)
-  insertionMode  KbInsertionMode?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id              String          @id @default(cuid())
+  userId          String          @db.Uuid
+  categoryId      String?
+  title           String
+  slug            String
+  summary         String?         @db.Text
+  content         String          @db.Text
+  status          KbArticleStatus @default(DRAFT)
+  difficulty      KbDifficulty    @default(BASIC)
+  targetAudience  KbAudience      @default(TECHNICIAN)
+  tags            String[]
+  viewCount       Int             @default(0)
+  helpfulCount    Int             @default(0)
+  notHelpfulCount Int             @default(0)
+  insertionMode   KbInsertionMode?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category    KbCategory?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  attachments KbArticleAttachment[]
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      KbCategory?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  attachments   KbArticleAttachment[]
   insertionLogs KbInsertionLog[]
 
   @@unique([userId, slug])
@@ -444,7 +1011,7 @@ enum KbInsertionMode {
 
 model KbArticleAttachment {
   id               String   @id @default(cuid())
-  userId           String
+  userId           String   @db.Uuid
   articleId        String
   fileName         String
   fileType         String
@@ -467,22 +1034,22 @@ model KbArticleAttachment {
 }
 
 model KbInsertionLog {
-  id             String          @id @default(cuid())
-  userId         String
-  articleId      String?
-  insertionMode  KbInsertionMode
-  originalInput  Json?
-  aiProvider     String?
-  aiModel        String?
-  aiSuggestions  Json?
-  aiTokensUsed   Int?
-  aiCostUsd      Float?
-  aiLatencyMs    Int?
-  fieldsAutoFilled Int           @default(0)
-  fieldsUserEdited Int           @default(0)
-  userEdits      Json?
-  status         String          @default("completed")
-  createdAt      DateTime        @default(now())
+  id               String          @id @default(cuid())
+  userId           String          @db.Uuid
+  articleId        String?
+  insertionMode    KbInsertionMode
+  originalInput    Json?
+  aiProvider       String?
+  aiModel          String?
+  aiSuggestions    Json?
+  aiTokensUsed     Int?
+  aiCostUsd        Float?
+  aiLatencyMs      Int?
+  fieldsAutoFilled Int             @default(0)
+  fieldsUserEdited Int             @default(0)
+  userEdits        Json?
+  status           String          @default("completed")
+  createdAt        DateTime        @default(now())
 
   user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   article KbArticle? @relation(fields: [articleId], references: [id], onDelete: SetNull)

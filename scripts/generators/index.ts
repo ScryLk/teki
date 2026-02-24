@@ -1,7 +1,7 @@
 export { generateArticle, generateArticles } from './kb-article.generator';
 export { generateTicket, generateTickets } from './ticket.generator';
 export { generateLog, generateLogs } from './log.generator';
-export { generateUser, generateUsers } from './user.generator';
+export { generateUser, generateUsers, generateUserWithAuth } from './user.generator';
 
 export type { SeedArticle } from './kb-article.generator';
 export type { SeedTicket } from './ticket.generator';
