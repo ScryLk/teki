@@ -21,6 +21,9 @@ interface AppState {
   // Settings panel
   settingsOpen: boolean;
 
+  // Full-page settings
+  settingsPageOpen: boolean;
+
   // Window watching state
   isWatching: boolean;
   watchedWindowName: string | null;
@@ -43,6 +46,7 @@ interface AppState {
   setLayout: (layout: LayoutMode) => void;
   toggleCommandPalette: () => void;
   setSettingsOpen: (open: boolean) => void;
+  setSettingsPageOpen: (open: boolean) => void;
   setWatching: (isWatching: boolean, windowName?: string) => void;
   setCatState: (catState: CatState) => void;
   setActiveWindow: (activeWindow: ActiveWindowInfo | null) => void;
@@ -72,6 +76,9 @@ export const useAppStore = create<AppState>((set) => ({
   // Settings panel
   settingsOpen: false,
 
+  // Full-page settings
+  settingsPageOpen: false,
+
   // Window watching state
   isWatching: false,
   watchedWindowName: null,
@@ -100,6 +107,8 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
 
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+
+  setSettingsPageOpen: (settingsPageOpen) => set({ settingsPageOpen }),
 
   setWatching: (isWatching, windowName) =>
     set((state) => ({

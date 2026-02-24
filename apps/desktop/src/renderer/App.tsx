@@ -7,12 +7,15 @@ import ChatPanel from './components/chat/ChatPanel';
 import ScreenViewer from './components/screen/ScreenViewer';
 import CommandPalette from './components/command-palette/CommandPalette';
 import SettingsModal from './components/settings/SettingsModal';
+import SettingsPage from './components/settings/SettingsPage';
 
 const App: React.FC = () => {
   const layout = useAppStore((s) => s.layout);
   const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
   const settingsOpen = useAppStore((s) => s.settingsOpen);
+  const settingsPageOpen = useAppStore((s) => s.settingsPageOpen);
   const setLayout = useAppStore((s) => s.setLayout);
+  const setSettingsPageOpen = useAppStore((s) => s.setSettingsPageOpen);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
 
   useEffect(() => {
@@ -68,6 +71,18 @@ const App: React.FC = () => {
         );
     }
   };
+
+  // Full-page settings takes over the entire app
+  if (settingsPageOpen) {
+    return (
+      <div className="h-screen flex flex-col bg-bg">
+        <TitleBar />
+        <main className="flex-1 overflow-hidden">
+          <SettingsPage onBack={() => setSettingsPageOpen(false)} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-bg">

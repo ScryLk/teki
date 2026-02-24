@@ -9,6 +9,7 @@ const TitleBar: React.FC = () => {
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
   const triggerWindowSelector = useAppStore((s) => s.triggerWindowSelector);
   const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
+  const setSettingsPageOpen = useAppStore((s) => s.setSettingsPageOpen);
 
   const handlePlayPauseClick = React.useCallback(async () => {
     if (isCapturing) {
@@ -64,9 +65,9 @@ const TitleBar: React.FC = () => {
           )}
         </button>
 
-        {/* Settings gear icon */}
+        {/* Settings gear icon — opens full-page settings */}
         <button
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => setSettingsPageOpen(true)}
           className="flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary"
           title="Configurações"
         >
