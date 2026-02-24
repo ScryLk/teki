@@ -56,6 +56,8 @@ model Tenant {
   dataPolicy TenantDataPolicy?
   sessions   UserSession[]
   preferences UserPreference[]
+  conversations Conversation[]
+  conversationTags ConversationTag[]
 
   @@index([slug])
   @@index([plan, status])
@@ -136,13 +138,21 @@ model User {
   channels         Channel[]
   apiKeys          ApiKey[]
   usageCounters    UsageCounter[]
-  conversations    Conversation[]
   providerKeys     ProviderKey[]
   webhookEndpoints WebhookEndpoint[]
   documents        Document[]
   kbArticles       KbArticle[]
   kbCategories     KbCategory[]
   kbInsertionLogs  KbInsertionLog[]
+
+  // Relations - Conversations (new schema)
+  createdConversations ConversationParticipant[]
+  conversationsCreated Conversation[]            @relation("ConversationCreator")
+  sentMessages         Message[]                 @relation("MessageSender")
+  messageFeedback      MessageFeedback[]
+  uploadedAttachments  MessageAttachment[]       @relation("AttachmentUploader")
+  createdTags          ConversationTag[]         @relation("TagCreator")
+  tagLinks             ConversationTagLink[]     @relation("TagLinkUser")
 
   @@index([email])
   @@index([status])
@@ -839,44 +849,528 @@ enum MessageRole {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CONVERSATIONS (Web/Desktop)
+// CONVERSATIONS — Container de interacoes
+// Uma conversa = um contexto continuo de troca de mensagens
+// Suporta: ai_chat, floating, internal_note e tipos futuros
 // ═══════════════════════════════════════════════════════════════
 
 model Conversation {
-  id        String             @id @default(cuid())
-  userId    String             @db.Uuid
-  agentId   String?
-  title     String             @default("Nova conversa")
-  source    ConversationSource @default(WEB)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
 
-  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages ConversationMessage[]
+  // Tipo da conversa
+  type ConversationType
 
-  @@index([userId, updatedAt])
+  // Identificacao
+  title String? @db.VarChar(300)
+  slug  String? @db.VarChar(100)
+
+  // Vinculo contextual (ticket, KB article, etc.)
+  context Json @default("{}")
+
+  // Configuracoes da conversa (provider, model, temperature, etc.)
+  settings Json @default("{}")
+
+  // Estado
+  status ConversationStatus @default(ACTIVE)
+
+  // Contadores desnormalizados
+  messageCount     Int @default(0) @map("message_count")
+  participantCount Int @default(0) @map("participant_count")
+  unreadCount      Json @default("{}") @map("unread_count")
+
+  // Resumo IA
+  aiSummary          String?   @map("ai_summary") @db.Text
+  aiSummaryUpdatedAt DateTime? @map("ai_summary_updated_at")
+
+  // Custos acumulados
+  totalAiTokensIn  Int     @default(0) @map("total_ai_tokens_in")
+  totalAiTokensOut Int     @default(0) @map("total_ai_tokens_out")
+  totalAiCostUsd   Decimal @default(0) @map("total_ai_cost_usd") @db.Decimal(10, 6)
+  totalAiMessages  Int     @default(0) @map("total_ai_messages")
+
+  // Primeiro e ultimo
+  firstMessageAt     DateTime? @map("first_message_at")
+  lastMessageAt      DateTime? @map("last_message_at")
+  lastMessagePreview String?   @map("last_message_preview") @db.VarChar(200)
+
+  // Criacao
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator      User                      @relation("ConversationCreator", fields: [createdBy], references: [id])
+  tenant       Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+  tagLinks     ConversationTagLink[]
+
+  @@index([tenantId, status, lastMessageAt(sort: Desc)])
+  @@index([tenantId, type, status])
+  @@index([createdBy, status])
+  @@map("conversations")
 }
 
-enum ConversationSource {
-  WEB
-  DESKTOP
-  API
+enum ConversationType {
+  AI_CHAT
+  FLOATING
+  INTERNAL_NOTE
+  SUPPORT_CHAT
+  BOT_FLOW
+  VOICE_TRANSCRIPT
+  GROUP_CHAT
 }
 
-model ConversationMessage {
-  id             String      @id @default(cuid())
-  conversationId String
-  role           MessageRole
-  content        String      @db.Text
-  modelUsed      String?
-  tokensIn       Int?
-  tokensOut      Int?
-  latencyMs      Int?
-  createdAt      DateTime    @default(now())
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  CLOSED
+  DELETED
+}
 
+// ═══════════════════════════════════════════════════════════════
+// CONVERSATION_PARTICIPANTS — Quem participa de cada conversa
+// Separada para: N participantes, join/leave, roles, notificacoes
+// ═══════════════════════════════════════════════════════════════
+
+model ConversationParticipant {
+  id             String @id @default(uuid()) @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  userId         String @map("user_id") @db.Uuid
+
+  // Role na conversa
+  role ParticipantRole @default(PARTICIPANT)
+
+  // Estado
+  status ParticipantStatus @default(ACTIVE)
+
+  // Leitura
+  lastReadAt        DateTime? @map("last_read_at")
+  lastReadMessageId String?   @map("last_read_message_id") @db.Uuid
+
+  // Preferencias por conversa
+  isPinned          Boolean @default(false) @map("is_pinned")
+  isMuted           Boolean @default(false) @map("is_muted")
+  notificationLevel NotificationLevel @default(ALL) @map("notification_level")
+
+  // Timestamps
+  joinedAt  DateTime  @default(now()) @map("joined_at")
+  leftAt    DateTime? @map("left_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([conversationId, createdAt])
+  @@unique([conversationId, userId])
+  @@index([conversationId, status])
+  @@index([userId, status])
+  @@index([userId, isPinned(sort: Desc), conversationId])
+  @@map("conversation_participants")
+}
+
+enum ParticipantRole {
+  CREATOR
+  PARTICIPANT
+  OBSERVER
+  MENTIONED
+}
+
+enum ParticipantStatus {
+  ACTIVE       @map("ACTIVE")
+  LEFT         @map("LEFT")
+  REMOVED      @map("REMOVED")
+  PARTICIPANT_MUTED @map("MUTED")
+}
+
+enum NotificationLevel {
+  ALL
+  MENTIONS
+  NONE
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGES — Conteudo de cada turno da conversa
+// Threading opcional via parentMessageId
+// ═══════════════════════════════════════════════════════════════
+
+model Message {
+  id             String @id @default(uuid()) @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+
+  // Autor
+  senderType SenderType @map("sender_type")
+  senderId   String?    @map("sender_id") @db.Uuid
+
+  // Conteudo
+  contentType MessageContentType @default(TEXT) @map("content_type")
+  content     String?            @db.Text
+  contentBlocks Json?            @map("content_blocks")
+
+  // Threading
+  parentMessageId    String? @map("parent_message_id") @db.Uuid
+  threadDepth        Int     @default(0) @map("thread_depth")
+  threadMessageCount Int     @default(0) @map("thread_message_count")
+
+  // Mencoes
+  mentions Json?
+
+  // Estado
+  status          MessageStatus @default(SENT)
+  editedAt        DateTime?     @map("edited_at")
+  editedBy        String?       @map("edited_by") @db.Uuid
+  originalContent String?       @map("original_content") @db.Text
+  deletedAt       DateTime?     @map("deleted_at")
+  deletedBy       String?       @map("deleted_by") @db.Uuid
+
+  // Flags
+  isAiGenerated Boolean @default(false) @map("is_ai_generated")
+  isPinned      Boolean @default(false) @map("is_pinned")
+
+  // Ordenacao
+  sequenceNumber BigInt @map("sequence_number")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  conversation  Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender        User?              @relation("MessageSender", fields: [senderId], references: [id])
+  parentMessage Message?           @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  childMessages Message[]          @relation("MessageThread")
+  aiMetadata    MessageAiMetadata?
+  sources       MessageSource[]
+  feedback      MessageFeedback[]
+  attachments   MessageAttachment[]
+
+  @@index([conversationId, sequenceNumber])
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([senderId, createdAt(sort: Desc)])
+  @@index([parentMessageId])
+  @@index([conversationId, isAiGenerated])
+  @@index([conversationId, isPinned])
+  @@map("messages")
+}
+
+enum SenderType {
+  USER_SENDER  @map("user")
+  AI_SENDER    @map("ai")
+  SYSTEM_SENDER @map("system")
+  BOT_SENDER   @map("bot")
+}
+
+enum MessageContentType {
+  TEXT
+  RICH_TEXT
+  CODE
+  IMAGE
+  FILE
+  AUDIO
+  SYSTEM_EVENT
+  SUGGESTION
+  TEMPLATE
+  COMPOSITE
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  EDITED
+  MSG_DELETED @map("DELETED")
+  FAILED
+  STREAMING
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE_AI_METADATA — Metadados de IA por mensagem
+// 1:1 com messages (apenas para mensagens de IA)
+// Rastreia: provider, modelo, tokens, custo, latencia, cache
+// ═══════════════════════════════════════════════════════════════
+
+model MessageAiMetadata {
+  id             String @id @default(uuid()) @db.Uuid
+  messageId      String @unique @map("message_id") @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+
+  // Provider
+  provider     String  @db.VarChar(50)
+  model        String  @db.VarChar(100)
+  modelVersion String? @map("model_version") @db.VarChar(50)
+
+  // Tokens
+  tokensInput  Int @default(0) @map("tokens_input")
+  tokensOutput Int @default(0) @map("tokens_output")
+  tokensCached Int @default(0) @map("tokens_cached")
+
+  // Custo
+  costInputUsd  Decimal @default(0) @map("cost_input_usd") @db.Decimal(10, 8)
+  costOutputUsd Decimal @default(0) @map("cost_output_usd") @db.Decimal(10, 8)
+
+  // Performance
+  latencyMs          Int      @default(0) @map("latency_ms")
+  timeToFirstTokenMs Int?     @map("time_to_first_token_ms")
+  tokensPerSecond    Decimal? @map("tokens_per_second") @db.Decimal(8, 2)
+
+  // Contexto do prompt
+  systemPromptHash          String? @map("system_prompt_hash") @db.VarChar(64)
+  systemPromptTokens        Int?    @map("system_prompt_tokens")
+  conversationHistoryTokens Int?    @map("conversation_history_tokens")
+  contextWindowUsage        Decimal? @map("context_window_usage") @db.Decimal(5, 2)
+
+  // Streaming
+  wasStreamed       Boolean @default(false) @map("was_streamed")
+  streamChunks      Int?    @map("stream_chunks")
+  streamInterrupted Boolean @default(false) @map("stream_interrupted")
+
+  // Fallback
+  wasFallback      Boolean @default(false) @map("was_fallback")
+  originalProvider String? @map("original_provider") @db.VarChar(50)
+  originalModel    String? @map("original_model") @db.VarChar(100)
+  fallbackReason   String? @map("fallback_reason") @db.VarChar(50)
+
+  // Cache
+  cacheHit Boolean @default(false) @map("cache_hit")
+  cacheKey String? @map("cache_key") @db.VarChar(255)
+
+  // Moderacao
+  contentFiltered Boolean @default(false) @map("content_filtered")
+  filterReason    String? @map("filter_reason") @db.Text
+
+  // Extras
+  rawResponseId String? @map("raw_response_id") @db.VarChar(255)
+  metadata      Json    @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([provider, model, createdAt(sort: Desc)])
+  @@index([wasFallback])
+  @@map("message_ai_metadata")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE_SOURCES — Fontes usadas pela IA para gerar resposta
+// N:1 com messages (uma mensagem pode ter multiplas fontes)
+// ═══════════════════════════════════════════════════════════════
+
+model MessageSource {
+  id             String @id @default(uuid()) @db.Uuid
+  messageId      String @map("message_id") @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+
+  // Tipo da fonte
+  sourceType SourceType @map("source_type")
+
+  // Referencia
+  referenceId    String? @map("reference_id") @db.Uuid
+  referenceUrl   String? @map("reference_url") @db.VarChar(2000)
+  referenceTitle String? @map("reference_title") @db.VarChar(500)
+
+  // Relevancia
+  relevanceScore Decimal? @map("relevance_score") @db.Decimal(5, 4)
+  relevanceRank  Int?     @map("relevance_rank")
+
+  // Trecho
+  excerpt String? @db.Text
+
+  // Uso
+  wasCited     Boolean @default(false) @map("was_cited")
+  citationText String? @map("citation_text") @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([conversationId])
+  @@index([sourceType, referenceId])
+  @@map("message_sources")
+}
+
+enum SourceType {
+  KB_ARTICLE
+  KB_SEARCH
+  WEB_SEARCH
+  WEB_PAGE
+  TICKET_HISTORY
+  CONVERSATION_REF @map("CONVERSATION")
+  UPLOADED_FILE
+  SCREEN_CAPTURE
+  AUDIO_TRANSCRIPT
+  AI_KNOWLEDGE
+  TEMPLATE_SOURCE  @map("TEMPLATE")
+  API_RESPONSE
+  DATABASE_QUERY
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE_FEEDBACK — Avaliacao humana de mensagens de IA
+// 1:1 por (message_id, user_id)
+// ═══════════════════════════════════════════════════════════════
+
+model MessageFeedback {
+  id             String @id @default(uuid()) @db.Uuid
+  messageId      String @map("message_id") @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+  userId         String @map("user_id") @db.Uuid
+
+  // Avaliacao
+  rating FeedbackRating
+
+  // Detalhes
+  comment String? @db.Text
+  tags    Json?
+
+  // Acao tomada
+  actionTaken String? @map("action_taken") @db.VarChar(30)
+
+  // Correcao
+  correctedContent String? @map("corrected_content") @db.Text
+
+  // Contexto do feedback
+  feedbackContext Json? @map("feedback_context")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([conversationId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, rating, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("message_feedback")
+}
+
+enum FeedbackRating {
+  POSITIVE
+  NEGATIVE
+  MIXED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE_ATTACHMENTS — Arquivos vinculados a mensagens
+// N:1 com messages (uma mensagem pode ter multiplos anexos)
+// ═══════════════════════════════════════════════════════════════
+
+model MessageAttachment {
+  id             String @id @default(uuid()) @db.Uuid
+  messageId      String @map("message_id") @db.Uuid
+  conversationId String @map("conversation_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+
+  // Arquivo
+  fileName      String @map("file_name") @db.VarChar(255)
+  fileType      String @map("file_type") @db.VarChar(100)
+  fileSizeBytes BigInt @map("file_size_bytes")
+  filePath      String @map("file_path") @db.VarChar(500)
+
+  // Thumbnail
+  thumbnailPath String? @map("thumbnail_path") @db.VarChar(500)
+
+  // Categorizacao
+  category AttachmentCategory @default(GENERIC_FILE)
+
+  // Processamento
+  processingStatus AttachmentProcessingStatus @default(UPLOADED) @map("processing_status")
+  processingResult Json?                      @map("processing_result")
+
+  // Expiracao
+  expiresAt DateTime? @map("expires_at")
+
+  // Metadados
+  metadata Json @default("{}")
+
+  uploadedBy String   @map("uploaded_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User    @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([messageId])
+  @@index([conversationId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([category, tenantId])
+  @@map("message_attachments")
+}
+
+enum AttachmentCategory {
+  IMAGE_FILE    @map("IMAGE")
+  SCREENSHOT
+  DOCUMENT
+  AUDIO_FILE    @map("AUDIO")
+  VIDEO_FILE    @map("VIDEO")
+  LOG_FILE
+  CODE_FILE     @map("CODE")
+  GENERIC_FILE  @map("FILE")
+}
+
+enum AttachmentProcessingStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  PROC_FAILED @map("FAILED")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONVERSATION_TAGS — Etiquetas para organizar conversas
+// ═══════════════════════════════════════════════════════════════
+
+model ConversationTag {
+  id          String  @id @default(uuid()) @db.Uuid
+  tenantId    String  @map("tenant_id") @db.Uuid
+  name        String  @db.VarChar(50)
+  color       String  @default("#3f3f46") @db.VarChar(7)
+  description String? @db.VarChar(200)
+  usageCount  Int     @default(0) @map("usage_count")
+  createdBy   String  @map("created_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant  Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator User                  @relation("TagCreator", fields: [createdBy], references: [id])
+  links   ConversationTagLink[]
+
+  @@unique([tenantId, name])
+  @@map("conversation_tags")
+}
+
+model ConversationTagLink {
+  conversationId String @map("conversation_id") @db.Uuid
+  tagId          String @map("tag_id") @db.Uuid
+  addedBy        String @map("added_by") @db.Uuid
+  addedAt        DateTime @default(now()) @map("added_at")
+
+  // Relations
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tag          ConversationTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  user         User            @relation("TagLinkUser", fields: [addedBy], references: [id])
+
+  @@id([conversationId, tagId])
+  @@index([conversationId])
+  @@index([tagId])
+  @@map("conversation_tag_links")
 }
 
 // ═══════════════════════════════════════════════════════════════
