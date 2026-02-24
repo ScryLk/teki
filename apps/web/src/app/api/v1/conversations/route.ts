@@ -7,10 +7,22 @@ export async function GET(req: NextRequest) {
     const { user } = await requireAuth(req);
 
     const conversations = await prisma.conversation.findMany({
-      where: { userId: user.id },
-      orderBy: { updatedAt: 'desc' },
+      where: {
+        participants: {
+          some: {
+            userId: user.id,
+            status: 'ACTIVE',
+          },
+        },
+        status: { in: ['ACTIVE', 'CLOSED'] },
+      },
+      orderBy: { lastMessageAt: 'desc' },
       include: {
         _count: { select: { messages: true } },
+        participants: {
+          where: { userId: user.id },
+          select: { isPinned: true, isMuted: true },
+        },
       },
       take: 50,
     });
