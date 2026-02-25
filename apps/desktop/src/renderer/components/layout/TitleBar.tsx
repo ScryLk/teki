@@ -49,7 +49,7 @@ const TitleBar: React.FC = () => {
         {/* Capture status indicator */}
         <button
           onClick={handlePlayPauseClick}
-          className="flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors"
+          className="no-drag flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors"
           title={isCapturing ? 'Parar observação' : 'Selecionar janela'}
         >
           {isCapturing ? (
@@ -67,7 +67,7 @@ const TitleBar: React.FC = () => {
         {/* Settings gear icon */}
         <button
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary"
+          className="no-drag flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary"
           title="Configurações"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
