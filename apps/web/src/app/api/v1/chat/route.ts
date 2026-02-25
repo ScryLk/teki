@@ -8,7 +8,7 @@ import {
   incrementUsage,
 } from '@/lib/plan-limits';
 import { getUserProviderKeys } from '@/lib/provider-keys';
-import { searchKnowledgeBase, formatKBContext } from '@/lib/kb/search';
+import { searchWithExpansion, formatExpansionContext, buildExpansionMetadata } from '@/lib/kb/query-expansion';
 import { prisma } from '@/lib/prisma';
 import { dispatchWebhook } from '@/lib/webhooks/dispatch';
 import type { ProviderMessage } from '@/lib/ai/types';
@@ -83,8 +83,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 6. RAG: search knowledge base
+    // 6. RAG: search knowledge base with progressive query expansion
     let kbContext = '';
+    let expansionMeta = null;
     if (agent) {
       const docCount = await prisma.document.count({
         where: { agentId: agent.id, status: 'INDEXED' },
@@ -94,11 +95,12 @@ export async function POST(req: NextRequest) {
           .reverse()
           .find((m: { role: string }) => m.role === 'user');
         if (lastUserMsg) {
-          const results = await searchKnowledgeBase(
-            agent.id,
-            (lastUserMsg as { content: string }).content
-          );
-          kbContext = formatKBContext(results);
+          const expansionResult = await searchWithExpansion({
+            agentId: agent.id,
+            query: (lastUserMsg as { content: string }).content,
+          });
+          kbContext = formatExpansionContext(expansionResult);
+          expansionMeta = buildExpansionMetadata(expansionResult);
         }
       }
     }
@@ -196,7 +198,7 @@ export async function POST(req: NextRequest) {
     const tokensIn = result.usage?.inputTokens ?? 0;
     const tokensOut = result.usage?.outputTokens ?? 0;
 
-    // 12. Save assistant message
+    // 12. Save assistant message (with expansion metadata if available)
     await prisma.conversationMessage.create({
       data: {
         conversationId: convId,
@@ -206,6 +208,7 @@ export async function POST(req: NextRequest) {
         tokensIn,
         tokensOut,
         latencyMs,
+        ...(expansionMeta ? { metadata: { kb_expansion: expansionMeta } } : {}),
       },
     });
 
