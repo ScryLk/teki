@@ -33,6 +33,8 @@ interface AnalyticsData {
   conversationsByType: { type: string; count: number }[];
   messagesByDay: { date: string; count: number }[];
   costByDay: { date: string; cost: number }[];
+  confidenceDistribution?: { classification: string; count: number }[];
+  avgConfidence?: number;
 }
 
 const TOOLTIP_STYLE = {
@@ -54,6 +56,18 @@ const FEEDBACK_COLORS: Record<string, string> = {
   POSITIVE: 'oklch(0.696 0.17 162.48)',
   NEGATIVE: 'oklch(0.645 0.246 16.439)',
   MIXED: 'oklch(0.769 0.188 70.08)',
+};
+
+const CONFIDENCE_COLORS: Record<string, string> = {
+  BASE_LOCAL: 'oklch(0.696 0.17 162.48)',   // green
+  INFERIDO: 'oklch(0.769 0.188 70.08)',      // yellow
+  GENERICO: 'oklch(0.645 0.246 16.439)',     // red
+};
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  BASE_LOCAL: 'Base Local',
+  INFERIDO: 'Inferido',
+  GENERICO: 'Genérico',
 };
 
 export default function AnalyticsPage() {
@@ -210,6 +224,86 @@ export default function AnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Confidence Distribution */}
+      {data.confidenceDistribution && data.confidenceDistribution.some(d => d.count > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Confiança da IA</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.confidenceDistribution.map(d => ({
+                        ...d,
+                        name: CONFIDENCE_LABELS[d.classification] || d.classification,
+                      }))}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={2}
+                    >
+                      {data.confidenceDistribution.map((entry) => (
+                        <Cell
+                          key={entry.classification}
+                          fill={CONFIDENCE_COLORS[entry.classification] || COLORS[3]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Legend
+                      formatter={(v: string) => (
+                        <span className="text-xs text-foreground">{v}</span>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Métricas de Confiança</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Confiança Média</p>
+                  <p className="text-3xl font-bold">{data.avgConfidence ?? 0}%</p>
+                </div>
+                <div className="space-y-2">
+                  {data.confidenceDistribution.map((d) => {
+                    const total = data.confidenceDistribution!.reduce((s, x) => s + x.count, 0);
+                    const pct = total > 0 ? ((d.count / total) * 100).toFixed(1) : '0';
+                    return (
+                      <div key={d.classification} className="flex items-center gap-3">
+                        <span
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ background: CONFIDENCE_COLORS[d.classification] || COLORS[3] }}
+                        />
+                        <span className="text-sm flex-1">
+                          {CONFIDENCE_LABELS[d.classification] || d.classification}
+                        </span>
+                        <span className="text-sm font-semibold">{formatNumber(d.count)}</span>
+                        <span className="text-xs text-muted-foreground w-12 text-right">
+                          {pct}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

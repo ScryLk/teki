@@ -12,6 +12,7 @@ import {
   Building2,
   BarChart3,
   MessageSquareWarning,
+  Sparkles,
   CreditCard,
   Flag,
   Megaphone,
@@ -48,6 +49,7 @@ const NAV_SECTIONS = [
     title: 'Inteligencia',
     items: [
       { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { label: 'Query Expansion', href: '/query-expansion', icon: Sparkles },
       { label: 'Feedback Negativo', href: '/feedback', icon: MessageSquareWarning },
     ],
   },

@@ -64,6 +64,45 @@ export async function GET(request: NextRequest) {
     costByDay.set(key, (costByDay.get(key) || 0) + Number(row.costUsd));
   }
 
+  // Confidence distribution from message metadata
+  let confidenceDistribution: { classification: string; count: number }[] = [];
+  let avgConfidence = 0;
+  try {
+    const messagesWithConfidence = await prisma.$queryRaw<
+      { metadata: string }[]
+    >`
+      SELECT metadata::text
+      FROM conversation_messages
+      WHERE role = 'ASSISTANT'
+        AND metadata IS NOT NULL
+        AND metadata::text LIKE '%confidence%'
+        AND created_at >= ${since}
+      LIMIT 5000
+    `;
+
+    const distMap: Record<string, number> = { BASE_LOCAL: 0, INFERIDO: 0, GENERICO: 0 };
+    let totalPct = 0;
+    let count = 0;
+
+    for (const row of messagesWithConfidence) {
+      try {
+        const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata;
+        const conf = meta?.confidence;
+        if (conf?.classification) {
+          distMap[conf.classification] = (distMap[conf.classification] ?? 0) + 1;
+          totalPct += conf.percentage ?? 0;
+          count++;
+        }
+      } catch { /* skip malformed */ }
+    }
+
+    confidenceDistribution = Object.entries(distMap).map(([classification, cnt]) => ({
+      classification,
+      count: cnt,
+    }));
+    avgConfidence = count > 0 ? Math.round(totalPct / count) : 0;
+  } catch { /* confidence query optional */ }
+
   return NextResponse.json({
     aiUsage: aiUsageDaily.map((r) => ({
       ...r,
@@ -93,5 +132,7 @@ export async function GET(request: NextRequest) {
       date,
       cost,
     })),
+    confidenceDistribution,
+    avgConfidence,
   });
 }

@@ -17,6 +17,7 @@
 import { searchKnowledgeBase, formatKBContext } from './search';
 import { getProvider } from '@/lib/ai/router';
 import type { ProviderResponse } from '@/lib/ai/types';
+import { getRelevantTerms, getLanguageInfo, FALLBACK_LANGUAGES } from './term-maps';
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -56,6 +57,12 @@ export interface QueryExpansionResult {
   budgetRemaining: number;
 }
 
+/** Configuração de idioma de fallback */
+export interface FallbackLanguageConfig {
+  code: string;
+  enabled: boolean;
+}
+
 /** Configuração do pipeline */
 export interface QueryExpansionConfig {
   enabled: boolean;
@@ -69,6 +76,7 @@ export interface QueryExpansionConfig {
   expansionModelId: string;
   primaryLanguage: string;
   fallbackLanguages: string[];
+  fallbackLanguageConfigs: FallbackLanguageConfig[];
   logExpansions: boolean;
 }
 
@@ -113,6 +121,7 @@ export const DEFAULT_EXPANSION_CONFIG: QueryExpansionConfig = {
   expansionModelId: 'gemini-flash',
   primaryLanguage: 'pt',
   fallbackLanguages: ['en'],
+  fallbackLanguageConfigs: [{ code: 'en', enabled: true }],
   logExpansions: true,
 };
 
@@ -151,9 +160,16 @@ function buildLayer1Prompt(params: ExpansionSearchParams, maxVariations: number)
   return parts.join('\n');
 }
 
-function buildLayer2Prompt(params: ExpansionSearchParams, maxVariations: number): string {
+function buildLayer2Prompt(
+  params: ExpansionSearchParams,
+  maxVariations: number,
+  languageCode: string = 'en',
+): string {
+  const langInfo = getLanguageInfo(languageCode);
+  const languageName = langInfo?.nativeName ?? 'English';
+
   const parts = [
-    `Translate this Brazilian technical support query into ${maxVariations} English search queries.`,
+    `Translate this Brazilian technical support query into ${maxVariations} ${languageName} search queries.`,
     ``,
     `ORIGINAL (Portuguese): "${params.query}"`,
   ];
@@ -161,23 +177,19 @@ function buildLayer2Prompt(params: ExpansionSearchParams, maxVariations: number)
   if (params.errorCode) parts.push(`ERROR CODE: ${params.errorCode}`);
   if (params.software) parts.push(`SOFTWARE: ${params.software}`);
 
-  parts.push(``);
-  parts.push(`TRANSLATION MAP for Brazilian terms:`);
-  parts.push(`- NFe / NF-e → "electronic invoice", "e-invoice", "NFe"`);
-  parts.push(`- SEFAZ → "tax authority", "SEFAZ", "fiscal authority"`);
-  parts.push(`- Certificado digital → "digital certificate", "SSL/TLS certificate"`);
-  parts.push(`- Rejeição → "rejection", "error", "refused"`);
-  parts.push(`- Nota fiscal → "invoice", "fiscal document"`);
-  parts.push(`- Transmissão → "transmission", "submission", "upload"`);
-  parts.push(`- Consulta → "query", "lookup", "check"`);
-  parts.push(`- Cancelamento → "cancellation", "void"`);
-  parts.push(`- Inutilização → "invalidation", "number gap"`);
-  parts.push(`- Contingência → "contingency", "offline mode"`);
+  // Use term maps for the target language
+  const relevantTerms = getRelevantTerms(params.query, languageCode);
+  if (relevantTerms) {
+    parts.push(``);
+    parts.push(`TRANSLATION MAP for Brazilian terms → ${languageName}:`);
+    parts.push(relevantTerms);
+  }
+
   parts.push(``);
   parts.push(`RULES:`);
   parts.push(`- Keep error codes and numbers unchanged`);
   parts.push(`- 3-8 words per query`);
-  parts.push(`- Use terms found in technical documentation and stack overflow`);
+  parts.push(`- Use terms found in technical documentation`);
   parts.push(`- Do NOT number the lines`);
   parts.push(``);
   parts.push(`Return ONLY the queries, one per line:`);
@@ -431,37 +443,58 @@ async function executeLayer2(
 ): Promise<ExpansionLayerResult> {
   const start = Date.now();
 
-  const prompt = buildLayer2Prompt(params, config.maxVariationsPerLayer);
-  const aiResponse = await callExpansionAI(config, prompt);
+  // Determine enabled languages from config
+  const enabledLanguages = config.fallbackLanguageConfigs
+    .filter(l => l.enabled)
+    .map(l => l.code);
 
-  const translations = parseQueryList(aiResponse.content, config.maxVariationsPerLayer);
-  const tokensUsed = (aiResponse.usage?.inputTokens ?? 0) + (aiResponse.usage?.outputTokens ?? 0);
+  // Fallback to legacy fallbackLanguages array if no configs
+  const languages = enabledLanguages.length > 0
+    ? enabledLanguages
+    : config.fallbackLanguages;
+
+  let totalTokensUsed = 0;
+  const allTranslations: string[] = [];
+
+  // Execute translation for each enabled language
+  for (const langCode of languages) {
+    const variationsPerLang = Math.max(2, Math.floor(config.maxVariationsPerLayer / languages.length));
+    const prompt = buildLayer2Prompt(params, variationsPerLang, langCode);
+    const aiResponse = await callExpansionAI(config, prompt);
+
+    const translations = parseQueryList(aiResponse.content, variationsPerLang);
+    totalTokensUsed += (aiResponse.usage?.inputTokens ?? 0) + (aiResponse.usage?.outputTokens ?? 0);
+    allTranslations.push(...translations);
+  }
 
   const results = await searchMultipleQueries(
     params.agentId,
-    translations,
+    allTranslations,
     'translation_en',
     topK,
     minSimilarity,
   );
 
+  const langNames = languages.map(c => getLanguageInfo(c)?.nativeName ?? c).join(', ');
+
   if (config.logExpansions) {
     console.log('[kb.expansion.layer2]', {
       agentId: params.agentId,
-      translations,
+      languages,
+      translations: allTranslations,
       resultsCount: results.length,
       bestScore: results[0]?.similarity ?? 0,
-      tokensUsed,
+      tokensUsed: totalTokensUsed,
     });
   }
 
   return {
     layer: 2,
-    layerName: 'Tradução Técnica (EN)',
-    queriesUsed: translations,
+    layerName: `Tradução Técnica (${langNames})`,
+    queriesUsed: allTranslations,
     results,
     bestScore: results[0]?.similarity ?? 0,
-    tokensUsed,
+    tokensUsed: totalTokensUsed,
     latencyMs: Date.now() - start,
     accepted: false,
   };
