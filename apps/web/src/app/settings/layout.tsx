@@ -20,7 +20,7 @@ const SETTINGS_SECTIONS = [
   { label: 'Integrações', href: '/settings/integracoes', icon: Plug, enabled: false },
   { label: 'Notificações', href: '/settings/notificacoes', icon: Bell, enabled: false },
   { label: 'Segurança', href: '/settings/seguranca', icon: Shield, enabled: false },
-  { label: 'Plano', href: '/settings/plano', icon: CreditCard, enabled: false },
+  { label: 'Plano', href: '/settings/billing', icon: CreditCard, enabled: true },
   { label: 'Privacidade', href: '/settings/privacidade', icon: Lock, enabled: false },
 ];
 

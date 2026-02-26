@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +35,10 @@ import {
   MessageSquare,
   BookOpen,
   PanelRight,
+  Settings,
 } from 'lucide-react';
+import { PlanBadge } from '@/components/billing/PlanBadge';
+import type { PlanTier } from '@prisma/client';
 
 interface HeaderProps {
   onNewChat?: () => void;
@@ -43,6 +46,7 @@ interface HeaderProps {
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
   showChatControls?: boolean;
+  planId?: PlanTier;
 }
 
 export function Header({
@@ -51,9 +55,11 @@ export function Header({
   onToggleSidebar,
   sidebarOpen = false,
   showChatControls = true,
+  planId,
 }: HeaderProps) {
   const [aboutOpen, setAboutOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     { href: '/chat', label: 'Chat', icon: MessageSquare },
@@ -109,6 +115,27 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-2">
+          {planId && (
+            <PlanBadge
+              planId={planId}
+              onClick={() => router.push('/settings/billing')}
+            />
+          )}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => router.push('/settings/billing')}
+              >
+                <Settings size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Configuracoes</TooltipContent>
+          </Tooltip>
+
           {showChatControls && (
             <>
               {onToggleSidebar && (

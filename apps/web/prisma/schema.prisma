@@ -205,6 +205,17 @@ model User {
   responseTemplatesLastUsed ResponseTemplate[] @relation("TemplateLastUser")
   templateUsageLogs         TemplateUsageLog[]
 
+  // ── Billing ──
+  billingName     String?   @map("billing_name") @db.VarChar(200)
+  billingCompany  String?   @map("billing_company") @db.VarChar(200)
+  billingTaxId    String?   @map("billing_tax_id") @db.VarChar(20)
+  planActivatedAt DateTime? @map("plan_activated_at")
+  planExpiresAt   DateTime? @map("plan_expires_at")
+  planCancelledAt DateTime? @map("plan_cancelled_at")
+
+  // Relations - Billing
+  planHistory PlanHistory[]
+
   @@index([email])
   @@index([status])
   @@index([createdAt(sort: Desc)])
@@ -1443,6 +1454,21 @@ model UsageCounter {
 
   @@unique([userId, period])
   @@index([userId, period])
+}
+
+model PlanHistory {
+  id       String   @id @default(cuid())
+  userId   String   @db.Uuid
+  fromPlan PlanTier @map("from_plan")
+  toPlan   PlanTier @map("to_plan")
+  reason   String   @db.VarChar(50) // upgrade, downgrade, cancel, expired, admin, simulation
+  amount   Float?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("plan_history")
 }
 
 // ═══════════════════════════════════════════════════════════════
