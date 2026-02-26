@@ -105,13 +105,13 @@ export const DevCatWrapper: React.FC<DevCatWrapperProps> = ({
     <>
       <div
         onClick={handleClick}
-        className="group relative"
+        className="group absolute bottom-2 right-2 z-10"
         style={{ cursor: 'pointer' }}
       >
         <CatMascot
           state={displayState}
           size={size}
-          className={`${className} !pointer-events-auto`}
+          className={`${className} !pointer-events-auto cat-no-position`}
         />
 
         {/* Dev badge: appears on hover */}

@@ -75,6 +75,14 @@ const styles = `
     pointer-events: auto;
   }
 
+  /* When wrapped by DevCatWrapper (which handles absolute positioning),
+     CatMascot should not apply its own absolute positioning. */
+  .cat-mascot-root.cat-no-position {
+    position: relative;
+    bottom: auto;
+    right: auto;
+  }
+
   .cat-svg {
     transition: filter 0.5s ease;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
