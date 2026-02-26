@@ -20,6 +20,7 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  Database,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -60,6 +61,12 @@ const NAV_SECTIONS = [
       { label: 'Feature Flags', href: '/flags', icon: Flag },
       { label: 'Broadcast', href: '/broadcast', icon: Megaphone },
       { label: 'Audit Log', href: '/audit', icon: ClipboardList },
+    ],
+  },
+  {
+    title: 'Super Admin',
+    items: [
+      { label: 'DB Explorer', href: '/explorer', icon: Database },
     ],
   },
 ];
