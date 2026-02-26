@@ -1,96 +1,43 @@
-import type { PlanTier } from '@prisma/client';
 import { prisma } from './prisma';
+import { getPlan, PLAN_ORDER } from './plans';
+import type { PlanTier } from '@prisma/client';
 
-interface PlanLimits {
-  agents: number;
-  messagesPerMonth: number;
-  documentsPerAgent: number;
-  kbSizeMB: number;
-  models: string[];
-  allowModelPerAgent: boolean;
-  allowBYOK: boolean;
-  conversationRetentionDays: number;
-  openclaw: boolean;
-  openclawChannels: number;
+export interface LimitCheck {
+  allowed: boolean;
+  current: number;
+  limit: number;
+  percentage: number;
+  remaining: number;
+  upgradeRequired?: PlanTier;
+  reason?: string;
 }
 
-const LIMITS: Record<PlanTier, PlanLimits> = {
-  FREE: {
-    agents: 1,
-    messagesPerMonth: 50,
-    documentsPerAgent: 2,
-    kbSizeMB: 5,
-    models: ['gemini-flash'],
-    allowModelPerAgent: false,
-    allowBYOK: false,
-    conversationRetentionDays: 7,
-    openclaw: false,
-    openclawChannels: 0,
-  },
-  STARTER: {
-    agents: 1,
-    messagesPerMonth: 500,
-    documentsPerAgent: 5,
-    kbSizeMB: 25,
-    models: ['gemini-flash', 'gpt-4o-mini', 'claude-haiku'],
-    allowModelPerAgent: true,
-    allowBYOK: false,
-    conversationRetentionDays: 30,
-    openclaw: false,
-    openclawChannels: 0,
-  },
-  PRO: {
-    agents: 5,
-    messagesPerMonth: 2000,
-    documentsPerAgent: 50,
-    kbSizeMB: 100,
-    models: [
-      'gemini-flash',
-      'gemini-pro',
-      'gpt-4o-mini',
-      'gpt-4o',
-      'claude-haiku',
-      'claude-sonnet',
-      'ollama-custom',
-    ],
-    allowModelPerAgent: true,
-    allowBYOK: true,
-    conversationRetentionDays: -1,
-    openclaw: true,
-    openclawChannels: 3,
-  },
-  ENTERPRISE: {
-    agents: 999,
-    messagesPerMonth: 999999,
-    documentsPerAgent: 999,
-    kbSizeMB: 10000,
-    models: [
-      'gemini-flash',
-      'gemini-pro',
-      'gpt-4o-mini',
-      'gpt-4o',
-      'claude-haiku',
-      'claude-sonnet',
-      'ollama-custom',
-    ],
-    allowModelPerAgent: true,
-    allowBYOK: true,
-    conversationRetentionDays: -1,
-    openclaw: true,
-    openclawChannels: 999,
-  },
-};
+// ─── Legacy compat (used by existing /api/v1/billing/plan) ───
 
-export function getPlanLimits(planId: PlanTier): PlanLimits {
-  return LIMITS[planId];
+export function getPlanLimits(planId: PlanTier) {
+  const plan = getPlan(planId);
+  return {
+    agents: plan.limits.agents,
+    messagesPerMonth: plan.limits.messagesPerMonth,
+    documentsPerAgent: plan.limits.documentsPerAgent,
+    kbSizeMB: plan.limits.kbSizeMB,
+    models: plan.features.models,
+    allowModelPerAgent: plan.features.modelSelection,
+    allowBYOK: plan.features.byok,
+    conversationRetentionDays: plan.limits.conversationRetentionDays,
+    openclaw: plan.features.openclaw,
+    openclawChannels: plan.features.openclawChannels,
+  };
 }
+
+// ─── Mensagens ───
 
 export async function checkMessageLimit(
   userId: string,
   planId: PlanTier,
   isByok = false
-) {
-  const limits = getPlanLimits(planId);
+): Promise<LimitCheck> {
+  const plan = getPlan(planId);
   const period = getCurrentPeriod();
 
   const usage = await prisma.usageCounter.findUnique({
@@ -98,55 +45,177 @@ export async function checkMessageLimit(
   });
 
   const current = usage?.messages ?? 0;
-  const remaining = Math.max(0, limits.messagesPerMonth - current);
+  const limit = plan.limits.messagesPerMonth;
+  const remaining = Math.max(0, limit - current);
+  const percentage = limit > 0 ? Math.min(100, (current / limit) * 100) : 0;
 
   return {
-    allowed: isByok || current < limits.messagesPerMonth,
+    allowed: isByok || current < limit,
     current,
-    limit: limits.messagesPerMonth,
+    limit,
+    percentage,
     remaining,
-    isByok,
+    upgradeRequired:
+      !isByok && current >= limit ? getNextPlan(planId) : undefined,
+    reason:
+      !isByok && current >= limit
+        ? `Limite de ${limit} mensagens/mes atingido.`
+        : undefined,
   };
 }
 
-export async function checkAgentLimit(userId: string, planId: PlanTier) {
-  const limits = getPlanLimits(planId);
-  const count = await prisma.agent.count({ where: { userId } });
-  return { allowed: count < limits.agents, current: count, limit: limits.agents };
+// ─── Agentes ───
+
+export async function checkAgentLimit(
+  userId: string,
+  planId: PlanTier
+): Promise<LimitCheck> {
+  const plan = getPlan(planId);
+  const current = await prisma.agent.count({ where: { userId } });
+  const limit = plan.limits.agents;
+
+  return {
+    allowed: current < limit,
+    current,
+    limit,
+    percentage: limit > 0 ? Math.min(100, (current / limit) * 100) : 0,
+    remaining: Math.max(0, limit - current),
+    upgradeRequired: current >= limit ? getNextPlan(planId) : undefined,
+    reason:
+      current >= limit
+        ? `Limite de ${limit} agente(s) atingido.`
+        : undefined,
+  };
 }
+
+// ─── Documentos por agente ───
 
 export async function checkDocumentLimit(
   userId: string,
   agentId: string,
   planId: PlanTier
-) {
-  const limits = getPlanLimits(planId);
-  const count = await prisma.document.count({ where: { agentId } });
+): Promise<LimitCheck> {
+  const plan = getPlan(planId);
+  const current = await prisma.document.count({ where: { agentId } });
+  const limit = plan.limits.documentsPerAgent;
+
   return {
-    allowed: count < limits.documentsPerAgent,
-    current: count,
-    limit: limits.documentsPerAgent,
+    allowed: current < limit,
+    current,
+    limit,
+    percentage: limit > 0 ? Math.min(100, (current / limit) * 100) : 0,
+    remaining: Math.max(0, limit - current),
+    upgradeRequired: current >= limit ? getNextPlan(planId) : undefined,
   };
 }
 
-export async function checkChannelLimit(userId: string, planId: PlanTier) {
-  const limits = getPlanLimits(planId);
-  if (!limits.openclaw)
-    return { allowed: false, current: 0, limit: 0, reason: 'OpenClaw requer plano Pro.' };
-  const count = await prisma.channel.count({
+// ─── Armazenamento KB ───
+
+export async function checkStorageLimit(
+  userId: string,
+  planId: PlanTier
+): Promise<LimitCheck> {
+  const plan = getPlan(planId);
+
+  const result = await prisma.document.aggregate({
+    where: { userId },
+    _sum: { fileSize: true },
+  });
+
+  const currentBytes = result._sum.fileSize ?? 0;
+  const currentMB = currentBytes / (1024 * 1024);
+  const limitMB = plan.limits.kbSizeMB;
+
+  return {
+    allowed: currentMB < limitMB,
+    current: Math.round(currentMB * 10) / 10,
+    limit: limitMB,
+    percentage: limitMB > 0 ? Math.min(100, (currentMB / limitMB) * 100) : 0,
+    remaining: Math.round(Math.max(0, limitMB - currentMB) * 10) / 10,
+    upgradeRequired: currentMB >= limitMB ? getNextPlan(planId) : undefined,
+  };
+}
+
+// ─── Canais OpenClaw ───
+
+export async function checkChannelLimit(
+  userId: string,
+  planId: PlanTier
+): Promise<LimitCheck & { featureAvailable: boolean }> {
+  const plan = getPlan(planId);
+
+  if (!plan.features.openclaw) {
+    return {
+      allowed: false,
+      current: 0,
+      limit: 0,
+      percentage: 0,
+      remaining: 0,
+      featureAvailable: false,
+      upgradeRequired: 'PRO',
+      reason: 'OpenClaw disponivel a partir do plano Pro.',
+    };
+  }
+
+  const current = await prisma.channel.count({
     where: { userId, isActive: true },
   });
+  const limit = plan.features.openclawChannels;
+
   return {
-    allowed: count < limits.openclawChannels,
-    current: count,
-    limit: limits.openclawChannels,
+    allowed: current < limit,
+    current,
+    limit,
+    percentage: limit > 0 ? Math.min(100, (current / limit) * 100) : 0,
+    remaining: Math.max(0, limit - current),
+    featureAvailable: true,
   };
 }
 
-export async function checkModelAccess(planId: PlanTier, modelId: string) {
-  const limits = getPlanLimits(planId);
-  return { allowed: limits.models.includes(modelId), availableModels: limits.models };
+// ─── Acesso a modelo ───
+
+export function checkModelAccess(
+  planId: PlanTier,
+  modelId: string
+): { allowed: boolean; upgradeRequired?: PlanTier } {
+  const plan = getPlan(planId);
+
+  if (plan.features.models.includes(modelId)) {
+    return { allowed: true };
+  }
+
+  for (const tier of ['STARTER', 'PRO', 'ENTERPRISE'] as PlanTier[]) {
+    const tierPlan = getPlan(tier);
+    if (tierPlan.features.models.includes(modelId)) {
+      return { allowed: false, upgradeRequired: tier };
+    }
+  }
+
+  return { allowed: false };
 }
+
+// ─── Feature access ───
+
+export function checkFeatureAccess(
+  planId: PlanTier,
+  feature: 'byok' | 'openclaw' | 'modelSelection' | 'prioritySupport'
+): { allowed: boolean; upgradeRequired?: PlanTier } {
+  const plan = getPlan(planId);
+
+  if (plan.features[feature]) {
+    return { allowed: true };
+  }
+
+  for (const tier of ['STARTER', 'PRO', 'ENTERPRISE'] as PlanTier[]) {
+    if (getPlan(tier).features[feature]) {
+      return { allowed: false, upgradeRequired: tier };
+    }
+  }
+
+  return { allowed: false };
+}
+
+// ─── Incrementar uso ───
 
 export async function incrementUsage(
   userId: string,
@@ -155,13 +224,14 @@ export async function incrementUsage(
   isByok = false
 ) {
   const period = getCurrentPeriod();
+
   await prisma.usageCounter.upsert({
     where: { userId_period: { userId, period } },
     update: {
       messages: { increment: 1 },
       tokensIn: { increment: tokensIn },
       tokensOut: { increment: tokensOut },
-      byokMessages: isByok ? { increment: 1 } : undefined,
+      ...(isByok ? { byokMessages: { increment: 1 } } : {}),
     },
     create: {
       userId,
@@ -174,6 +244,36 @@ export async function incrementUsage(
   });
 }
 
+// ─── Uso completo (pra dashboard) ───
+
+export async function getFullUsage(userId: string, planId: PlanTier) {
+  const [messages, agents, storage] = await Promise.all([
+    checkMessageLimit(userId, planId),
+    checkAgentLimit(userId, planId),
+    checkStorageLimit(userId, planId),
+  ]);
+
+  const period = getCurrentPeriod();
+  const usage = await prisma.usageCounter.findUnique({
+    where: { userId_period: { userId, period } },
+  });
+
+  return {
+    messages,
+    agents,
+    storage,
+    byokMessages: usage?.byokMessages ?? 0,
+    period,
+  };
+}
+
+// ─── Helpers ───
+
 function getCurrentPeriod(): string {
   return new Date().toISOString().slice(0, 7);
+}
+
+function getNextPlan(currentPlan: PlanTier): PlanTier | undefined {
+  const idx = PLAN_ORDER.indexOf(currentPlan);
+  return idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : undefined;
 }

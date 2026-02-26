@@ -41,6 +41,14 @@ export const IPC_CHANNELS = {
 
   // AI Validation
   AI_VALIDATE_KEY: 'ai:validateKey',
+
+  // Auth
+  AUTH_DEVICE_START: 'auth:device:start',
+  AUTH_DEVICE_CANCEL: 'auth:device:cancel',
+  AUTH_DEVICE_STATUS: 'auth:device:status',
+  AUTH_SET_API_KEY: 'auth:setApiKey',
+  AUTH_GET_STATUS: 'auth:getStatus',
+  AUTH_LOGOUT: 'auth:logout',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -70,6 +78,14 @@ export interface TekiAPI {
 
   // AI Key Validation
   validateApiKey: (provider: AiProviderId, key: string) => Promise<ApiKeyValidationResult>;
+
+  // Auth
+  startDeviceAuth: () => Promise<{ userCode: string; deviceCode: string }>;
+  cancelDeviceAuth: () => void;
+  onAuthStatus: (callback: (data: { status: string; email?: string; name?: string }) => void) => () => void;
+  setApiKey: (key: string) => Promise<boolean>;
+  getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }>;
+  logout: () => Promise<void>;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -116,4 +132,10 @@ export interface TekiSettings {
   openaiKeyStatus: ApiKeyStatus;
   anthropicKeyStatus: ApiKeyStatus;
   ollamaKeyStatus: ApiKeyStatus;
+
+  // Auth
+  authApiKey: string | null;
+  authEmail: string | null;
+  authName: string | null;
+  authAuthenticatedAt: string | null;
 }

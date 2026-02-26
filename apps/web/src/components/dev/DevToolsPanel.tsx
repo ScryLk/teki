@@ -8,6 +8,8 @@ import { DataTab } from './tabs/DataTab';
 import { InspectorTab } from './tabs/InspectorTab';
 import { EventsTab } from './tabs/EventsTab';
 import { InfoTab } from './tabs/InfoTab';
+import { QueryExpansionTab } from './tabs/QueryExpansionTab';
+import { ConfidenceTab } from './tabs/ConfidenceTab';
 
 export default function DevToolsPanel() {
   const isOpen = useDevTools((s) => s.isOpen);
@@ -71,6 +73,10 @@ export default function DevToolsPanel() {
         return <EventsTab />;
       case 'info':
         return <InfoTab />;
+      case 'query_expansion':
+        return <QueryExpansionTab />;
+      case 'confidence':
+        return <ConfidenceTab />;
     }
   };
 

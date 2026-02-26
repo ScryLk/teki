@@ -9,6 +9,8 @@ const TABS: { id: DevToolsSection; label: string }[] = [
   { id: 'inspector', label: 'Inspector' },
   { id: 'events', label: 'Events' },
   { id: 'info', label: 'Info' },
+  { id: 'query_expansion', label: 'KB Search' },
+  { id: 'confidence', label: 'Confidence' },
 ];
 
 export function DevToolsTabs() {

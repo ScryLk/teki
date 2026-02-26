@@ -87,6 +87,40 @@ const tekiAPI: TekiAPI = {
   validateApiKey: (provider: AiProviderId, key: string): Promise<ApiKeyValidationResult> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_KEY, provider, key);
   },
+
+  // Auth
+  startDeviceAuth: (): Promise<{ userCode: string; deviceCode: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_DEVICE_START);
+  },
+
+  cancelDeviceAuth: (): void => {
+    ipcRenderer.invoke(IPC_CHANNELS.AUTH_DEVICE_CANCEL);
+  },
+
+  onAuthStatus: (callback: (data: { status: string; email?: string; name?: string }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      data: { status: string; email?: string; name?: string },
+    ) => {
+      callback(data);
+    };
+    ipcRenderer.on(IPC_CHANNELS.AUTH_DEVICE_STATUS, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.AUTH_DEVICE_STATUS, listener);
+    };
+  },
+
+  setApiKey: (key: string): Promise<boolean> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_API_KEY, key);
+  },
+
+  getAuthStatus: (): Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_GET_STATUS);
+  },
+
+  logout: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGOUT);
+  },
 };
 
 contextBridge.exposeInMainWorld('tekiAPI', tekiAPI);

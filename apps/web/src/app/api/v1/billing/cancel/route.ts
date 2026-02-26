@@ -1,48 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
-import { cancelSubscription } from '@/lib/mercadopago';
+import { getPlan } from '@/lib/plans';
+import { isSimulationMode } from '@/lib/billing-mode';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
+    const body = await req.json();
 
-    // Find the user's primary tenant
-    const membership = await prisma.tenantMember.findFirst({
-      where: { userId: user.id, status: 'ACTIVE' },
-      include: {
-        tenant: {
-          select: { id: true, mpPreapprovalId: true },
-        },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-
-    if (!membership?.tenant.mpPreapprovalId) {
+    if (!body.confirm) {
       return NextResponse.json(
-        { error: { code: 'BAD_REQUEST', message: 'Nenhuma assinatura ativa.' } },
+        { error: { code: 'BAD_REQUEST', message: 'Confirmacao obrigatoria.' } },
         { status: 400 }
       );
     }
 
-    await cancelSubscription(membership.tenant.mpPreapprovalId);
+    if (user.planId === 'FREE') {
+      return NextResponse.json(
+        { error: { code: 'BAD_REQUEST', message: 'Voce ja esta no plano Free.' } },
+        { status: 400 }
+      );
+    }
 
-    // Update tenant (not user) — plan is on tenant
-    await prisma.tenant.update({
-      where: { id: membership.tenant.id },
+    const plan = getPlan(user.planId);
+
+    // Sanitize reason
+    const reason = typeof body.reason === 'string'
+      ? body.reason.replace(/<[^>]*>/g, '').slice(0, 500)
+      : null;
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { planExpiresAt: true },
+    });
+
+    const now = new Date();
+    const activeUntil = dbUser?.planExpiresAt ?? now;
+
+    // Mark cancellation
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { planCancelledAt: now },
+    });
+
+    // Record history
+    await prisma.planHistory.create({
       data: {
-        plan: 'FREE',
-        mpPreapprovalId: null,
-        planExpiresAt: null,
+        userId: user.id,
+        fromPlan: user.planId,
+        toPlan: 'FREE',
+        reason: 'cancel',
       },
     });
 
-    return NextResponse.json({ success: true, message: 'Assinatura cancelada.' });
+    // In simulation mode, also downgrade to FREE immediately on the tenant
+    if (isSimulationMode()) {
+      const membership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (membership) {
+        await prisma.tenant.update({
+          where: { id: membership.tenantId },
+          data: { plan: 'FREE', planExpiresAt: null, mpPreapprovalId: null },
+        });
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          planExpiresAt: null,
+          planActivatedAt: null,
+          planCancelledAt: null,
+        },
+      });
+    }
+
+    const formatter = new Intl.DateTimeFormat('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    return NextResponse.json({
+      success: true,
+      activeUntil: isSimulationMode() ? null : activeUntil.toISOString(),
+      message: isSimulationMode()
+        ? `Plano ${plan.name} cancelado. Voce agora esta no plano Free.`
+        : `Seu plano ${plan.name} ficara ativo ate ${formatter.format(activeUntil)}. Apos isso, voltara para o plano Free.`,
+    });
   } catch (error) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: error.message } },
+        { status: 401 }
+      );
     }
     console.error('[billing cancel]', error);
-    return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR' } },
+      { status: 500 }
+    );
   }
 }

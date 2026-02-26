@@ -75,7 +75,7 @@ function getAll() {
   return store.store;
 }
 const settingsStore = { get, set, getAll };
-let watchInterval = null;
+let watchTimer = null;
 let watchedSourceId = null;
 let onClosedCallback = null;
 async function getAvailableWindows() {
@@ -100,13 +100,18 @@ function startWatching(sourceId, mainWindow2, onClosed) {
   watchedSourceId = sourceId;
   onClosedCallback = onClosed ?? null;
   let lastWindowName = "";
-  watchInterval = setInterval(async () => {
-    if (!mainWindow2 || mainWindow2.isDestroyed()) return;
+  const captureLoop = async () => {
+    if (!watchTimer) return;
+    if (!mainWindow2 || mainWindow2.isDestroyed()) {
+      watchTimer = setTimeout(captureLoop, 1e3);
+      return;
+    }
     try {
       const sources = await electron.desktopCapturer.getSources({
         types: ["window"],
         thumbnailSize: { width: 1280, height: 720 }
       });
+      if (!watchTimer) return;
       const target = sources.find((s) => s.id === sourceId);
       if (!target) {
         const name = lastWindowName;
@@ -125,18 +130,22 @@ function startWatching(sourceId, mainWindow2, onClosed) {
       mainWindow2.webContents.send(IPC_CHANNELS.WATCH_FRAME, frame);
     } catch {
     }
-  }, 1e3);
+    if (watchTimer) {
+      watchTimer = setTimeout(captureLoop, 1e3);
+    }
+  };
+  watchTimer = setTimeout(captureLoop, 0);
 }
 function stopWatching() {
-  if (watchInterval) {
-    clearInterval(watchInterval);
-    watchInterval = null;
+  if (watchTimer) {
+    clearTimeout(watchTimer);
+    watchTimer = null;
   }
   watchedSourceId = null;
   onClosedCallback = null;
 }
 function isWatching() {
-  return watchInterval !== null;
+  return watchTimer !== null;
 }
 function getWatchedSourceId() {
   return watchedSourceId;

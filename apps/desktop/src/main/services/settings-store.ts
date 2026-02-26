@@ -43,6 +43,12 @@ const defaults: TekiSettings = {
   openaiKeyStatus: 'unconfigured',
   anthropicKeyStatus: 'unconfigured',
   ollamaKeyStatus: 'unconfigured',
+
+  // Auth
+  authApiKey: null,
+  authEmail: null,
+  authName: null,
+  authAuthenticatedAt: null,
 };
 
 const store = new Store<TekiSettings>({

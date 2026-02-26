@@ -19,6 +19,26 @@ interface AnthropicMessage {
   content: string | AnthropicPart[];
 }
 
+// ── Mock mode ─────────────────────────────────────────────────────────────────
+// Set MOCK_AI=true in .env.local to skip the Anthropic API call during local tests.
+
+function mockResponse(message: string, history: ChatHistoryMessage[], hasImage: boolean): string {
+  const turn = Math.floor(history.length / 2) + 1;
+  const imageNote = hasImage ? ' Recebi também uma imagem — em modo mock não faço análise visual.' : '';
+  return [
+    `[MOCK — turno ${turn}]${imageNote}`,
+    '',
+    `Você perguntou: "${message.slice(0, 120)}${message.length > 120 ? '…' : ''}"`,
+    '',
+    'Resposta simulada do Teki:',
+    '1. Verifique se o problema ocorre em outro dispositivo.',
+    '2. Reinicie o serviço afetado.',
+    '3. Se persistir, envie logs para análise.',
+    '',
+    '_Esta é uma resposta de teste. Configure ANTHROPIC_API_KEY para respostas reais._',
+  ].join('\n');
+}
+
 export async function chatWithAnthropic({
   systemPrompt,
   history,
@@ -32,6 +52,11 @@ export async function chatWithAnthropic({
   screenshot?: string | null;
   mimeType?: 'image/png' | 'image/jpeg';
 }): Promise<string> {
+  if (process.env.MOCK_AI === 'true') {
+    await new Promise((r) => setTimeout(r, 400)); // simula latência
+    return mockResponse(message, history, !!screenshot);
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY não configurada no servidor.');

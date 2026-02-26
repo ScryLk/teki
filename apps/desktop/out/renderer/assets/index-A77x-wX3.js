@@ -132,7 +132,7 @@ const TitleBar = () => {
             "button",
             {
               onClick: handlePlayPauseClick,
-              className: "flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors",
+              className: "no-drag flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors",
               title: isCapturing ? "Parar observação" : "Selecionar janela",
               children: isCapturing ? /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: "text-success", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "6", y: "4", width: "4", height: "16" }),
@@ -144,7 +144,7 @@ const TitleBar = () => {
             "button",
             {
               onClick: () => setSettingsOpen(true),
-              className: "flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary",
+              className: "no-drag flex items-center justify-center w-8 h-8 rounded hover:bg-surface-hover transition-colors text-text-muted hover:text-text-secondary",
               title: "Configurações",
               children: /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "12", cy: "12", r: "3" }),
@@ -10188,7 +10188,7 @@ const ChatInput = ({
     )
   ] });
 };
-const TEKI_API_URL = "";
+const TEKI_API_URL = "http://localhost:3000";
 async function sendMessage(messages, context, model) {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   const screenshot = context?.screenshot;
@@ -10600,8 +10600,20 @@ const styles = `
     z-index: 10;
   }
 
+  .cat-mascot-root.!pointer-events-auto {
+    pointer-events: auto;
+  }
+
+  /* When wrapped by DevCatWrapper (which handles absolute positioning),
+     CatMascot should not apply its own absolute positioning. */
+  .cat-mascot-root.cat-no-position {
+    position: relative;
+    bottom: auto;
+    right: auto;
+  }
+
   .cat-svg {
-    transition: transform 0.5s ease, filter 0.5s ease;
+    transition: filter 0.5s ease;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
   }
 
@@ -10611,7 +10623,7 @@ const styles = `
 
   /* ---- Body animations ---- */
   .cat-body-sitting { }
-  .cat-body-attentive { transform-origin: center bottom; }
+  .cat-body-attentive { transform-origin: 55px 104px; }
   .cat-body-paw-chin { }
   .cat-body-smiling { }
   .cat-body-ears-up { }
@@ -10621,29 +10633,30 @@ const styles = `
 
   /* ---- Eye styles ---- */
   .cat-eye {
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   .cat-eye-semiclosed .cat-eye {
-    animation: blink 4s ease-in-out infinite;
+    /* Olhos semicerrados são relaxados — sem animação de blink */
   }
 
   .cat-eye-open .cat-eye { }
 
   .cat-eye-blinking .cat-eye {
     animation: blink 2s ease-in-out infinite;
+    transform-origin: 55px 52px;
   }
 
   .cat-eye-wide .cat-eye {
-    transform: scale(1.2);
+    /* Olhos wide já são desenhados maiores no SVG (r=7) — sem scale CSS */
   }
 
   /* ---- Tail styles ---- */
-  /* The tail <g> is wrapped in a translate(85,88) group, so rotating
+  /* The tail <g> is wrapped in a translate(76,86) group, so rotating
      around (0,0) pivots exactly at the tail base — no viewport ambiguity. */
   .cat-tail {
-    transform-origin: 0 0;
-    transition: all 0.3s ease;
+    transform-origin: 0px 0px;
+    /* Sem transition — as animations tailSlow/tailFast já fazem transições suaves */
   }
   .cat-tail-slow {
     animation: tailSlow 3s ease-in-out infinite;
@@ -10655,7 +10668,7 @@ const styles = `
   /* ---- Ears ---- */
   .cat-ears {
     transition: transform 0.3s ease;
-    transform-origin: center bottom;
+    transform-origin: 55px 35px;
   }
   .cat-ears-alert {
     animation: earsUp 0.4s ease-out forwards;
@@ -10669,12 +10682,13 @@ const styles = `
 
   /* ---- Paw ---- */
   .cat-paw {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   /* ---- Whiskers ---- */
   .cat-whiskers {
     transition: transform 0.3s ease;
+    transform-origin: 55px 60px;
   }
   .cat-whiskers-alert {
     transform: scaleX(1.1);
@@ -10751,7 +10765,7 @@ const CatMascot = ({
         ] });
       case "semiclosed": {
         const eyeHeight = 5;
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("g", { className: "cat-eye", style: { transformOrigin: `${leftEyeX}px ${eyeY}px` }, children: [
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("g", { className: "cat-eye", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "ellipse",
             {
@@ -10777,27 +10791,7 @@ const CatMascot = ({
             }
           ),
           /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: rightEyeX + 1, cy: eyeY, r: "2.5", fill: "#0a0a0b" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: rightEyeX + 2, cy: eyeY - 1.5, r: "1", fill: "#ffffff", opacity: "0.7" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "ellipse",
-            {
-              cx: leftEyeX,
-              cy: eyeY - 3,
-              rx: "6.5",
-              ry: "4",
-              fill: "#2A8F9D"
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "ellipse",
-            {
-              cx: rightEyeX,
-              cy: eyeY - 3,
-              rx: "6.5",
-              ry: "4",
-              fill: "#2A8F9D"
-            }
-          )
+          /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: rightEyeX + 2, cy: eyeY - 1.5, r: "1", fill: "#ffffff", opacity: "0.7" })
         ] });
       }
       case "wide": {
@@ -10980,6 +10974,10 @@ const CatMascot = ({
                 )
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("g", { className: eyeClasses, children: renderEyes }),
+              config.eyeStyle === "semiclosed" && /* @__PURE__ */ jsxRuntimeExports.jsxs("g", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("ellipse", { cx: "42", cy: "49", rx: "6.5", ry: "4", fill: "#2A8F9D" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("ellipse", { cx: "68", cy: "49", rx: "6.5", ry: "4", fill: "#2A8F9D" })
+              ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "polygon",
                 {
@@ -11031,6 +11029,58 @@ const CatMascot = ({
       ]
     }
   );
+};
+const ONE_SHOT_DURATIONS = {
+  alert: 5e3,
+  happy: 3e3
+};
+const DevCatWrapper = ({
+  state: realState,
+  size = "md",
+  className = ""
+}) => {
+  const isDev = false;
+  const [showPreview, setShowPreview] = reactExports.useState(false);
+  const [devOverrideState, setDevOverrideState] = reactExports.useState(null);
+  const [devLoop, setDevLoop] = reactExports.useState(false);
+  const oneShotTimerRef = reactExports.useRef(null);
+  reactExports.useEffect(() => {
+    return () => {
+      if (oneShotTimerRef.current) {
+        clearTimeout(oneShotTimerRef.current);
+      }
+    };
+  }, []);
+  reactExports.useCallback(
+    (e) => {
+      return;
+    },
+    [isDev, devLoop, devOverrideState]
+  );
+  reactExports.useCallback(
+    (state, loop) => {
+      if (oneShotTimerRef.current) {
+        clearTimeout(oneShotTimerRef.current);
+        oneShotTimerRef.current = null;
+      }
+      setDevOverrideState(state);
+      setDevLoop(loop);
+      if (!loop) {
+        const duration = ONE_SHOT_DURATIONS[state];
+        if (duration) {
+          oneShotTimerRef.current = setTimeout(() => {
+            oneShotTimerRef.current = null;
+            setDevOverrideState(null);
+            setDevLoop(false);
+          }, duration);
+        }
+      }
+    },
+    []
+  );
+  {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(CatMascot, { state: realState, size, className });
+  }
 };
 const ScreenViewer = () => {
   const catState = useAppStore((s) => s.catState);
@@ -11148,7 +11198,7 @@ const ScreenViewer = () => {
           ]
         }
       ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(CatMascot, { state: catState, size: "md" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DevCatWrapper, { state: catState, size: "md" })
     ] });
   }
   if (viewerState === "selecting") {
@@ -11238,7 +11288,7 @@ const ScreenViewer = () => {
           draggable: false
         }
       ) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-text-muted", children: "Aguardando captura..." }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(CatMascot, { state: catState, size: "md" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DevCatWrapper, { state: catState, size: "md" })
     ] });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-full h-full bg-bg overflow-hidden flex flex-col items-center justify-center gap-5", children: [
@@ -11270,7 +11320,7 @@ const ScreenViewer = () => {
         ]
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(CatMascot, { state: catState, size: "md" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx(DevCatWrapper, { state: catState, size: "md" })
   ] });
 };
 const SearchIcon = ({ className }) => /* @__PURE__ */ jsxRuntimeExports.jsxs(

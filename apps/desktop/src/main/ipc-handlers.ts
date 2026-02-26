@@ -5,6 +5,13 @@ import settingsStore from './services/settings-store';
 import windowWatcher from './services/window-watcher';
 import { updateTrayState } from './tray';
 import { validateApiKey } from './services/ai-key-validator';
+import {
+  startDeviceFlow,
+  cancelDeviceFlow,
+  setApiKeyManually,
+  getAuthStatus,
+  logout,
+} from './services/auth-service';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   // ── Window watching ───────────────────────────────────────────────
@@ -60,5 +67,27 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(IPC_CHANNELS.AI_VALIDATE_KEY, (_event, provider: AiProviderId, key: string) => {
     return validateApiKey(provider, key);
+  });
+
+  // ── Auth ─────────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_DEVICE_START, async () => {
+    return startDeviceFlow(mainWindow);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_DEVICE_CANCEL, () => {
+    cancelDeviceFlow();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_SET_API_KEY, async (_event, key: string) => {
+    return setApiKeyManually(key);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_GET_STATUS, async () => {
+    return getAuthStatus();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_LOGOUT, () => {
+    logout();
   });
 }

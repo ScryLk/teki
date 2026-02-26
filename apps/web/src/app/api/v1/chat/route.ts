@@ -8,7 +8,9 @@ import {
   incrementUsage,
 } from '@/lib/plan-limits';
 import { getUserProviderKeys } from '@/lib/provider-keys';
-import { searchKnowledgeBase, formatKBContext } from '@/lib/kb/search';
+import { searchWithExpansion, formatExpansionContext, buildExpansionMetadata } from '@/lib/kb/query-expansion';
+import { calculateConfidence, buildConfidenceMetadata } from '@/lib/kb/confidence-scorer';
+import type { QueryExpansionResult } from '@/lib/kb/query-expansion';
 import { prisma } from '@/lib/prisma';
 import { dispatchWebhook } from '@/lib/webhooks/dispatch';
 import type { ProviderMessage } from '@/lib/ai/types';
@@ -83,8 +85,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 6. RAG: search knowledge base
+    // 6. RAG: search knowledge base with progressive query expansion
     let kbContext = '';
+    let expansionMeta = null;
+    let expansionResultForConfidence: QueryExpansionResult | null = null;
     if (agent) {
       const docCount = await prisma.document.count({
         where: { agentId: agent.id, status: 'INDEXED' },
@@ -94,11 +98,13 @@ export async function POST(req: NextRequest) {
           .reverse()
           .find((m: { role: string }) => m.role === 'user');
         if (lastUserMsg) {
-          const results = await searchKnowledgeBase(
-            agent.id,
-            (lastUserMsg as { content: string }).content
-          );
-          kbContext = formatKBContext(results);
+          const expansionResult = await searchWithExpansion({
+            agentId: agent.id,
+            query: (lastUserMsg as { content: string }).content,
+          });
+          kbContext = formatExpansionContext(expansionResult);
+          expansionMeta = buildExpansionMetadata(expansionResult);
+          expansionResultForConfidence = expansionResult;
         }
       }
     }
@@ -196,7 +202,22 @@ export async function POST(req: NextRequest) {
     const tokensIn = result.usage?.inputTokens ?? 0;
     const tokensOut = result.usage?.outputTokens ?? 0;
 
-    // 12. Save assistant message
+    // 11b. Calculate confidence score (post-response)
+    let confidenceMeta = null;
+    if (expansionResultForConfidence) {
+      const confidenceResult = calculateConfidence({
+        expansionResult: expansionResultForConfidence,
+        responseText: result.content,
+        modelId,
+      });
+      confidenceMeta = buildConfidenceMetadata(confidenceResult);
+    }
+
+    // 12. Save assistant message (with expansion + confidence metadata)
+    const messageMetadata: Record<string, unknown> = {};
+    if (expansionMeta) messageMetadata.kb_expansion = expansionMeta;
+    if (confidenceMeta) messageMetadata.confidence = confidenceMeta;
+
     await prisma.conversationMessage.create({
       data: {
         conversationId: convId,
@@ -206,6 +227,7 @@ export async function POST(req: NextRequest) {
         tokensIn,
         tokensOut,
         latencyMs,
+        ...(Object.keys(messageMetadata).length > 0 ? { metadata: messageMetadata } : {}),
       },
     });
 
@@ -226,6 +248,13 @@ export async function POST(req: NextRequest) {
         model: modelId,
         conversationId: convId,
         usage: result.usage,
+        ...(confidenceMeta ? {
+          confidence: {
+            percentage: confidenceMeta.percentage,
+            label: confidenceMeta.label,
+            classification: confidenceMeta.classification,
+          },
+        } : {}),
       },
       { headers: { 'X-Teki-Model': modelId } }
     );

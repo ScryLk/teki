@@ -14,7 +14,9 @@ export type DevToolsSection =
   | 'data'
   | 'inspector'
   | 'events'
-  | 'info';
+  | 'info'
+  | 'query_expansion'
+  | 'confidence';
 
 export interface AiCallLogEntry {
   id: string;
@@ -67,6 +69,11 @@ interface DevToolsState {
   aiCallsLog: AiCallLogEntry[];
   eventLog: EventLogEntry[];
 
+  // Query Expansion & Confidence debug data
+  lastExpansionResult: unknown | null;
+  lastConfidenceResult: unknown | null;
+  expansionStats: { l0: number; l1: number; l2: number; l3: number; miss: number };
+
   // Actions
   toggle: () => void;
   setIsOpen: (open: boolean) => void;
@@ -90,6 +97,10 @@ interface DevToolsState {
   clearAiCallsLog: () => void;
   addEventLog: (entry: EventLogEntry) => void;
   clearEventLog: () => void;
+  setLastExpansionResult: (result: unknown) => void;
+  setLastConfidenceResult: (result: unknown) => void;
+  incrementExpansionStat: (layer: 'l0' | 'l1' | 'l2' | 'l3' | 'miss') => void;
+  resetExpansionStats: () => void;
 }
 
 export const useDevTools = create<DevToolsState>()(
@@ -118,6 +129,9 @@ export const useDevTools = create<DevToolsState>()(
 
       aiCallsLog: [],
       eventLog: [],
+      lastExpansionResult: null,
+      lastConfidenceResult: null,
+      expansionStats: { l0: 0, l1: 0, l2: 0, l3: 0, miss: 0 },
 
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
       setIsOpen: (open) => set({ isOpen: open }),
@@ -156,6 +170,17 @@ export const useDevTools = create<DevToolsState>()(
           eventLog: [entry, ...s.eventLog].slice(0, 100),
         })),
       clearEventLog: () => set({ eventLog: [] }),
+      setLastExpansionResult: (result) => set({ lastExpansionResult: result }),
+      setLastConfidenceResult: (result) => set({ lastConfidenceResult: result }),
+      incrementExpansionStat: (layer) =>
+        set((s) => ({
+          expansionStats: {
+            ...s.expansionStats,
+            [layer]: s.expansionStats[layer] + 1,
+          },
+        })),
+      resetExpansionStats: () =>
+        set({ expansionStats: { l0: 0, l1: 0, l2: 0, l3: 0, miss: 0 } }),
     }),
     {
       name: 'teki-devtools',

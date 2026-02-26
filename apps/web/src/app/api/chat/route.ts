@@ -5,6 +5,33 @@ import type { ProviderMessage } from '@/lib/ai/types';
 
 export const runtime = 'nodejs';
 
+// ── Mock mode ─────────────────────────────────────────────────────────────────
+
+function mockSSEStream(message: string, hasImage: boolean): ReadableStream {
+  const words = [
+    '[MOCK]',
+    hasImage ? ' Recebi sua imagem.' : '',
+    ` Você perguntou sobre: "${message.slice(0, 80)}${message.length > 80 ? '…' : ''}"`,
+    '\n\nResposta simulada:\n',
+    '1. Verifique se o problema ocorre em outro dispositivo.\n',
+    '2. Reinicie o serviço afetado.\n',
+    '3. Se persistir, envie os logs para análise.\n\n',
+    '_Modo mock ativo — configure_ `MOCK_AI=false` _para respostas reais._',
+  ].filter(Boolean);
+
+  return new ReadableStream({
+    async start(controller) {
+      const enc = new TextEncoder();
+      for (const chunk of words) {
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`));
+        await new Promise((r) => setTimeout(r, 60));
+      }
+      controller.enqueue(enc.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
+
 const SYSTEM_PROMPT = `Você é o Teki, um assistente especializado em suporte técnico de TI.
 Responda sempre em português do Brasil. Seja direto, técnico e prático.
 Quando receber uma imagem, analise-a e descreva o problema detectado.
@@ -59,6 +86,19 @@ export async function POST(req: NextRequest) {
     if (context.nivelTecnico) lines.push(`Nível técnico: ${context.nivelTecnico}`);
     lines.push('[FIM DO CONTEXTO]');
     systemPrompt += lines.join('\n');
+  }
+
+  if (process.env.MOCK_AI === 'true') {
+    const lastUserMsg = (messages ?? []).findLast((m: { role: string }) => m.role === 'user')?.content ?? '';
+    const mockStream = mockSSEStream(lastUserMsg, !!screenshot);
+    return new Response(mockStream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Teki-Model': 'mock',
+      },
+    });
   }
 
   try {
