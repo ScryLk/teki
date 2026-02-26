@@ -39,6 +39,11 @@ interface AppState {
   // AI model selection
   selectedModel: string;
 
+  // Auth
+  isAuthenticated: boolean;
+  userEmail: string | null;
+  userName: string | null;
+
   // Actions
   setLayout: (layout: LayoutMode) => void;
   toggleCommandPalette: () => void;
@@ -52,6 +57,10 @@ interface AppState {
   requestWindowSelector: boolean;
   triggerWindowSelector: () => void;
   clearWindowSelector: () => void;
+
+  // Auth actions
+  setAuth: (isAuthenticated: boolean, email: string | null, name: string | null) => void;
+  clearAuth: () => void;
 }
 
 function getStoredModel(): string {
@@ -93,6 +102,11 @@ export const useAppStore = create<AppState>((set) => ({
   // AI model
   selectedModel: getStoredModel(),
 
+  // Auth
+  isAuthenticated: false,
+  userEmail: null,
+  userName: null,
+
   // Actions
   setLayout: (layout) => set({ layout }),
 
@@ -128,4 +142,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   triggerWindowSelector: () => set({ requestWindowSelector: true }),
   clearWindowSelector: () => set({ requestWindowSelector: false }),
+
+  // Auth actions
+  setAuth: (isAuthenticated, email, name) =>
+    set({ isAuthenticated, userEmail: email, userName: name }),
+  clearAuth: () =>
+    set({ isAuthenticated: false, userEmail: null, userName: null }),
 }));

@@ -7,13 +7,25 @@ import ChatPanel from './components/chat/ChatPanel';
 import ScreenViewer from './components/screen/ScreenViewer';
 import CommandPalette from './components/command-palette/CommandPalette';
 import SettingsModal from './components/settings/SettingsModal';
+import DesktopLogin from './components/auth/DesktopLogin';
 
 const App: React.FC = () => {
   const layout = useAppStore((s) => s.layout);
   const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
   const settingsOpen = useAppStore((s) => s.settingsOpen);
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const setAuth = useAppStore((s) => s.setAuth);
   const setLayout = useAppStore((s) => s.setLayout);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
+
+  // Check auth status on mount
+  useEffect(() => {
+    if (window.tekiAPI?.getAuthStatus) {
+      window.tekiAPI.getAuthStatus().then((status) => {
+        setAuth(status.isAuthenticated, status.email, status.name);
+      });
+    }
+  }, [setAuth]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,6 +80,18 @@ const App: React.FC = () => {
         );
     }
   };
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen flex flex-col bg-bg">
+        <TitleBar />
+        <main className="flex-1 overflow-hidden">
+          <DesktopLogin />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-bg">
