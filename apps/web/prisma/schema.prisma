@@ -132,12 +132,29 @@ model User {
   anonymizedAt      DateTime? @map("anonymized_at")
   anonymizedBy      String?   @map("anonymized_by") @db.Uuid
 
+  // ── NextAuth compatibility fields ──
+  name  String? @db.VarChar(200)
+  image String? @db.VarChar(500)
+
+  // ── Progressive profiling (tudo opcional no início) ──
+  onboardingStep Int      @default(0) @map("onboarding_step")
+  aiTone         String?  @map("ai_tone") @db.VarChar(50)
+  area           String?  @db.VarChar(50)
+  userRole       String?  @map("user_role") @db.VarChar(50)
+  company        String?  @db.VarChar(200)
+  firstLoginAt   DateTime? @map("first_login_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations - Auth
   credentials   UserCredential?
   authProviders UserAuthProvider[]
+
+  // Relations - NextAuth adapter
+  nextAuthAccounts NextAuthAccount[]
+  nextAuthSessions NextAuthSession[]
+  deviceCodes      DeviceCode[]
 
   // Relations - Operational
   memberships TenantMember[]   @relation("UserMemberships")
@@ -2427,4 +2444,78 @@ enum SyncLogStatus {
   SUCCESS
   PARTIAL
   SYNC_ERROR @map("ERROR")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NEXTAUTH v5 — Adapter tables (database sessions)
+// ═══════════════════════════════════════════════════════════════
+
+model NextAuthAccount {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("nextauth_accounts")
+}
+
+model NextAuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("nextauth_sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DEVICE CODES — Desktop authentication via browser
+// ═══════════════════════════════════════════════════════════════
+
+model DeviceCode {
+  id         String           @id @default(cuid())
+  userCode   String           @unique @map("user_code")
+  deviceCode String           @unique @map("device_code")
+  userId     String?          @map("user_id") @db.Uuid
+  apiKeyId   String?          @map("api_key_id")
+  status     DeviceCodeStatus @default(PENDING)
+  userAgent  String?          @map("user_agent")
+  expiresAt  DateTime         @map("expires_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([deviceCode])
+  @@index([userCode])
+  @@map("device_codes")
+}
+
+enum DeviceCodeStatus {
+  PENDING
+  AUTHORIZED
+  EXPIRED
+  DENIED
 }

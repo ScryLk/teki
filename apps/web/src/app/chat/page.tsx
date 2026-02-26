@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { Header } from '@/components/Header';
 import { ContextPanel, type SupportContext } from '@/components/ContextPanel';
 import { ChatArea, type Message } from '@/components/ChatArea';
 import { DiagnosticPanel } from '@/components/DiagnosticPanel';
+import { OnboardingBanner } from '@/components/auth/OnboardingBanner';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClipboardList, Search } from 'lucide-react';
@@ -20,6 +22,7 @@ const DEFAULT_CONTEXT: SupportContext = {
 };
 
 export default function Teki() {
+  const { data: session } = useSession();
   const [context, setContext] = useState<SupportContext>({ ...DEFAULT_CONTEXT });
   const [lastResponse, setLastResponse] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -67,6 +70,13 @@ export default function Teki() {
         onClearContext={handleClearContext}
         onToggleSidebar={toggleSidebar}
         sidebarOpen={sidebarOpen}
+      />
+
+      {/* Progressive profiling banner */}
+      <OnboardingBanner
+        onboardingStep={(session?.user as any)?.onboardingStep ?? -1}
+        messageCount={messages.length}
+        userName={session?.user?.name}
       />
 
       <div className="flex flex-1 overflow-hidden">
