@@ -31,8 +31,13 @@
     ]
   },
   "devDependencies": {
+    "@types/pg": "^8.16.0",
     "@vitejs/plugin-react": "^5.1.4",
     "cross-env": "^10.1.0",
     "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.4.1",
+    "pg": "^8.19.0"
   }
 }

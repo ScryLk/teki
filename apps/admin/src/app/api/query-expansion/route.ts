@@ -4,24 +4,26 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  try {
   const params = request.nextUrl.searchParams;
   const days = parseInt(params.get('days') || '30');
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // Query conversation messages that have expansion metadata
+  // Query AI messages that have expansion metadata
   const messagesWithExpansion = await prisma.$queryRaw<
     {
       metadata: string;
       created_at: Date;
     }[]
   >`
-    SELECT metadata::text, created_at
-    FROM conversation_messages
-    WHERE role = 'ASSISTANT'
-      AND metadata IS NOT NULL
-      AND metadata::text LIKE '%kb_expansion%'
-      AND created_at >= ${since}
-    ORDER BY created_at DESC
+    SELECT m2.metadata::text, m.created_at
+    FROM messages m
+    INNER JOIN message_ai_metadata m2 ON m2.message_id = m.id
+    WHERE m.sender_type = 'ai'
+      AND m2.metadata IS NOT NULL
+      AND m2.metadata::text LIKE '%kb_expansion%'
+      AND m.created_at >= ${since}
+    ORDER BY m.created_at DESC
     LIMIT 5000
   `;
 
@@ -96,4 +98,11 @@ export async function GET(request: NextRequest) {
     totalTokensSpent: totalTokens,
     dailyData,
   });
+  } catch (error) {
+    console.error('[query-expansion]', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal error' },
+      { status: 500 }
+    );
+  }
 }

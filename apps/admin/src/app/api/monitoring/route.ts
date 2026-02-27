@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  try {
   const now = new Date();
   const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -57,14 +58,14 @@ export async function GET() {
       take: 20,
     }),
     prisma.connectorSyncLog.findMany({
-      where: { status: 'FAILED' },
+      where: { status: 'SYNC_ERROR' },
       take: 10,
-      orderBy: { startedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         status: true,
         errorMessage: true,
-        startedAt: true,
+        createdAt: true,
         connector: {
           select: { displayName: true, platform: true },
         },
@@ -92,9 +93,16 @@ export async function GET() {
     })),
     recentErrors: recentErrors.map((e) => ({
       ...e,
-      startedAt: e.startedAt.toISOString(),
+      startedAt: e.createdAt.toISOString(),
       connectorName: e.connector.displayName,
       platform: e.connector.platform,
     })),
   });
+  } catch (error) {
+    console.error('[monitoring]', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal error' },
+      { status: 500 }
+    );
+  }
 }
