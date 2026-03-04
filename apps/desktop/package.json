@@ -10,7 +10,7 @@
     "package": "electron-builder"
   },
   "dependencies": {
-    "@electron-toolkit/utils": "^3.0.0",
+    "@electron-toolkit/utils": "^4.0.0",
     "@teki/shared": "workspace:*",
     "clsx": "^2.1.1",
     "electron-store": "^8.2.0",
@@ -24,7 +24,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.0",
-    "electron": "^33.4.11",
+    "electron": "^40.7.0",
     "electron-builder": "^25.0.0",
     "electron-vite": "^2.3.0",
     "postcss": "^8.4.0",
