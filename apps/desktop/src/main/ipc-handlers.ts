@@ -8,6 +8,7 @@ import { validateApiKey } from './services/ai-key-validator';
 import {
   startDeviceFlow,
   cancelDeviceFlow,
+  loginWithCredentials,
   setApiKeyManually,
   getAuthStatus,
   logout,
@@ -77,6 +78,10 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(IPC_CHANNELS.AUTH_DEVICE_CANCEL, () => {
     cancelDeviceFlow();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_LOGIN_CREDENTIALS, async (_event, email: string, password: string) => {
+    return loginWithCredentials(email, password);
   });
 
   ipcMain.handle(IPC_CHANNELS.AUTH_SET_API_KEY, async (_event, key: string) => {

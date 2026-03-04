@@ -1,0 +1,90 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { createApiKey } from '@/lib/api-keys';
+import bcrypt from 'bcryptjs';
+
+/**
+ * POST /api/auth/desktop-login
+ * Direct email+password login for desktop app.
+ * Returns an API key instead of a session cookie.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const { email, password } = await req.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: { code: 'BAD_REQUEST', message: 'Email e senha obrigatorios.' } },
+        { status: 400 },
+      );
+    }
+
+    const normalizedEmail = (email as string).toLowerCase().trim();
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: { credentials: true },
+    });
+
+    if (!user || user.status !== 'ACTIVE' || !user.credentials) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_CREDENTIALS', message: 'Email ou senha incorretos.' } },
+        { status: 401 },
+      );
+    }
+
+    // Check lockout
+    if (user.credentials.lockedUntil && user.credentials.lockedUntil > new Date()) {
+      return NextResponse.json(
+        { error: { code: 'LOCKED', message: 'Conta bloqueada. Tente novamente em alguns minutos.' } },
+        { status: 423 },
+      );
+    }
+
+    const valid = await bcrypt.compare(password, user.credentials.passwordHash);
+
+    if (!valid) {
+      const failedAttempts = user.credentials.failedAttempts + 1;
+      await prisma.userCredential.update({
+        where: { userId: user.id },
+        data: {
+          failedAttempts,
+          ...(failedAttempts >= 5
+            ? { lockedUntil: new Date(Date.now() + 15 * 60 * 1000) }
+            : {}),
+        },
+      });
+      return NextResponse.json(
+        { error: { code: 'INVALID_CREDENTIALS', message: 'Email ou senha incorretos.' } },
+        { status: 401 },
+      );
+    }
+
+    // Reset failed attempts
+    await prisma.userCredential.update({
+      where: { userId: user.id },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
+
+    // Create API key for desktop
+    const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE');
+
+    return NextResponse.json({
+      apiKey: key,
+      email: user.email,
+      name: user.displayName ?? user.firstName,
+    });
+  } catch (error) {
+    console.error('[desktop-login]', error);
+    if ((error as Error).message?.includes('Limite de 5')) {
+      return NextResponse.json(
+        { error: { code: 'LIMIT_REACHED', message: 'Limite de chaves ativas atingido.' } },
+        { status: 422 },
+      );
+    }
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Erro interno.' } },
+      { status: 500 },
+    );
+  }
+}

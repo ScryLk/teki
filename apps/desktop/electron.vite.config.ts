@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ['@teki/shared'] })],
+    plugins: [externalizeDepsPlugin({ exclude: ['@teki/shared', '@electron-toolkit/utils'] })],
     resolve: {
       alias: {
         '@teki/shared': resolve(__dirname, '../../packages/shared'),

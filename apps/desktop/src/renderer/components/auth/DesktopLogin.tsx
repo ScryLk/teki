@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../stores/app-store';
 
-type AuthState = 'idle' | 'device_flow' | 'api_key';
+type AuthState = 'idle' | 'device_flow';
 
 const DesktopLogin: React.FC = () => {
   const [authState, setAuthState] = useState<AuthState>('idle');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [userCode, setUserCode] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(600);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const setAuth = useAppStore((s) => s.setAuth);
 
   // Listen for auth status from main process
@@ -49,6 +53,28 @@ const DesktopLogin: React.FC = () => {
     return () => clearInterval(timer);
   }, [authState]);
 
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await window.tekiAPI.loginWithCredentials(email, password);
+      if (result.success) {
+        const status = await window.tekiAPI.getAuthStatus();
+        setAuth(true, status.email, status.name);
+      } else {
+        setError(result.error || 'Email ou senha incorretos.');
+      }
+    } catch {
+      setError('Erro de conexao. Verifique se o servidor esta rodando.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeviceFlow = async () => {
     setError(null);
     setAuthState('device_flow');
@@ -57,7 +83,7 @@ const DesktopLogin: React.FC = () => {
     try {
       const result = await window.tekiAPI.startDeviceAuth();
       setUserCode(result.userCode);
-    } catch (err) {
+    } catch {
       setError('Erro ao iniciar autenticacao. Verifique sua conexao.');
       setAuthState('idle');
     }
@@ -113,39 +139,86 @@ const DesktopLogin: React.FC = () => {
         {/* Idle state */}
         {authState === 'idle' && (
           <div className="space-y-4">
-            <button
-              onClick={handleDeviceFlow}
-              className="w-full h-11 bg-accent text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-            >
-              Entrar via navegador
-            </button>
+            {/* Email + Password form (primary) */}
+            <form onSubmit={handleCredentialsLogin} className="space-y-3 text-left">
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Senha</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Sua senha"
+                  className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !email || !password}
+                className="w-full h-11 bg-accent text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
+              </button>
+            </form>
 
+            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-bg px-2 text-text-secondary">
-                  ou cole sua API key
-                </span>
+                <span className="bg-bg px-2 text-text-secondary">ou</span>
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="tk_live_..."
-                className="flex-1 h-9 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none font-mono"
-              />
+            {/* Browser auth button */}
+            <button
+              onClick={handleDeviceFlow}
+              className="w-full h-10 bg-surface border border-border text-text-primary rounded-lg text-sm font-medium hover:border-accent transition-colors"
+            >
+              Entrar via navegador
+            </button>
+
+            {/* Advanced: API key */}
+            <div>
               <button
-                onClick={handleApiKey}
-                disabled={!apiKeyInput.trim()}
-                className="h-9 px-4 text-sm bg-surface border border-border rounded-md text-text-primary hover:border-accent disabled:opacity-50 transition-colors"
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
               >
-                Salvar
+                {showAdvanced ? 'Ocultar API key' : 'Usar API key'}
               </button>
+
+              {showAdvanced && (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="tk_live_..."
+                    className="flex-1 h-9 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none font-mono"
+                  />
+                  <button
+                    onClick={handleApiKey}
+                    disabled={!apiKeyInput.trim()}
+                    className="h-9 px-4 text-sm bg-surface border border-border rounded-md text-text-primary hover:border-accent disabled:opacity-50 transition-colors"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

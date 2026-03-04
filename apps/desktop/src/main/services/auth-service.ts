@@ -1,7 +1,9 @@
 import { BrowserWindow, shell } from 'electron';
 import settingsStore from './settings-store';
 
-const API_BASE = process.env.TEKI_API_URL || 'https://teki.com.br';
+const API_BASE =
+  process.env.TEKI_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://teki.com.br');
 
 interface DeviceCodeResponse {
   deviceCode: string;
@@ -102,6 +104,36 @@ export function cancelDeviceFlow(): void {
   if (pollingInterval) {
     clearInterval(pollingInterval);
     pollingInterval = null;
+  }
+}
+
+export async function loginWithCredentials(
+  email: string,
+  password: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/desktop-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { success: false, error: data.error?.message || 'Erro ao autenticar.' };
+    }
+
+    if (data.apiKey) {
+      const saved = await saveAuth(data.apiKey);
+      if (!saved) {
+        return { success: false, error: 'Erro ao salvar credenciais.' };
+      }
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Erro de conexao. Verifique se o servidor esta rodando.' };
   }
 }
 

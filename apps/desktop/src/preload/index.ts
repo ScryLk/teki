@@ -110,6 +110,10 @@ const tekiAPI: TekiAPI = {
     };
   },
 
+  loginWithCredentials: (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGIN_CREDENTIALS, email, password);
+  },
+
   setApiKey: (key: string): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_API_KEY, key);
   },

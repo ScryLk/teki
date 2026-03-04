@@ -676,6 +676,10 @@ video {
 .z-\[9999\] {
   z-index: 9999;
 }
+.mx-1 {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
 .mx-2 {
   margin-left: 0.5rem;
   margin-right: 0.5rem;
@@ -774,6 +778,12 @@ video {
 }
 .h-10 {
   height: 2.5rem;
+}
+.h-11 {
+  height: 2.75rem;
+}
+.h-12 {
+  height: 3rem;
 }
 .h-14 {
   height: 3.5rem;
@@ -1477,6 +1487,9 @@ video {
 .p-7 {
   padding: 1.75rem;
 }
+.p-8 {
+  padding: 2rem;
+}
 .px-1 {
   padding-left: 0.25rem;
   padding-right: 0.25rem;
@@ -1617,6 +1630,10 @@ video {
   font-size: 1.5rem;
   line-height: 2rem;
 }
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
 .text-\[10px\] {
   font-size: 10px;
 }
@@ -1677,6 +1694,9 @@ video {
 }
 .tracking-wider {
   letter-spacing: 0.05em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
 }
 .text-\[\#2A8F9D\] {
   --tw-text-opacity: 1;
@@ -2055,6 +2075,9 @@ video {
 }
 .hover\:opacity-80:hover {
   opacity: 0.8;
+}
+.hover\:opacity-90:hover {
+  opacity: 0.9;
 }
 .focus\:border-\[\#2A8F9D\]:focus {
   --tw-border-opacity: 1;

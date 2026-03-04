@@ -46,6 +46,7 @@ export const IPC_CHANNELS = {
   AUTH_DEVICE_START: 'auth:device:start',
   AUTH_DEVICE_CANCEL: 'auth:device:cancel',
   AUTH_DEVICE_STATUS: 'auth:device:status',
+  AUTH_LOGIN_CREDENTIALS: 'auth:loginCredentials',
   AUTH_SET_API_KEY: 'auth:setApiKey',
   AUTH_GET_STATUS: 'auth:getStatus',
   AUTH_LOGOUT: 'auth:logout',
@@ -83,6 +84,7 @@ export interface TekiAPI {
   startDeviceAuth: () => Promise<{ userCode: string; deviceCode: string }>;
   cancelDeviceAuth: () => void;
   onAuthStatus: (callback: (data: { status: string; email?: string; name?: string }) => void) => () => void;
+  loginWithCredentials: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   setApiKey: (key: string) => Promise<boolean>;
   getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }>;
   logout: () => Promise<void>;

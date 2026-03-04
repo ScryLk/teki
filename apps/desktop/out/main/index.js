@@ -1,9 +1,16 @@
 "use strict";
 const electron = require("electron");
 const path = require("path");
-const utils = require("@electron-toolkit/utils");
 const Store = require("electron-store");
 const zlib = require("zlib");
+const is = {
+  dev: !electron.app.isPackaged
+};
+({
+  isWindows: process.platform === "win32",
+  isMacOS: process.platform === "darwin",
+  isLinux: process.platform === "linux"
+});
 const IPC_CHANNELS = {
   // Window watching
   WATCH_GET_SOURCES: "watch:getSources",
@@ -22,7 +29,15 @@ const IPC_CHANNELS = {
   // App
   APP_GET_VERSION: "app:getVersion",
   // AI Validation
-  AI_VALIDATE_KEY: "ai:validateKey"
+  AI_VALIDATE_KEY: "ai:validateKey",
+  // Auth
+  AUTH_DEVICE_START: "auth:device:start",
+  AUTH_DEVICE_CANCEL: "auth:device:cancel",
+  AUTH_DEVICE_STATUS: "auth:device:status",
+  AUTH_LOGIN_CREDENTIALS: "auth:loginCredentials",
+  AUTH_SET_API_KEY: "auth:setApiKey",
+  AUTH_GET_STATUS: "auth:getStatus",
+  AUTH_LOGOUT: "auth:logout"
 };
 const defaults = {
   // Capture
@@ -59,7 +74,12 @@ const defaults = {
   geminiKeyStatus: "unconfigured",
   openaiKeyStatus: "unconfigured",
   anthropicKeyStatus: "unconfigured",
-  ollamaKeyStatus: "unconfigured"
+  ollamaKeyStatus: "unconfigured",
+  // Auth
+  authApiKey: null,
+  authEmail: null,
+  authName: null,
+  authAuthenticatedAt: null
 };
 const store = new Store({
   name: "teki-settings",
@@ -298,7 +318,7 @@ function createPopupWindow() {
       sandbox: false
     }
   });
-  if (utils.is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     popupWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/tray-popup.html`);
   } else {
     popupWindow.loadFile(path.join(__dirname, "../renderer/tray-popup.html"));
@@ -658,6 +678,146 @@ function parseError(error) {
   if (e.code === "ENOTFOUND") return "Servidor não encontrado. Verifique sua conexão.";
   return String(e.message ?? "Erro desconhecido na validação.");
 }
+const API_BASE = process.env.TEKI_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://teki.com.br");
+let pollingInterval = null;
+async function startDeviceFlow(mainWindow2) {
+  cancelDeviceFlow();
+  const res = await fetch(`${API_BASE}/api/auth/device`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userAgent: `Teki Desktop/${process.env.npm_package_version || "0.1.0"}`
+    })
+  });
+  if (!res.ok) {
+    throw new Error("Falha ao iniciar autenticacao");
+  }
+  const data = await res.json();
+  electron.shell.openExternal(`${data.verificationUrl}`);
+  pollingInterval = setInterval(async () => {
+    try {
+      const pollRes = await fetch(
+        `${API_BASE}/api/auth/device/poll?deviceCode=${data.deviceCode}`
+      );
+      if (!pollRes.ok) return;
+      const pollData = await pollRes.json();
+      switch (pollData.status) {
+        case "authorized": {
+          cancelDeviceFlow();
+          if (pollData.apiKey) {
+            await saveAuth(pollData.apiKey);
+          }
+          mainWindow2.webContents.send("auth:device:status", {
+            status: "authorized",
+            email: settingsStore.get("authEmail"),
+            name: settingsStore.get("authName")
+          });
+          break;
+        }
+        case "expired":
+        case "denied": {
+          cancelDeviceFlow();
+          mainWindow2.webContents.send("auth:device:status", {
+            status: pollData.status
+          });
+          break;
+        }
+      }
+    } catch {
+    }
+  }, 3e3);
+  return {
+    userCode: data.userCode,
+    deviceCode: data.deviceCode
+  };
+}
+function cancelDeviceFlow() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+async function loginWithCredentials(email, password) {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/desktop-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { success: false, error: data.error?.message || "Erro ao autenticar." };
+    }
+    if (data.apiKey) {
+      const saved = await saveAuth(data.apiKey);
+      if (!saved) {
+        return { success: false, error: "Erro ao salvar credenciais." };
+      }
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Erro de conexao. Verifique se o servidor esta rodando." };
+  }
+}
+async function setApiKeyManually(key) {
+  if (!key.startsWith("tk_live_") && !key.startsWith("tk_test_")) {
+    throw new Error("Formato de API key invalido. Deve comecar com tk_live_ ou tk_test_");
+  }
+  return saveAuth(key);
+}
+async function saveAuth(apiKey) {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/user`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    if (!res.ok) {
+      throw new Error("API key invalida ou expirada");
+    }
+    const profile = await res.json();
+    settingsStore.set("authApiKey", apiKey);
+    settingsStore.set("authEmail", profile.email);
+    settingsStore.set(
+      "authName",
+      profile.displayName || profile.firstName
+    );
+    settingsStore.set("authAuthenticatedAt", (/* @__PURE__ */ new Date()).toISOString());
+    return true;
+  } catch {
+    return false;
+  }
+}
+function logout() {
+  settingsStore.set("authApiKey", null);
+  settingsStore.set("authEmail", null);
+  settingsStore.set("authName", null);
+  settingsStore.set("authAuthenticatedAt", null);
+}
+async function getAuthStatus() {
+  const apiKey = settingsStore.get("authApiKey");
+  if (!apiKey) {
+    return { isAuthenticated: false, email: null, name: null };
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/user`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    if (res.ok) {
+      return {
+        isAuthenticated: true,
+        email: settingsStore.get("authEmail"),
+        name: settingsStore.get("authName")
+      };
+    }
+    logout();
+    return { isAuthenticated: false, email: null, name: null };
+  } catch {
+    return {
+      isAuthenticated: true,
+      email: settingsStore.get("authEmail"),
+      name: settingsStore.get("authName")
+    };
+  }
+}
 function registerIPCHandlers(mainWindow2) {
   electron.ipcMain.handle(IPC_CHANNELS.WATCH_GET_SOURCES, async () => {
     return windowWatcher.getAvailableWindows();
@@ -694,6 +854,24 @@ function registerIPCHandlers(mainWindow2) {
   electron.ipcMain.handle(IPC_CHANNELS.AI_VALIDATE_KEY, (_event, provider, key) => {
     return validateApiKey(provider, key);
   });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_DEVICE_START, async () => {
+    return startDeviceFlow(mainWindow2);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_DEVICE_CANCEL, () => {
+    cancelDeviceFlow();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_LOGIN_CREDENTIALS, async (_event, email, password) => {
+    return loginWithCredentials(email, password);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_SET_API_KEY, async (_event, key) => {
+    return setApiKeyManually(key);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_GET_STATUS, async () => {
+    return getAuthStatus();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH_LOGOUT, () => {
+    logout();
+  });
 }
 let mainWindow = null;
 function createWindow() {
@@ -720,7 +898,7 @@ function createWindow() {
     electron.shell.openExternal(details.url);
     return { action: "deny" };
   });
-  if (utils.is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     window.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));

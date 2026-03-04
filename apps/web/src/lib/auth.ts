@@ -11,19 +11,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: TekiPrismaAdapter(prisma),
 
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
 
-    Resend({
-      apiKey: process.env.RESEND_API_KEY!,
-      from: process.env.EMAIL_FROM || 'Teki <acesso@teki.com.br>',
-      async sendVerificationRequest({ identifier: email, url }) {
-        await sendMagicLinkEmail({ email, url });
-      },
-    }),
+    ...(process.env.RESEND_API_KEY
+      ? [
+          Resend({
+            apiKey: process.env.RESEND_API_KEY,
+            from: process.env.EMAIL_FROM || 'Teki <acesso@teki.com.br>',
+            async sendVerificationRequest({ identifier: email, url }) {
+              await sendMagicLinkEmail({ email, url });
+            },
+          }),
+        ]
+      : []),
 
     Credentials({
       id: 'credentials',

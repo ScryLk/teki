@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function sendMagicLinkEmail({
   email,
@@ -9,7 +15,9 @@ export async function sendMagicLinkEmail({
   email: string;
   url: string;
 }) {
-  await resend.emails.send({
+  const client = getResend();
+  if (!client) throw new Error('RESEND_API_KEY not configured');
+  await client.emails.send({
     from: process.env.EMAIL_FROM || 'Teki <acesso@teki.com.br>',
     to: email,
     subject: 'Seu link de acesso ao Teki',

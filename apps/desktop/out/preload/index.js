@@ -16,7 +16,15 @@ const IPC_CHANNELS = {
   // App
   APP_GET_VERSION: "app:getVersion",
   // AI Validation
-  AI_VALIDATE_KEY: "ai:validateKey"
+  AI_VALIDATE_KEY: "ai:validateKey",
+  // Auth
+  AUTH_DEVICE_START: "auth:device:start",
+  AUTH_DEVICE_CANCEL: "auth:device:cancel",
+  AUTH_DEVICE_STATUS: "auth:device:status",
+  AUTH_LOGIN_CREDENTIALS: "auth:loginCredentials",
+  AUTH_SET_API_KEY: "auth:setApiKey",
+  AUTH_GET_STATUS: "auth:getStatus",
+  AUTH_LOGOUT: "auth:logout"
 };
 const tekiAPI = {
   // Window watching
@@ -85,6 +93,34 @@ const tekiAPI = {
   // AI Key Validation
   validateApiKey: (provider, key) => {
     return electron.ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_KEY, provider, key);
+  },
+  // Auth
+  startDeviceAuth: () => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_DEVICE_START);
+  },
+  cancelDeviceAuth: () => {
+    electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_DEVICE_CANCEL);
+  },
+  onAuthStatus: (callback) => {
+    const listener = (_event, data) => {
+      callback(data);
+    };
+    electron.ipcRenderer.on(IPC_CHANNELS.AUTH_DEVICE_STATUS, listener);
+    return () => {
+      electron.ipcRenderer.removeListener(IPC_CHANNELS.AUTH_DEVICE_STATUS, listener);
+    };
+  },
+  loginWithCredentials: (email, password) => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGIN_CREDENTIALS, email, password);
+  },
+  setApiKey: (key) => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_API_KEY, key);
+  },
+  getAuthStatus: () => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_GET_STATUS);
+  },
+  logout: () => {
+    return electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGOUT);
   }
 };
 electron.contextBridge.exposeInMainWorld("tekiAPI", tekiAPI);

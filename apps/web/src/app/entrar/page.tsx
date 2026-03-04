@@ -6,14 +6,13 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showMagicLink, setShowMagicLink] = useState(false);
   const [isLoading, setIsLoading] = useState<
     'google' | 'email' | 'credentials' | null
   >(null);
@@ -79,6 +78,48 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Email + Password Login (primary) */}
+          <form onSubmit={handleCredentials} className="space-y-3">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#71717a]" />
+              <Input
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10 h-11 bg-[#18181b] border-[#3f3f46] focus:border-[#2A8F9D] text-white placeholder:text-[#52525b]"
+                autoFocus
+                required
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#71717a]" />
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 h-11 bg-[#18181b] border-[#3f3f46] focus:border-[#2A8F9D] text-white placeholder:text-[#52525b]"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-[#2A8F9D] hover:bg-[#237f8b] text-white font-medium"
+              disabled={isLoading !== null || !email || !password}
+            >
+              {isLoading === 'credentials' ? 'Entrando...' : 'Entrar'}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative">
+            <Separator className="bg-[#27272a]" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f0f12] px-3 text-xs text-[#71717a]">
+              ou
+            </span>
+          </div>
+
           {/* Google */}
           <Button
             variant="outline"
@@ -107,55 +148,23 @@ function LoginForm() {
             {isLoading === 'google' ? 'Conectando...' : 'Continuar com Google'}
           </Button>
 
-          {/* Divider */}
-          <div className="relative">
-            <Separator className="bg-[#27272a]" />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f0f12] px-3 text-xs text-[#71717a]">
-              ou
-            </span>
-          </div>
-
-          {/* Magic Link */}
-          <form onSubmit={handleMagicLink} className="space-y-3">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#71717a]" />
-              <Input
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-11 bg-[#18181b] border-[#3f3f46] focus:border-[#2A8F9D] text-white placeholder:text-[#52525b]"
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full h-11 bg-[#2A8F9D] hover:bg-[#237f8b] text-white font-medium"
-              disabled={isLoading !== null || !email}
-            >
-              {isLoading === 'email'
-                ? 'Enviando...'
-                : 'Enviar link de acesso'}
-            </Button>
-          </form>
-
-          {/* Password section (expandable) */}
+          {/* Magic Link section (expandable) */}
           <div>
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowMagicLink(!showMagicLink)}
               className="flex items-center justify-between w-full text-sm text-[#a1a1aa] hover:text-[#2A8F9D] transition-colors"
             >
-              <span>Prefere usar senha?</span>
-              {showPassword ? (
+              <span>Entrar com link magico</span>
+              {showMagicLink ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
                 <ChevronDown className="h-4 w-4" />
               )}
             </button>
 
-            {showPassword && (
-              <form onSubmit={handleCredentials} className="mt-4 space-y-3">
+            {showMagicLink && (
+              <form onSubmit={handleMagicLink} className="mt-4 space-y-3">
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#71717a]" />
                   <Input
@@ -167,41 +176,15 @@ function LoginForm() {
                     required
                   />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#71717a]" />
-                  <Input
-                    type="password"
-                    placeholder="Senha (min. 8 caracteres)"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-11 bg-[#18181b] border-[#3f3f46] focus:border-[#2A8F9D] text-white placeholder:text-[#52525b]"
-                    minLength={8}
-                    required
-                  />
-                </div>
                 <Button
                   type="submit"
                   className="w-full h-11 bg-[#2A8F9D] hover:bg-[#237f8b] text-white font-medium"
-                  disabled={isLoading !== null || !email || !password}
+                  disabled={isLoading !== null || !email}
                 >
-                  {isLoading === 'credentials' ? 'Entrando...' : 'Entrar'}
+                  {isLoading === 'email'
+                    ? 'Enviando...'
+                    : 'Enviar link de acesso'}
                 </Button>
-                <div className="flex flex-col gap-1 text-xs text-[#71717a]">
-                  <button
-                    type="button"
-                    onClick={handleMagicLink}
-                    className="text-left hover:text-[#2A8F9D] transition-colors"
-                  >
-                    Nao tem senha? Enviar link de acesso.
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleMagicLink}
-                    className="text-left hover:text-[#2A8F9D] transition-colors"
-                  >
-                    Esqueceu a senha? Enviar link de recuperacao.
-                  </button>
-                </div>
               </form>
             )}
           </div>

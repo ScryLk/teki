@@ -67,6 +67,10 @@ const useAppStore = create$1((set) => ({
   requestWindowSelector: false,
   // AI model
   selectedModel: getStoredModel(),
+  // Auth
+  isAuthenticated: false,
+  userEmail: null,
+  userName: null,
   // Actions
   setLayout: (layout) => set({ layout }),
   toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
@@ -89,7 +93,10 @@ const useAppStore = create$1((set) => ({
     set({ selectedModel: model });
   },
   triggerWindowSelector: () => set({ requestWindowSelector: true }),
-  clearWindowSelector: () => set({ requestWindowSelector: false })
+  clearWindowSelector: () => set({ requestWindowSelector: false }),
+  // Auth actions
+  setAuth: (isAuthenticated, email, name2) => set({ isAuthenticated, userEmail: email, userName: name2 }),
+  clearAuth: () => set({ isAuthenticated: false, userEmail: null, userName: null })
 }));
 const TitleBar = () => {
   const isCapturing = useAppStore((s) => s.isWatching);
@@ -13615,12 +13622,255 @@ const SidebarTab = ({ active, onClick, icon, label }) => /* @__PURE__ */ jsxRunt
     ]
   }
 );
+const DesktopLogin = () => {
+  const [authState, setAuthState] = reactExports.useState("idle");
+  const [email, setEmail] = reactExports.useState("");
+  const [password, setPassword] = reactExports.useState("");
+  const [userCode, setUserCode] = reactExports.useState("");
+  const [apiKeyInput, setApiKeyInput] = reactExports.useState("");
+  const [error, setError] = reactExports.useState(null);
+  const [loading, setLoading] = reactExports.useState(false);
+  const [countdown, setCountdown] = reactExports.useState(600);
+  const [showAdvanced, setShowAdvanced] = reactExports.useState(false);
+  const setAuth = useAppStore((s) => s.setAuth);
+  reactExports.useEffect(() => {
+    if (!window.tekiAPI) return;
+    const cleanup = window.tekiAPI.onAuthStatus?.((data) => {
+      if (data.status === "authorized") {
+        setAuth(true, data.email || null, data.name || null);
+      } else if (data.status === "expired") {
+        setError("Codigo expirado. Tente novamente.");
+        setAuthState("idle");
+      } else if (data.status === "denied") {
+        setError("Acesso negado.");
+        setAuthState("idle");
+      }
+    });
+    return cleanup;
+  }, [setAuth]);
+  reactExports.useEffect(() => {
+    if (authState !== "device_flow") return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1e3);
+    return () => clearInterval(timer);
+  }, [authState]);
+  const handleCredentialsLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await window.tekiAPI.loginWithCredentials(email, password);
+      if (result.success) {
+        const status = await window.tekiAPI.getAuthStatus();
+        setAuth(true, status.email, status.name);
+      } else {
+        setError(result.error || "Email ou senha incorretos.");
+      }
+    } catch {
+      setError("Erro de conexao. Verifique se o servidor esta rodando.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeviceFlow = async () => {
+    setError(null);
+    setAuthState("device_flow");
+    setCountdown(600);
+    try {
+      const result = await window.tekiAPI.startDeviceAuth();
+      setUserCode(result.userCode);
+    } catch {
+      setError("Erro ao iniciar autenticacao. Verifique sua conexao.");
+      setAuthState("idle");
+    }
+  };
+  const handleApiKey = async () => {
+    setError(null);
+    if (!apiKeyInput.trim()) return;
+    try {
+      const success = await window.tekiAPI.setApiKey(apiKeyInput.trim());
+      if (success) {
+        const status = await window.tekiAPI.getAuthStatus();
+        setAuth(true, status.email, status.name);
+      } else {
+        setError("API key invalida. Verifique e tente novamente.");
+      }
+    } catch {
+      setError("Erro ao validar API key.");
+    }
+  };
+  const handleCancel = () => {
+    window.tekiAPI.cancelDeviceAuth?.();
+    setAuthState("idle");
+    setUserCode("");
+    setError(null);
+  };
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-col items-center justify-center h-full bg-bg p-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-sm w-full space-y-6 text-center", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold text-text-primary", children: "Teki" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-text-secondary", children: "Assistente IA para Suporte Tecnico" })
+    ] }),
+    error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-red-500/10 text-red-400 rounded-lg p-3 text-sm", children: error }),
+    authState === "idle" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCredentialsLogin, className: "space-y-3 text-left", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-xs text-text-secondary mb-1", children: "Email" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              type: "email",
+              value: email,
+              onChange: (e) => setEmail(e.target.value),
+              placeholder: "seu@email.com",
+              className: "w-full h-10 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none",
+              autoFocus: true,
+              required: true
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-xs text-text-secondary mb-1", children: "Senha" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              type: "password",
+              value: password,
+              onChange: (e) => setPassword(e.target.value),
+              placeholder: "Sua senha",
+              className: "w-full h-10 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none",
+              required: true
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "submit",
+            disabled: loading || !email || !password,
+            className: "w-full h-11 bg-accent text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50",
+            children: loading ? "Entrando..." : "Entrar"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full border-t border-border" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative flex justify-center text-xs", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bg-bg px-2 text-text-secondary", children: "ou" }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          onClick: handleDeviceFlow,
+          className: "w-full h-10 bg-surface border border-border text-text-primary rounded-lg text-sm font-medium hover:border-accent transition-colors",
+          children: "Entrar via navegador"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => setShowAdvanced(!showAdvanced),
+            className: "text-xs text-text-muted hover:text-text-secondary transition-colors",
+            children: showAdvanced ? "Ocultar API key" : "Usar API key"
+          }
+        ),
+        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 mt-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              type: "text",
+              value: apiKeyInput,
+              onChange: (e) => setApiKeyInput(e.target.value),
+              placeholder: "tk_live_...",
+              className: "flex-1 h-9 px-3 text-sm bg-surface border border-border rounded-md text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none font-mono"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              onClick: handleApiKey,
+              disabled: !apiKeyInput.trim(),
+              className: "h-9 px-4 text-sm bg-surface border border-border rounded-md text-text-primary hover:border-accent disabled:opacity-50 transition-colors",
+              children: "Salvar"
+            }
+          )
+        ] })
+      ] })
+    ] }),
+    authState === "device_flow" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-text-secondary", children: "Codigo de acesso:" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-center gap-1 text-3xl font-mono font-bold text-text-primary tracking-widest", children: userCode ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        userCode.split("-")[0]?.split("").map((char, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "span",
+          {
+            className: "w-10 h-12 flex items-center justify-center bg-surface border border-border rounded-lg",
+            children: char
+          },
+          `a${i}`
+        )),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-text-muted mx-1", children: "-" }),
+        userCode.split("-")[1]?.split("").map((char, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "span",
+          {
+            className: "w-10 h-12 flex items-center justify-center bg-surface border border-border rounded-lg",
+            children: char
+          },
+          `b${i}`
+        ))
+      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base text-text-muted", children: "Gerando codigo..." }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-text-secondary", children: [
+          "Abra",
+          " ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-accent font-medium", children: "teki.com.br/auth/device" }),
+          " ",
+          "no navegador e digite este codigo."
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-text-muted animate-pulse", children: "Aguardando autorizacao..." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-text-muted", children: [
+          "Expira em ",
+          formatTime(countdown)
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          onClick: handleCancel,
+          className: "text-sm text-text-secondary hover:text-text-primary transition-colors",
+          children: "Cancelar"
+        }
+      )
+    ] })
+  ] }) });
+};
 const App = () => {
   const layout = useAppStore((s) => s.layout);
   const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
   const settingsOpen = useAppStore((s) => s.settingsOpen);
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const setAuth = useAppStore((s) => s.setAuth);
   const setLayout = useAppStore((s) => s.setLayout);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
+  reactExports.useEffect(() => {
+    if (window.tekiAPI?.getAuthStatus) {
+      window.tekiAPI.getAuthStatus().then((status) => {
+        setAuth(status.isAuthenticated, status.email, status.name);
+      });
+    }
+  }, [setAuth]);
   reactExports.useEffect(() => {
     const handleKeyDown = (e) => {
       const isCtrl = e.ctrlKey || e.metaKey;
@@ -13667,6 +13917,12 @@ const App = () => {
         );
     }
   };
+  if (!isAuthenticated) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-screen flex flex-col bg-bg", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBar, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "flex-1 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(DesktopLogin, {}) })
+    ] });
+  }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-screen flex flex-col bg-bg", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBar, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "flex-1 overflow-hidden", children: renderContent() }),
