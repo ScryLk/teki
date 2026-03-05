@@ -10,9 +10,12 @@ export async function GET(
     const { user } = await requireAuth(req);
     const { id } = await params;
 
-    // Verify conversation belongs to user
+    // Verify conversation belongs to user (via participants)
     const conversation = await prisma.conversation.findFirst({
-      where: { id, userId: user.id },
+      where: {
+        id,
+        participants: { some: { userId: user.id, status: 'ACTIVE' } },
+      },
     });
 
     if (!conversation) {
@@ -25,7 +28,7 @@ export async function GET(
     const limit = parseInt(req.nextUrl.searchParams.get('limit') ?? '100', 10);
     const offset = parseInt(req.nextUrl.searchParams.get('offset') ?? '0', 10);
 
-    const messages = await prisma.conversationMessage.findMany({
+    const messages = await prisma.message.findMany({
       where: { conversationId: id },
       orderBy: { createdAt: 'asc' },
       skip: offset,

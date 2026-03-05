@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // Fetch chat messages
     const conversation = await prisma.conversation.findFirst({
-      where: { id: chatSessionId, userId: user.id },
+      where: { id: chatSessionId, createdBy: user.id },
       include: {
         messages: { orderBy: { createdAt: 'asc' } },
       },
@@ -52,9 +52,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const senderTypeToRole: Record<string, string> = {
+      USER_SENDER: 'user',
+      AI_SENDER: 'assistant',
+      SYSTEM_SENDER: 'system',
+      BOT_SENDER: 'assistant',
+    };
+
     const chatMessages = conversation.messages.map((m) => ({
-      role: m.role.toLowerCase(),
-      content: m.content,
+      role: senderTypeToRole[m.senderType] ?? 'user',
+      content: m.content ?? '',
     }));
 
     if (chatMessages.length < 2) {

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teki Cats</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #040e14;
+    overflow: hidden;
+  }
+
+  .scene {
+    position: relative;
+    width: 600px;
+    height: 400px;
+    background: #061820;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* === WAVE BACKGROUND === */
+  .wave-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .wave-line {
+    position: absolute;
+    width: 200%;
+    height: 1px;
+    left: -50%;
+    background: linear-gradient(90deg, transparent 0%, rgba(0,255,238,0.06) 25%, rgba(0,255,238,0.12) 50%, rgba(0,255,238,0.06) 75%, transparent 100%);
+    animation: waveScroll 6s linear infinite;
+  }
+
+  .wave-line:nth-child(1)  { top: 15%; animation-duration: 7s; }
+  .wave-line:nth-child(2)  { top: 25%; animation-duration: 8s; animation-delay: -2s; }
+  .wave-line:nth-child(3)  { top: 38%; animation-duration: 6.5s; animation-delay: -4s; }
+  .wave-line:nth-child(4)  { top: 50%; animation-duration: 9s; animation-delay: -1s; }
+  .wave-line:nth-child(5)  { top: 62%; animation-duration: 7.5s; animation-delay: -3s; }
+  .wave-line:nth-child(6)  { top: 75%; animation-duration: 8.5s; animation-delay: -5s; }
+  .wave-line:nth-child(7)  { top: 88%; animation-duration: 6s; animation-delay: -2.5s; }
+
+  @keyframes waveScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(50%); }
+  }
+
+  /* Radial background pulse */
+  .bg-pulse {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 60%, rgba(0,200,190,0.08) 0%, transparent 60%);
+    animation: bgPulse 4s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes bgPulse {
+    0%   { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  /* === PARTICLE DOTS === */
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(0,255,238,0.3);
+    border-radius: 50%;
+    animation: particleFloat 5s ease-in-out infinite;
+  }
+
+  .particle:nth-child(1)  { left: 10%; top: 20%; animation-delay: 0s; animation-duration: 6s; }
+  .particle:nth-child(2)  { left: 25%; top: 70%; animation-delay: -1s; animation-duration: 5s; }
+  .particle:nth-child(3)  { left: 50%; top: 30%; animation-delay: -2s; animation-duration: 7s; }
+  .particle:nth-child(4)  { left: 75%; top: 80%; animation-delay: -3s; animation-duration: 5.5s; }
+  .particle:nth-child(5)  { left: 85%; top: 15%; animation-delay: -1.5s; animation-duration: 6.5s; }
+  .particle:nth-child(6)  { left: 40%; top: 55%; animation-delay: -4s; animation-duration: 4.5s; }
+  .particle:nth-child(7)  { left: 60%; top: 45%; animation-delay: -0.5s; animation-duration: 5.8s; }
+  .particle:nth-child(8)  { left: 15%; top: 85%; animation-delay: -2.5s; animation-duration: 6.2s; }
+
+  @keyframes particleFloat {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.2; }
+    50%      { transform: translateY(-20px) scale(1.5); opacity: 0.6; }
+  }
+
+  /* === CAT CONTAINERS === */
+  .cat-wrapper {
+    position: absolute;
+    width: 160px;
+    height: 220px;
+  }
+
+  .cat1-wrapper {
+    left: 100px;
+    top: 90px;
+    animation: floatBob 3s ease-in-out infinite;
+  }
+
+  .cat2-wrapper {
+    left: 350px;
+    top: 100px;
+    animation: spinFloat 2.5s linear infinite;
+    perspective: 600px;
+  }
+
+  @keyframes floatBob {
+    0%, 100% { transform: translateY(-12px); }
+    50%      { transform: translateY(12px); }
+  }
+
+  @keyframes spinFloat {
+    0%   { transform: translateY(-6px) rotateY(0deg); }
+    25%  { transform: translateY(4px) rotateY(90deg); }
+    50%  { transform: translateY(6px) rotateY(180deg); }
+    75%  { transform: translateY(4px) rotateY(270deg); }
+    100% { transform: translateY(-6px) rotateY(360deg); }
+  }
+
+  /* === CAT SVG ANIMATIONS === */
+  .cat-body-group {
+    animation: bodyGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes bodyGlow {
+    0%   { filter: brightness(1.0) drop-shadow(0 0 18px #00FFEE); }
+    100% { filter: brightness(1.2) drop-shadow(0 0 28px #00FFEE); }
+  }
+
+  .cat-eye {
+    animation: eyePulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes eyePulse {
+    0%, 100% { opacity: 0.8; }
+    50%      { opacity: 1.0; }
+  }
+
+  /* === NAMES === */
+  .cat-name {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #00FFEE;
+    text-shadow: 0 0 10px #00FFEE, 0 0 20px rgba(0,255,238,0.4);
+    letter-spacing: 2px;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
+  /* === FLOOR GLOW === */
+  .floor-glow {
+    position: absolute;
+    bottom: 30px;
+    width: 120px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,255,238,0.15) 0%, transparent 70%);
+    animation: floorPulse 3s ease-in-out infinite alternate;
+  }
+
+  .floor-glow-1 { left: 120px; animation-duration: 3s; }
+  .floor-glow-2 { left: 370px; animation-duration: 2.5s; animation-delay: -1s; }
+
+  @keyframes floorPulse {
+    0%   { opacity: 0.5; transform: scaleX(0.9); }
+    100% { opacity: 1;   transform: scaleX(1.1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <!-- Background effects -->
+  <div class="bg-pulse"></div>
+  <div class="wave-layer">
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+  </div>
+
+  <!-- Particles -->
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+
+  <!-- Floor glows -->
+  <div class="floor-glow floor-glow-1"></div>
+  <div class="floor-glow floor-glow-2"></div>
+
+  <!-- CAT 1 — Idle Float -->
+  <div class="cat-wrapper cat1-wrapper">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220">
+      <defs>
+        <filter id="glow1" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="eyeGlow1" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="bodyGrad1" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#00FFEE"/>
+          <stop offset="100%" stop-color="#007A75"/>
+        </radialGradient>
+      </defs>
+      <g class="cat-body-group">
+        <!-- Tail -->
+        <path d="M 115,130 Q 145,115 135,80" stroke="url(#bodyGrad1)" stroke-width="7" stroke-linecap="round" fill="none" filter="url(#glow1)"/>
+        <!-- Body -->
+        <ellipse cx="80" cy="145" rx="45" ry="38" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+        <!-- Body highlight -->
+        <ellipse cx="68" cy="135" rx="18" ry="12" fill="rgba(255,255,255,0.12)"/>
+        <!-- Head -->
+        <circle cx="80" cy="80" r="36" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+        <!-- Head highlight -->
+        <ellipse cx="72" cy="72" rx="14" ry="10" fill="rgba(255,255,255,0.10)"/>
+        <!-- Ears -->
+        <path d="M 52,62 L 60,28 L 72,58 Z" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+        <path d="M 88,58 L 100,28 L 108,62 Z" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+        <!-- Inner ears -->
+        <path d="M 57,58 L 62,36 L 69,56 Z" fill="rgba(0,168,180,0.6)"/>
+        <path d="M 91,56 L 98,36 L 103,58 Z" fill="rgba(0,168,180,0.6)"/>
+        <!-- Eyes -->
+        <circle class="cat-eye" cx="66" cy="80" r="7" fill="#39FF14" filter="url(#eyeGlow1)"/>
+        <circle class="cat-eye" cx="94" cy="80" r="7" fill="#39FF14" filter="url(#eyeGlow1)"/>
+        <!-- Pupils -->
+        <ellipse cx="67" cy="80" rx="2.5" ry="5" fill="#062820"/>
+        <ellipse cx="95" cy="80" rx="2.5" ry="5" fill="#062820"/>
+        <!-- Nose + mouth -->
+        <ellipse cx="80" cy="92" rx="3" ry="2" fill="#00A8B4"/>
+        <path d="M 73,97 Q 80,102 87,97" stroke="#00A8B4" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <!-- Whiskers -->
+        <line x1="30" y1="85" x2="58" y2="88" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="32" y1="93" x2="58" y2="93" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="102" y1="88" x2="130" y2="85" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="102" y1="93" x2="128" y2="93" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <!-- Paws -->
+        <ellipse cx="58" cy="178" rx="14" ry="8" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+        <ellipse cx="102" cy="178" rx="14" ry="8" fill="url(#bodyGrad1)" filter="url(#glow1)"/>
+      </g>
+    </svg>
+    <div class="cat-name">TEKI</div>
+  </div>
+
+  <!-- CAT 2 — Spin Float -->
+  <div class="cat-wrapper cat2-wrapper">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220">
+      <defs>
+        <filter id="glow2" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="eyeGlow2" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="bodyGrad2" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#00FFEE"/>
+          <stop offset="100%" stop-color="#007A75"/>
+        </radialGradient>
+      </defs>
+      <g class="cat-body-group">
+        <!-- Tail -->
+        <path d="M 115,130 Q 145,115 135,80" stroke="url(#bodyGrad2)" stroke-width="7" stroke-linecap="round" fill="none" filter="url(#glow2)"/>
+        <!-- Body -->
+        <ellipse cx="80" cy="145" rx="45" ry="38" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+        <!-- Body highlight -->
+        <ellipse cx="68" cy="135" rx="18" ry="12" fill="rgba(255,255,255,0.12)"/>
+        <!-- Head -->
+        <circle cx="80" cy="80" r="36" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+        <!-- Head highlight -->
+        <ellipse cx="72" cy="72" rx="14" ry="10" fill="rgba(255,255,255,0.10)"/>
+        <!-- Ears -->
+        <path d="M 52,62 L 60,28 L 72,58 Z" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+        <path d="M 88,58 L 100,28 L 108,62 Z" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+        <!-- Inner ears -->
+        <path d="M 57,58 L 62,36 L 69,56 Z" fill="rgba(0,168,180,0.6)"/>
+        <path d="M 91,56 L 98,36 L 103,58 Z" fill="rgba(0,168,180,0.6)"/>
+        <!-- Eyes -->
+        <circle class="cat-eye" cx="66" cy="80" r="7" fill="#39FF14" filter="url(#eyeGlow2)"/>
+        <circle class="cat-eye" cx="94" cy="80" r="7" fill="#39FF14" filter="url(#eyeGlow2)"/>
+        <!-- Pupils -->
+        <ellipse cx="67" cy="80" rx="2.5" ry="5" fill="#062820"/>
+        <ellipse cx="95" cy="80" rx="2.5" ry="5" fill="#062820"/>
+        <!-- Nose + mouth -->
+        <ellipse cx="80" cy="92" rx="3" ry="2" fill="#00A8B4"/>
+        <path d="M 73,97 Q 80,102 87,97" stroke="#00A8B4" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <!-- Whiskers -->
+        <line x1="30" y1="85" x2="58" y2="88" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="32" y1="93" x2="58" y2="93" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="102" y1="88" x2="130" y2="85" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <line x1="102" y1="93" x2="128" y2="93" stroke="rgba(0,255,238,0.3)" stroke-width="1"/>
+        <!-- Paws -->
+        <ellipse cx="58" cy="178" rx="14" ry="8" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+        <ellipse cx="102" cy="178" rx="14" ry="8" fill="url(#bodyGrad2)" filter="url(#glow2)"/>
+      </g>
+    </svg>
+    <div class="cat-name">TEKI</div>
+  </div>
+</div>
+
+</body>
+</html>

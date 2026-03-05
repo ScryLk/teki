@@ -1,4 +1,5 @@
 import { prisma } from '../prisma';
+import type { Prisma } from '@prisma/client';
 import type { AttachmentCategory, AttachmentProcessingStatus } from '@teki/shared';
 
 // ═══════════════════════════════════════════════════════════════
@@ -64,7 +65,7 @@ export async function createAttachment(input: CreateAttachmentInput) {
       processingStatus: 'UPLOADED',
       uploadedBy: input.uploadedBy,
       expiresAt: input.expiresAt,
-      metadata: input.metadata ?? {},
+      metadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
     },
   });
 }
@@ -80,7 +81,7 @@ export async function updateProcessingStatus(
     where: { id: attachmentId },
     data: {
       processingStatus: mapProcessingStatus(status),
-      processingResult: result,
+      processingResult: result as Prisma.InputJsonValue,
     },
   });
 }

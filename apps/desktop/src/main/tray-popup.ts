@@ -1,6 +1,6 @@
 import { BrowserWindow, Tray, ipcMain, screen, app } from 'electron';
 import { join } from 'path';
-import { is } from '@electron-toolkit/utils';
+const is = { get dev() { return !app.isPackaged; } };
 import { getElapsed } from './services/watch-timer';
 
 let popupWindow: BrowserWindow | null = null;

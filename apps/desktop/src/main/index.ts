@@ -1,6 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'path';
-import { is } from '@electron-toolkit/utils';
+const is = { get dev() { return !app.isPackaged; } };
 import { registerIPCHandlers } from './ipc-handlers';
 import { createTray, destroyTray, initTrayIcons } from './tray';
 // import { startPolling, stopPolling } from './services/window-detector';

@@ -35,7 +35,7 @@ export async function logDataAccess(input: LogAccessInput) {
       subjectId: input.subjectId,
       action: mapAction(input.action),
       dataCategories: input.dataCategories,
-      details: input.details ?? undefined,
+      details: (input.details ?? undefined) as import('@prisma/client').Prisma.InputJsonValue | undefined,
       legalBasis: input.legalBasis,
       justification: input.justification,
       ipAddress: input.ipAddress,

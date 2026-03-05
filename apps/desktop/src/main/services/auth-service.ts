@@ -5,6 +5,8 @@ const API_BASE =
   process.env.TEKI_API_URL ||
   (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://teki.com.br');
 
+console.log('[AUTH] NODE_ENV:', process.env.NODE_ENV, '| API_BASE:', API_BASE);
+
 interface DeviceCodeResponse {
   deviceCode: string;
   userCode: string;

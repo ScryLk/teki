@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm dev:desktop)",
+      "Bash(node install.js)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:root@localhost:5432/teki\" DIRECT_URL=\"postgresql://postgres:root@localhost:5432/teki\" npx prisma db push)",
+      "Bash(/tmp/electron-test2/package.json:*)",
+      "Bash(c:/Users/lucas/Documents/teki/node_modules/.pnpm/electron@40.7.0/node_modules/electron/dist/electron.exe /tmp/electron-test2)",
+      "WebFetch(domain:prototypestudio.co)",
+      "WebFetch(domain:www.landing.love)"
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 import { prisma } from '../prisma';
+import type { Prisma } from '@prisma/client';
 import type {
   ConversationType,
   ConversationStatus,
@@ -189,8 +190,8 @@ export async function createConversation(input: CreateConversationInput) {
         type: mapConversationType(input.type),
         title: input.title,
         slug,
-        context: input.context ?? {},
-        settings: input.settings ?? {},
+        context: (input.context ?? {}) as Prisma.InputJsonValue,
+        settings: (input.settings ?? {}) as Prisma.InputJsonValue,
         status: 'ACTIVE',
         createdBy: input.userId,
       },
@@ -344,7 +345,7 @@ export async function markAsRead(conversationId: string, userId: string) {
     prisma.conversation.update({
       where: { id: conversationId },
       data: {
-        unreadCount: prisma.conversation.fields.unreadCount, // Will be handled by setUnreadToZero
+        unreadCount: prisma.conversation.fields.unreadCount as unknown as Prisma.InputJsonValue, // Will be handled by setUnreadToZero
       },
     }),
   ]);
@@ -486,7 +487,7 @@ export async function recordAiMetadata(input: RecordAiMetadataInput) {
         systemPromptTokens: input.systemPromptTokens,
         conversationHistoryTokens: input.conversationHistoryTokens,
         contextWindowUsage: input.contextWindowUsage,
-        metadata: input.metadata ?? {},
+        metadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
       },
     });
 

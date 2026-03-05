@@ -142,25 +142,65 @@ export async function POST(req: NextRequest) {
         ? (firstMsg.content as string).slice(0, 80)
         : 'Nova conversa';
 
+      // Find user's tenant
+      const membership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        select: { tenantId: true },
+      });
+      if (!membership) {
+        return NextResponse.json(
+          { error: { code: 'NO_TENANT', message: 'Nenhum tenant ativo.' } },
+          { status: 400 }
+        );
+      }
+
       const conv = await prisma.conversation.create({
         data: {
-          userId: user.id,
-          agentId: agent?.id,
+          tenantId: membership.tenantId,
+          type: 'AI_CHAT',
           title,
-          source: 'WEB',
+          createdBy: user.id,
+          context: agent?.id ? { agentId: agent.id, source: 'WEB' } : { source: 'WEB' },
         },
       });
+
+      // Add user as participant
+      await prisma.conversationParticipant.create({
+        data: {
+          conversationId: conv.id,
+          userId: user.id,
+          role: 'CREATOR',
+          status: 'ACTIVE',
+        },
+      });
+
       convId = conv.id;
     }
 
     // 10. Save user message
     const lastUserMsg = providerMessages[providerMessages.length - 1];
     if (lastUserMsg?.role === 'user') {
-      await prisma.conversationMessage.create({
+      const maxSeq = await prisma.message.aggregate({
+        where: { conversationId: convId },
+        _max: { sequenceNumber: true },
+      });
+      const nextSeq = (maxSeq._max.sequenceNumber ?? BigInt(0)) + BigInt(1);
+
+      const userMembership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        select: { tenantId: true },
+      });
+
+      await prisma.message.create({
         data: {
           conversationId: convId,
-          role: 'USER',
+          tenantId: userMembership!.tenantId,
+          senderType: 'USER_SENDER',
+          senderId: user.id,
+          contentType: 'TEXT',
           content: lastUserMsg.content as string,
+          status: 'SENT',
+          sequenceNumber: nextSeq,
         },
       });
     }
@@ -218,18 +258,31 @@ export async function POST(req: NextRequest) {
     if (expansionMeta) messageMetadata.kb_expansion = expansionMeta;
     if (confidenceMeta) messageMetadata.confidence = confidenceMeta;
 
-    await prisma.conversationMessage.create({
-      data: {
-        conversationId: convId,
-        role: 'ASSISTANT',
-        content: result.content,
-        modelUsed: modelId,
-        tokensIn,
-        tokensOut,
-        latencyMs,
-        ...(Object.keys(messageMetadata).length > 0 ? { metadata: messageMetadata } : {}),
-      },
-    });
+    {
+      const maxSeq2 = await prisma.message.aggregate({
+        where: { conversationId: convId },
+        _max: { sequenceNumber: true },
+      });
+      const nextSeq2 = (maxSeq2._max.sequenceNumber ?? BigInt(0)) + BigInt(1);
+
+      const aiMembership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        select: { tenantId: true },
+      });
+
+      await prisma.message.create({
+        data: {
+          conversationId: convId,
+          tenantId: aiMembership!.tenantId,
+          senderType: 'AI_SENDER',
+          contentType: 'TEXT',
+          content: result.content,
+          status: 'SENT',
+          isAiGenerated: true,
+          sequenceNumber: nextSeq2,
+        },
+      });
+    }
 
     // 13. Increment usage
     await incrementUsage(user.id, tokensIn, tokensOut, isByok);

@@ -148,10 +148,10 @@ export async function PATCH(req: NextRequest) {
     // Upsert AiRoutingRules
     await prisma.aiRoutingRules.upsert({
       where: { tenantId: membership.tenantId },
-      update: { typeRules: updatedTypeRules },
+      update: { typeRules: updatedTypeRules as Record<string, unknown> as import('@prisma/client').Prisma.InputJsonValue },
       create: {
         tenantId: membership.tenantId,
-        typeRules: updatedTypeRules,
+        typeRules: updatedTypeRules as Record<string, unknown> as import('@prisma/client').Prisma.InputJsonValue,
       },
     });
 

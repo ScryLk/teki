@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teki — Design System</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       TEKI DESIGN SYSTEM
+       ─────────────────
+       Inspiração:
+         • Frequency Breathwork — warm minimalism, organic motion,
+           muted earth tones (#242424, #DFD7C8, #F2EFE9), smooth
+           GSAP scroll animations, clamp() typography, 1px borders
+         • Prototype Studio — clean gallery aesthetic, generous
+           whitespace, editorial layout, subtle hover states
+
+       Adaptação:
+         Teki — dark tech SaaS com accent teal/cyan
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ── 1. DESIGN TOKENS ─────────────────────────────────────── */
+
+    :root {
+      /* ── 1.1 Color Palette ── */
+
+      /* Backgrounds */
+      --bg-primary:       #07090b;
+      --bg-secondary:     #0c1014;
+      --bg-surface:       #111519;
+      --bg-surface-hover: #181d23;
+      --bg-elevated:      #1a2028;
+      --bg-overlay:       rgba(7, 9, 11, 0.8);
+
+      /* Text */
+      --text-primary:   #e8e6e1;   /* warm off-white (inspirado no #DFD7C8 do Frequency) */
+      --text-secondary: #9ca3af;
+      --text-muted:     #5a6270;
+      --text-inverse:   #07090b;
+
+      /* Accent — Teki Teal */
+      --accent:             #2A8F9D;
+      --accent-light:       #34D8C0;
+      --accent-dark:        #1E6B75;
+      --accent-subtle:      rgba(42, 143, 157, 0.08);
+      --accent-glow:        rgba(42, 143, 157, 0.15);
+      --accent-glow-strong: rgba(42, 143, 157, 0.30);
+
+      /* Semantic */
+      --success:  #17c964;
+      --error:    #f31260;
+      --warning:  #f5a623;
+      --info:     #0072f5;
+
+      /* Borders */
+      --border:        rgba(255, 255, 255, 0.06);
+      --border-hover:  rgba(255, 255, 255, 0.12);
+      --border-accent: rgba(42, 143, 157, 0.30);
+      --border-strong: rgba(255, 255, 255, 0.20);
+
+      /* Warm neutrals (paleta Frequency Breathwork adaptada) */
+      --warm-100: #F2EFE9;
+      --warm-200: #DFD7C8;
+      --warm-300: #d5d1c7;
+      --warm-400: #a8a29e;
+      --warm-500: #78716c;
+      --warm-900: #242424;
+
+      /* ── 1.2 Typography ── */
+      --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+      --font-serif:   'Playfair Display', Georgia, serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Type scale — fluid (clamp) inspirado no Frequency */
+      --text-xs:    clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);    /* 11-12px */
+      --text-sm:    clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem);       /* 12-14px */
+      --text-base:  clamp(0.875rem, 0.82rem + 0.25vw, 1rem);        /* 14-16px */
+      --text-lg:    clamp(1rem, 0.92rem + 0.35vw, 1.125rem);        /* 16-18px */
+      --text-xl:    clamp(1.125rem, 1rem + 0.5vw, 1.25rem);         /* 18-20px */
+      --text-2xl:   clamp(1.25rem, 1rem + 1vw, 1.75rem);            /* 20-28px */
+      --text-3xl:   clamp(1.5rem, 1.1rem + 1.5vw, 2.25rem);        /* 24-36px */
+      --text-4xl:   clamp(2rem, 1.4rem + 2.5vw, 3rem);             /* 32-48px */
+      --text-5xl:   clamp(2.5rem, 1.5rem + 4vw, 4rem);             /* 40-64px */
+      --text-6xl:   clamp(3rem, 1.8rem + 5vw, 5rem);               /* 48-80px */
+      --text-hero:  clamp(3.5rem, 2rem + 6vw, 6.5rem);             /* 56-104px */
+
+      /* Line heights */
+      --leading-none:    1;
+      --leading-tight:   1.15;
+      --leading-snug:    1.3;
+      --leading-normal:  1.5;
+      --leading-relaxed: 1.65;
+
+      /* Letter spacing */
+      --tracking-tighter: -0.03em;
+      --tracking-tight:   -0.02em;
+      --tracking-normal:  0;
+      --tracking-wide:    0.02em;
+      --tracking-wider:   0.05em;
+      --tracking-widest:  0.1em;
+
+      /* Font weights */
+      --weight-light:     300;
+      --weight-regular:   400;
+      --weight-medium:    500;
+      --weight-semibold:  600;
+      --weight-bold:      700;
+      --weight-extrabold: 800;
+      --weight-black:     900;
+
+      /* ── 1.3 Spacing ── */
+      --space-0:   0;
+      --space-1:   0.25rem;   /* 4px */
+      --space-2:   0.5rem;    /* 8px */
+      --space-3:   0.75rem;   /* 12px */
+      --space-4:   1rem;      /* 16px */
+      --space-5:   1.25rem;   /* 20px */
+      --space-6:   1.5rem;    /* 24px */
+      --space-8:   2rem;      /* 32px */
+      --space-10:  2.5rem;    /* 40px */
+      --space-12:  3rem;      /* 48px */
+      --space-16:  4rem;      /* 64px */
+      --space-20:  5rem;      /* 80px */
+      --space-24:  6rem;      /* 96px */
+      --space-32:  8rem;      /* 128px */
+
+      /* Section spacing — Frequency uses ~60px vertical padding */
+      --section-gap: clamp(3.5rem, 2rem + 5vw, 7rem);
+
+      /* ── 1.4 Borders & Radius ── */
+      --radius-xs:   4px;
+      --radius-sm:   6px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-2xl:  24px;
+      --radius-full: 9999px;
+
+      /* ── 1.5 Shadows ── */
+      --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md:    0 4px 12px rgba(0, 0, 0, 0.25);
+      --shadow-lg:    0 8px 24px rgba(0, 0, 0, 0.3);
+      --shadow-xl:    0 16px 48px rgba(0, 0, 0, 0.35);
+      --shadow-glow:  0 0 20px var(--accent-glow), 0 0 60px var(--accent-glow);
+      --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
+      /* ── 1.6 Transitions & Motion ── */
+      /* Frequency Breathwork uses 0.4s–2s ease-out, stagger 0.08–0.12s */
+      --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --duration-fast:    150ms;
+      --duration-normal:  300ms;
+      --duration-slow:    500ms;
+      --duration-slower:  800ms;
+      --duration-slowest: 1200ms;
+
+      --stagger-sm: 0.06s;
+      --stagger-md: 0.08s;
+      --stagger-lg: 0.12s;
+
+      /* ── 1.7 Z-Index Scale ── */
+      --z-behind:  -1;
+      --z-base:     0;
+      --z-raised:   10;
+      --z-sticky:   100;
+      --z-overlay:  200;
+      --z-modal:    300;
+      --z-toast:    400;
+      --z-max:      9999;
+
+      /* ── 1.8 Container Widths ── */
+      --container-sm:  640px;
+      --container-md:  768px;
+      --container-lg:  1024px;
+      --container-xl:  1200px;
+      --container-2xl: 1400px;
+    }
+
+
+    /* ── 2. BASE RESET ────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      font-weight: var(--weight-regular);
+      line-height: var(--leading-normal);
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+    }
+
+    ::selection {
+      background: var(--accent-glow-strong);
+      color: var(--text-primary);
+    }
+
+
+    /* ── 3. DOCUMENT LAYOUT ───────────────────────────────────── */
+
+    .ds-page {
+      max-width: var(--container-xl);
+      margin: 0 auto;
+      padding: var(--space-12) var(--space-6);
+    }
+
+    .ds-section {
+      margin-bottom: var(--section-gap);
+      padding-bottom: var(--section-gap);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ds-section:last-child {
+      border-bottom: none;
+    }
+
+    .ds-section-title {
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-widest);
+      color: var(--accent);
+      margin-bottom: var(--space-8);
+    }
+
+    .ds-section-subtitle {
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      margin-bottom: var(--space-6);
+    }
+
+    .ds-grid {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .ds-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .ds-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .ds-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .ds-grid-5 { grid-template-columns: repeat(5, 1fr); }
+    .ds-grid-6 { grid-template-columns: repeat(6, 1fr); }
+
+    @media (max-width: 768px) {
+      .ds-grid-2, .ds-grid-3, .ds-grid-4, .ds-grid-5, .ds-grid-6 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .ds-label {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-top: var(--space-2);
+    }
+
+    .ds-value {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       4. DESIGN SYSTEM SHOWCASE STYLES
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ── 4.1 Color Swatches ── */
+
+    .swatch-row {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-6);
+    }
+
+    .swatch-group-title {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-3);
+      width: 100%;
+    }
+
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .swatch-color {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-hover);
+      transition: transform var(--duration-normal) var(--ease-out);
+    }
+
+    .swatch-color:hover {
+      transform: scale(1.08);
+    }
+
+    .swatch-name {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 80px;
+    }
+
+    .swatch-hex {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+
+    /* ── 4.2 Typography Showcase ── */
+
+    .type-sample {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .type-sample:last-child { border-bottom: none; }
+
+    .type-sample-text {
+      margin-bottom: var(--space-2);
+    }
+
+    .type-meta {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      display: flex;
+      gap: var(--space-4);
+    }
+
+
+    /* ── 4.3 Spacing Visualization ── */
+
+    .space-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+
+    .space-bar {
+      height: 24px;
+      background: var(--accent-glow);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-xs);
+      transition: background var(--duration-normal) var(--ease-out);
+    }
+
+    .space-bar:hover {
+      background: var(--accent-glow-strong);
+    }
+
+    .space-label {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      min-width: 100px;
+    }
+
+
+    /* ── 4.4 Radius Showcase ── */
+
+    .radius-box {
+      width: 80px;
+      height: 80px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color var(--duration-normal) var(--ease-out);
+    }
+
+    .radius-box:hover {
+      border-color: var(--border-accent);
+    }
+
+    .radius-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+
+    /* ── 4.5 Shadow Showcase ── */
+
+    .shadow-box {
+      width: 120px;
+      height: 80px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .shadow-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       5. COMPONENT TOKENS
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ── 5.1 Buttons ── */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      line-height: 1;
+      border: none;
+      cursor: pointer;
+      transition:
+        background var(--duration-normal) var(--ease-out),
+        border-color var(--duration-normal) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out),
+        box-shadow var(--duration-normal) var(--ease-out);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    /* Sizes */
+    .btn-sm  { height: 32px; padding: 0 var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-xs); }
+    .btn-md  { height: 40px; padding: 0 var(--space-5); border-radius: var(--radius-md); }
+    .btn-lg  { height: 48px; padding: 0 var(--space-8); border-radius: var(--radius-md); font-size: var(--text-base); }
+    .btn-xl  { height: 56px; padding: 0 var(--space-10); border-radius: var(--radius-lg); font-size: var(--text-lg); }
+
+    /* Variants */
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-hover);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-accent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border-accent);
+    }
+    .btn-outline:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+    }
+
+
+    /* ── 5.2 Inputs ── */
+
+    .input {
+      height: 40px;
+      padding: 0 var(--space-3);
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      outline: none;
+      transition:
+        border-color var(--duration-normal) var(--ease-out),
+        box-shadow var(--duration-normal) var(--ease-out);
+      width: 100%;
+    }
+
+    .input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .input-lg {
+      height: 48px;
+      padding: 0 var(--space-4);
+      font-size: var(--text-base);
+    }
+
+    .textarea {
+      min-height: 100px;
+      padding: var(--space-3);
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      outline: none;
+      resize: vertical;
+      transition: border-color var(--duration-normal) var(--ease-out);
+      width: 100%;
+    }
+
+    .textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+
+    /* ── 5.3 Cards ── */
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      transition:
+        border-color var(--duration-normal) var(--ease-out),
+        transform var(--duration-slow) var(--ease-out),
+        box-shadow var(--duration-slow) var(--ease-out);
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-accent:hover {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-glow);
+    }
+
+
+    /* ── 5.4 Badges ── */
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      padding: 2px var(--space-2);
+      border-radius: var(--radius-full);
+      line-height: 1.4;
+    }
+
+    .badge-default {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .badge-accent {
+      background: var(--accent-subtle);
+      color: var(--accent-light);
+      border: 1px solid var(--border-accent);
+    }
+
+    .badge-success {
+      background: rgba(23, 201, 100, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(23, 201, 100, 0.2);
+    }
+
+    .badge-error {
+      background: rgba(243, 18, 96, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(243, 18, 96, 0.2);
+    }
+
+
+    /* ── 5.5 Dividers ── */
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: var(--space-6) 0;
+    }
+
+    .divider-accent {
+      background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
+    }
+
+
+    /* ── 5.6 Tags / Chips ── */
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      height: 28px;
+      padding: 0 var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      cursor: default;
+      transition:
+        border-color var(--duration-normal) var(--ease-out),
+        color var(--duration-normal) var(--ease-out);
+    }
+
+    .tag:hover {
+      border-color: var(--border-accent);
+      color: var(--text-primary);
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       6. ANIMATION PATTERNS
+       Inspirado no Frequency Breathwork (GSAP ScrollTrigger,
+       stagger 0.08-0.12s, ease-out 0.4-2s, blur 3-12px)
+    ═══════════════════════════════════════════════════════════════ */
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes softPulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.6; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes wordCycle {
+      0%, 18%   { opacity: 1; transform: translateY(0); }
+      22%, 28%  { opacity: 0; transform: translateY(-100%); }
+      32%       { opacity: 0; transform: translateY(100%); }
+      36%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Utility classes for animation */
+    .anim-fade-up    { animation: fadeInUp 0.8s var(--ease-out) both; }
+    .anim-fade       { animation: fadeIn 0.6s var(--ease-out) both; }
+    .anim-slide-left { animation: slideInLeft 0.8s var(--ease-out) both; }
+    .anim-scale      { animation: scaleIn 0.6s var(--ease-out) both; }
+    .anim-pulse      { animation: softPulse 3s ease-in-out infinite; }
+    .anim-float      { animation: float 4s ease-in-out infinite; }
+
+    /* Stagger delays */
+    .delay-1 { animation-delay: 0.08s; }
+    .delay-2 { animation-delay: 0.16s; }
+    .delay-3 { animation-delay: 0.24s; }
+    .delay-4 { animation-delay: 0.32s; }
+    .delay-5 { animation-delay: 0.40s; }
+    .delay-6 { animation-delay: 0.48s; }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       7. HEADER DO DESIGN SYSTEM
+    ═══════════════════════════════════════════════════════════════ */
+
+    .ds-header {
+      text-align: center;
+      margin-bottom: var(--section-gap);
+      padding-bottom: var(--space-12);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ds-header h1 {
+      font-size: var(--text-4xl);
+      font-weight: var(--weight-bold);
+      letter-spacing: var(--tracking-tight);
+      margin-bottom: var(--space-3);
+    }
+
+    .ds-header h1 span {
+      color: var(--accent);
+    }
+
+    .ds-header p {
+      font-size: var(--text-lg);
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: var(--leading-relaxed);
+    }
+
+    .ds-header-meta {
+      margin-top: var(--space-6);
+      display: flex;
+      justify-content: center;
+      gap: var(--space-4);
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       8. COMPONENT SHOWCASE GRID
+    ═══════════════════════════════════════════════════════════════ */
+
+    .component-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-4);
+    }
+
+    .component-group {
+      margin-bottom: var(--space-8);
+    }
+
+    .component-group-title {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+
+    /* ── Animation showcase boxes ── */
+    .anim-demo {
+      width: 80px;
+      height: 80px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ds-page">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="ds-header">
+      <h1>Teki <span>Design System</span></h1>
+      <p>
+        Tokens, tipografia, paleta e componentes base.
+        Inspirado em Frequency Breathwork &amp; Prototype Studio.
+      </p>
+      <div class="ds-header-meta">
+        <span class="badge badge-accent">v1.0</span>
+        <span class="badge badge-default">Dark Theme</span>
+        <span class="badge badge-default">Fluid Type</span>
+      </div>
+    </header>
+
+
+    <!-- ═══ 1. COLOR PALETTE ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">1. Color Palette</h2>
+
+      <!-- Backgrounds -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Backgrounds</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-primary);"></div>
+          <span class="swatch-name">bg-primary</span>
+          <span class="swatch-hex">#07090b</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-secondary);"></div>
+          <span class="swatch-name">bg-secondary</span>
+          <span class="swatch-hex">#0c1014</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-surface);"></div>
+          <span class="swatch-name">bg-surface</span>
+          <span class="swatch-hex">#111519</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-surface-hover);"></div>
+          <span class="swatch-name">bg-surface-hover</span>
+          <span class="swatch-hex">#181d23</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-elevated);"></div>
+          <span class="swatch-name">bg-elevated</span>
+          <span class="swatch-hex">#1a2028</span>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Text</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-primary);"></div>
+          <span class="swatch-name">text-primary</span>
+          <span class="swatch-hex">#e8e6e1</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-secondary);"></div>
+          <span class="swatch-name">text-secondary</span>
+          <span class="swatch-hex">#9ca3af</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-muted);"></div>
+          <span class="swatch-name">text-muted</span>
+          <span class="swatch-hex">#5a6270</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--text-inverse);"></div>
+          <span class="swatch-name">text-inverse</span>
+          <span class="swatch-hex">#07090b</span>
+        </div>
+      </div>
+
+      <!-- Accent -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Accent — Teki Teal</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--accent-dark);"></div>
+          <span class="swatch-name">accent-dark</span>
+          <span class="swatch-hex">#1E6B75</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--accent);"></div>
+          <span class="swatch-name">accent</span>
+          <span class="swatch-hex">#2A8F9D</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--accent-light);"></div>
+          <span class="swatch-name">accent-light</span>
+          <span class="swatch-hex">#34D8C0</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--accent-glow); border-style: dashed;"></div>
+          <span class="swatch-name">accent-glow</span>
+          <span class="swatch-hex">rgba 15%</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--accent-glow-strong); border-style: dashed;"></div>
+          <span class="swatch-name">glow-strong</span>
+          <span class="swatch-hex">rgba 30%</span>
+        </div>
+      </div>
+
+      <!-- Semantic -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Semantic</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--success);"></div>
+          <span class="swatch-name">success</span>
+          <span class="swatch-hex">#17c964</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--error);"></div>
+          <span class="swatch-name">error</span>
+          <span class="swatch-hex">#f31260</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warning);"></div>
+          <span class="swatch-name">warning</span>
+          <span class="swatch-hex">#f5a623</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--info);"></div>
+          <span class="swatch-name">info</span>
+          <span class="swatch-hex">#0072f5</span>
+        </div>
+      </div>
+
+      <!-- Warm Neutrals (Frequency) -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Warm Neutrals (ref: Frequency Breathwork)</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-900);"></div>
+          <span class="swatch-name">warm-900</span>
+          <span class="swatch-hex">#242424</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-500);"></div>
+          <span class="swatch-name">warm-500</span>
+          <span class="swatch-hex">#78716c</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-400);"></div>
+          <span class="swatch-name">warm-400</span>
+          <span class="swatch-hex">#a8a29e</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-300);"></div>
+          <span class="swatch-name">warm-300</span>
+          <span class="swatch-hex">#d5d1c7</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-200);"></div>
+          <span class="swatch-name">warm-200</span>
+          <span class="swatch-hex">#DFD7C8</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--warm-100);"></div>
+          <span class="swatch-name">warm-100</span>
+          <span class="swatch-hex">#F2EFE9</span>
+        </div>
+      </div>
+
+      <!-- Borders -->
+      <div class="swatch-row">
+        <div class="swatch-group-title">Borders</div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-secondary); border: 2px solid var(--border);"></div>
+          <span class="swatch-name">border</span>
+          <span class="swatch-hex">white 6%</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-secondary); border: 2px solid var(--border-hover);"></div>
+          <span class="swatch-name">border-hover</span>
+          <span class="swatch-hex">white 12%</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-secondary); border: 2px solid var(--border-accent);"></div>
+          <span class="swatch-name">border-accent</span>
+          <span class="swatch-hex">accent 30%</span>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: var(--bg-secondary); border: 2px solid var(--border-strong);"></div>
+          <span class="swatch-name">border-strong</span>
+          <span class="swatch-hex">white 20%</span>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 2. TYPOGRAPHY ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">2. Typography</h2>
+
+      <p class="ds-section-subtitle">
+        3 famílias: <strong>Inter</strong> (sans), <strong>Playfair Display</strong> (serif/display),
+        <strong>JetBrains Mono</strong> (mono). Escala fluida com clamp().
+      </p>
+
+      <!-- Font families -->
+      <div class="component-group">
+        <div class="component-group-title">Font Families</div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-family: var(--font-sans); font-size: var(--text-2xl);">
+            Inter — The quick brown fox jumps over the lazy dog
+          </div>
+          <div class="type-meta">
+            <span>--font-sans</span>
+            <span>Weights: 300–900</span>
+            <span>Body & UI</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-family: var(--font-serif); font-size: var(--text-2xl);">
+            Playfair Display — The quick brown fox jumps over the lazy dog
+          </div>
+          <div class="type-meta">
+            <span>--font-serif</span>
+            <span>Weights: 400–700 + italic</span>
+            <span>Headlines & Display</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-family: var(--font-mono); font-size: var(--text-xl);">
+            JetBrains Mono — const x = { color: '#2A8F9D' };
+          </div>
+          <div class="type-meta">
+            <span>--font-mono</span>
+            <span>Weights: 400–600</span>
+            <span>Code & Labels</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type scale -->
+      <div class="component-group">
+        <div class="component-group-title">Type Scale (fluid — redimensione o navegador)</div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-hero); font-weight: var(--weight-black); line-height: var(--leading-none); letter-spacing: var(--tracking-tighter);">
+            Hero Text
+          </div>
+          <div class="type-meta">
+            <span>--text-hero</span>
+            <span>56–104px</span>
+            <span>weight: 900</span>
+            <span>leading: 1</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-6xl); font-weight: var(--weight-bold); line-height: var(--leading-none); letter-spacing: var(--tracking-tighter);">
+            Heading 6XL
+          </div>
+          <div class="type-meta">
+            <span>--text-6xl</span>
+            <span>48–80px</span>
+            <span>weight: 700</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-5xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); letter-spacing: var(--tracking-tight);">
+            Heading 5XL
+          </div>
+          <div class="type-meta">
+            <span>--text-5xl</span>
+            <span>40–64px</span>
+            <span>weight: 700</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-4xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); letter-spacing: var(--tracking-tight);">
+            Heading 4XL
+          </div>
+          <div class="type-meta">
+            <span>--text-4xl</span>
+            <span>32–48px</span>
+            <span>weight: 700</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-3xl); font-weight: var(--weight-semibold); line-height: var(--leading-snug);">
+            Heading 3XL
+          </div>
+          <div class="type-meta">
+            <span>--text-3xl</span>
+            <span>24–36px</span>
+            <span>weight: 600</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-2xl); font-weight: var(--weight-semibold); line-height: var(--leading-snug);">
+            Heading 2XL
+          </div>
+          <div class="type-meta">
+            <span>--text-2xl</span>
+            <span>20–28px</span>
+            <span>weight: 600</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-xl); font-weight: var(--weight-medium);">
+            Text XL — Subtitulos e destaques
+          </div>
+          <div class="type-meta">
+            <span>--text-xl</span>
+            <span>18–20px</span>
+            <span>weight: 500</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-lg);">
+            Text LG — Texto introdutório e parágrafos destacados
+          </div>
+          <div class="type-meta">
+            <span>--text-lg</span>
+            <span>16–18px</span>
+            <span>weight: 400</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-base);">
+            Text Base — Corpo principal de texto. O padrão para parágrafos e conteúdo geral.
+          </div>
+          <div class="type-meta">
+            <span>--text-base</span>
+            <span>14–16px</span>
+            <span>weight: 400</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-sm); color: var(--text-secondary);">
+            Text SM — Labels, captions, texto auxiliar
+          </div>
+          <div class="type-meta">
+            <span>--text-sm</span>
+            <span>12–14px</span>
+          </div>
+        </div>
+
+        <div class="type-sample">
+          <div class="type-sample-text" style="font-size: var(--text-xs); color: var(--text-muted);">
+            Text XS — Footnotes, badges, micro-copy
+          </div>
+          <div class="type-meta">
+            <span>--text-xs</span>
+            <span>11–12px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weights -->
+      <div class="component-group">
+        <div class="component-group-title">Font Weights</div>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-6);">
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 300;">Light 300</span>
+            <div class="ds-label">--weight-light</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 400;">Regular 400</span>
+            <div class="ds-label">--weight-regular</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 500;">Medium 500</span>
+            <div class="ds-label">--weight-medium</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 600;">Semibold 600</span>
+            <div class="ds-label">--weight-semibold</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 700;">Bold 700</span>
+            <div class="ds-label">--weight-bold</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 800;">Extrabold 800</span>
+            <div class="ds-label">--weight-extrabold</div>
+          </div>
+          <div>
+            <span style="font-size: var(--text-xl); font-weight: 900;">Black 900</span>
+            <div class="ds-label">--weight-black</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Letter spacing -->
+      <div class="component-group">
+        <div class="component-group-title">Letter Spacing</div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-tighter);">TIGHTER -0.03em — Grandes headlines</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-tighter</span>
+          </div>
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-tight);">TIGHT -0.02em — Headlines menores</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-tight</span>
+          </div>
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-normal);">NORMAL 0em — Corpo de texto</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-normal</span>
+          </div>
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-wide);">WIDE 0.02em — Labels e UI</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-wide</span>
+          </div>
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-wider);">WIDER 0.05em — Botões e tags</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-wider</span>
+          </div>
+          <div>
+            <span style="font-size: var(--text-lg); letter-spacing: var(--tracking-widest);">WIDEST 0.1em — Section titles</span>
+            <span class="ds-label" style="margin-left: var(--space-4);">--tracking-widest</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 3. SPACING SCALE ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">3. Spacing Scale</h2>
+      <p class="ds-section-subtitle">Base: 4px (0.25rem). Frequency Breathwork usa 12, 16, 18, 24, 48, 60px.</p>
+
+      <div class="space-row">
+        <span class="space-label">--space-1 · 4px</span>
+        <div class="space-bar" style="width: 16px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-2 · 8px</span>
+        <div class="space-bar" style="width: 32px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-3 · 12px</span>
+        <div class="space-bar" style="width: 48px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-4 · 16px</span>
+        <div class="space-bar" style="width: 64px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-5 · 20px</span>
+        <div class="space-bar" style="width: 80px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-6 · 24px</span>
+        <div class="space-bar" style="width: 96px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-8 · 32px</span>
+        <div class="space-bar" style="width: 128px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-10 · 40px</span>
+        <div class="space-bar" style="width: 160px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-12 · 48px</span>
+        <div class="space-bar" style="width: 192px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-16 · 64px</span>
+        <div class="space-bar" style="width: 256px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-20 · 80px</span>
+        <div class="space-bar" style="width: 320px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-24 · 96px</span>
+        <div class="space-bar" style="width: 384px;"></div>
+      </div>
+      <div class="space-row">
+        <span class="space-label">--space-32 · 128px</span>
+        <div class="space-bar" style="width: 512px;"></div>
+      </div>
+
+      <div style="margin-top: var(--space-8);">
+        <div class="component-group-title">Section Gap (fluid)</div>
+        <div class="space-row">
+          <span class="space-label">--section-gap</span>
+          <div class="space-bar" style="width: 100%; max-width: 600px; height: 32px;"></div>
+        </div>
+        <div class="ds-label">clamp(3.5rem, 2rem + 5vw, 7rem) — 56px → 112px</div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 4. BORDER RADIUS ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">4. Border Radius</h2>
+      <p class="ds-section-subtitle">Frequency usa 8px (vídeo) e 50% (círculos). Escala: 4–24px + full.</p>
+
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-6); align-items: flex-end;">
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-xs);">4px</div>
+          <span class="ds-label">--radius-xs</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-sm);">6px</div>
+          <span class="ds-label">--radius-sm</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-md);">8px</div>
+          <span class="ds-label">--radius-md</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-lg);">12px</div>
+          <span class="ds-label">--radius-lg</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-xl);">16px</div>
+          <span class="ds-label">--radius-xl</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-2xl);">24px</div>
+          <span class="ds-label">--radius-2xl</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius: var(--radius-full); width: 80px; height: 80px;">full</div>
+          <span class="ds-label">--radius-full</span>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 5. SHADOWS ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">5. Shadows</h2>
+      <p class="ds-section-subtitle">Frequency é minimalista em sombras — usa transparência e layering. Teki adiciona glow para accent.</p>
+
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-8); align-items: flex-end;">
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-sm);">sm</div>
+          <span class="ds-label">--shadow-sm</span>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-md);">md</div>
+          <span class="ds-label">--shadow-md</span>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-lg);">lg</div>
+          <span class="ds-label">--shadow-lg</span>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-xl);">xl</div>
+          <span class="ds-label">--shadow-xl</span>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-glow); border: 1px solid var(--border-accent);">glow</div>
+          <span class="ds-label">--shadow-glow</span>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-box" style="box-shadow: var(--shadow-inner);">inner</div>
+          <span class="ds-label">--shadow-inner</span>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 6. COMPONENTS ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">6. Components</h2>
+
+      <!-- Buttons -->
+      <div class="component-group">
+        <div class="component-group-title">Buttons — Variants</div>
+        <div class="component-row">
+          <button class="btn btn-primary btn-md">Primary</button>
+          <button class="btn btn-secondary btn-md">Secondary</button>
+          <button class="btn btn-outline btn-md">Outline</button>
+          <button class="btn btn-ghost btn-md">Ghost</button>
+        </div>
+      </div>
+
+      <div class="component-group">
+        <div class="component-group-title">Buttons — Sizes</div>
+        <div class="component-row">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary btn-md">Medium</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+          <button class="btn btn-primary btn-xl">Extra Large</button>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="component-group">
+        <div class="component-group-title">Inputs</div>
+        <div style="max-width: 400px; display: flex; flex-direction: column; gap: var(--space-3);">
+          <input type="text" class="input" placeholder="Input padrão..." />
+          <input type="email" class="input input-lg" placeholder="Input grande..." />
+          <textarea class="textarea" placeholder="Textarea..."></textarea>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="component-group">
+        <div class="component-group-title">Cards</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-4);">
+          <div class="card">
+            <div style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-2);">Card Default</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Hover para ver border elevation. Borda sutil com 6% white.</div>
+          </div>
+          <div class="card card-accent">
+            <div style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-2); color: var(--accent-light);">Card Accent</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Hover com borda accent e glow teal. Para features e destaques.</div>
+          </div>
+          <div class="card" style="background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));">
+            <div style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-2);">Card Gradient</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Background gradient sutil para hierarquia visual.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="component-group">
+        <div class="component-group-title">Badges</div>
+        <div class="component-row">
+          <span class="badge badge-default">Default</span>
+          <span class="badge badge-accent">Accent</span>
+          <span class="badge badge-success">Success</span>
+          <span class="badge badge-error">Error</span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="component-group">
+        <div class="component-group-title">Tags / Chips</div>
+        <div class="component-row">
+          <span class="tag">IA</span>
+          <span class="tag">Suporte</span>
+          <span class="tag">Automação</span>
+          <span class="tag">Base de Conhecimento</span>
+          <span class="tag">SLA</span>
+        </div>
+      </div>
+
+      <!-- Dividers -->
+      <div class="component-group">
+        <div class="component-group-title">Dividers</div>
+        <div class="divider"></div>
+        <div class="ds-label" style="margin-bottom: var(--space-4);">Default (--border)</div>
+        <div class="divider divider-accent"></div>
+        <div class="ds-label">Accent (gradient fade)</div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 7. ANIMATIONS ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">7. Motion & Animation</h2>
+      <p class="ds-section-subtitle">
+        Padrões de animação inspirados no Frequency Breathwork: GSAP ScrollTrigger com stagger 0.08–0.12s,
+        ease-out 0.4–2s, blur 3–12px. Microinterações suaves e orgânicas.
+      </p>
+
+      <!-- Easing -->
+      <div class="component-group">
+        <div class="component-group-title">Easing Curves</div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); font-family: var(--font-mono); font-size: var(--text-sm);">
+          <div style="display: flex; gap: var(--space-4); align-items: center;">
+            <span class="ds-label" style="min-width: 120px;">--ease-out</span>
+            <span style="color: var(--text-secondary);">cubic-bezier(0.16, 1, 0.3, 1)</span>
+            <span style="color: var(--text-muted);">— Saídas suaves (padrão)</span>
+          </div>
+          <div style="display: flex; gap: var(--space-4); align-items: center;">
+            <span class="ds-label" style="min-width: 120px;">--ease-in-out</span>
+            <span style="color: var(--text-secondary);">cubic-bezier(0.4, 0, 0.2, 1)</span>
+            <span style="color: var(--text-muted);">— Transições de estado</span>
+          </div>
+          <div style="display: flex; gap: var(--space-4); align-items: center;">
+            <span class="ds-label" style="min-width: 120px;">--ease-spring</span>
+            <span style="color: var(--text-secondary);">cubic-bezier(0.34, 1.56, 0.64, 1)</span>
+            <span style="color: var(--text-muted);">— Overshoot (botões, toasts)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="component-group">
+        <div class="component-group-title">Durations</div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); font-family: var(--font-mono); font-size: var(--text-sm);">
+          <div><span class="ds-label" style="display: inline-block; min-width: 160px;">--duration-fast</span> <span style="color: var(--text-secondary);">150ms</span> <span style="color: var(--text-muted); margin-left: var(--space-4);">hover, focus</span></div>
+          <div><span class="ds-label" style="display: inline-block; min-width: 160px;">--duration-normal</span> <span style="color: var(--text-secondary);">300ms</span> <span style="color: var(--text-muted); margin-left: var(--space-4);">transições de UI</span></div>
+          <div><span class="ds-label" style="display: inline-block; min-width: 160px;">--duration-slow</span> <span style="color: var(--text-secondary);">500ms</span> <span style="color: var(--text-muted); margin-left: var(--space-4);">cards, modais</span></div>
+          <div><span class="ds-label" style="display: inline-block; min-width: 160px;">--duration-slower</span> <span style="color: var(--text-secondary);">800ms</span> <span style="color: var(--text-muted); margin-left: var(--space-4);">scroll reveals</span></div>
+          <div><span class="ds-label" style="display: inline-block; min-width: 160px;">--duration-slowest</span> <span style="color: var(--text-secondary);">1200ms</span> <span style="color: var(--text-muted); margin-left: var(--space-4);">hero entrance</span></div>
+        </div>
+      </div>
+
+      <!-- Stagger -->
+      <div class="component-group">
+        <div class="component-group-title">Stagger Delays (para listas e grids)</div>
+        <div style="display: flex; gap: var(--space-4);">
+          <div class="anim-demo anim-fade-up delay-1">0.08s</div>
+          <div class="anim-demo anim-fade-up delay-2">0.16s</div>
+          <div class="anim-demo anim-fade-up delay-3">0.24s</div>
+          <div class="anim-demo anim-fade-up delay-4">0.32s</div>
+          <div class="anim-demo anim-fade-up delay-5">0.40s</div>
+          <div class="anim-demo anim-fade-up delay-6">0.48s</div>
+        </div>
+        <div class="ds-label" style="margin-top: var(--space-2);">--stagger-sm: 0.06s · --stagger-md: 0.08s · --stagger-lg: 0.12s</div>
+      </div>
+
+      <!-- Keyframes -->
+      <div class="component-group">
+        <div class="component-group-title">Keyframe Animations</div>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-6);">
+          <div style="text-align: center;">
+            <div class="anim-demo anim-fade-up" style="animation-iteration-count: infinite; animation-duration: 2s;">↑</div>
+            <div class="ds-label">fadeInUp</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="anim-demo anim-slide-left" style="animation-iteration-count: infinite; animation-duration: 2s;">←</div>
+            <div class="ds-label">slideInLeft</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="anim-demo anim-scale" style="animation-iteration-count: infinite; animation-duration: 2s;">⬡</div>
+            <div class="ds-label">scaleIn</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="anim-demo anim-pulse">●</div>
+            <div class="ds-label">softPulse</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="anim-demo anim-float">◇</div>
+            <div class="ds-label">float</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 8. Z-INDEX & CONTAINERS ═══ -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">8. Layout Tokens</h2>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8);">
+        <!-- Z-Index -->
+        <div>
+          <div class="component-group-title">Z-Index Scale</div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm);">
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-behind</span> <span style="color: var(--text-secondary);">-1</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-base</span> <span style="color: var(--text-secondary);">0</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-raised</span> <span style="color: var(--text-secondary);">10</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-sticky</span> <span style="color: var(--text-secondary);">100</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-overlay</span> <span style="color: var(--text-secondary);">200</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-modal</span> <span style="color: var(--text-secondary);">300</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-toast</span> <span style="color: var(--text-secondary);">400</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 120px;">--z-max</span> <span style="color: var(--text-secondary);">9999</span></div>
+          </div>
+        </div>
+
+        <!-- Containers -->
+        <div>
+          <div class="component-group-title">Container Widths</div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm);">
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 140px;">--container-sm</span> <span style="color: var(--text-secondary);">640px</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 140px;">--container-md</span> <span style="color: var(--text-secondary);">768px</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 140px;">--container-lg</span> <span style="color: var(--text-secondary);">1024px</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 140px;">--container-xl</span> <span style="color: var(--text-secondary);">1200px</span></div>
+            <div><span style="color: var(--text-muted); display: inline-block; min-width: 140px;">--container-2xl</span> <span style="color: var(--text-secondary);">1400px</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══ 9. REFERENCE NOTES ═══ -->
+    <section class="ds-section" style="border-bottom: none;">
+      <h2 class="ds-section-title">9. Notas de Referência</h2>
+
+      <div class="card" style="max-width: 700px;">
+        <div style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-4); color: var(--accent-light);">
+          Frequency Breathwork
+        </div>
+        <ul style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed); list-style: none; display: flex; flex-direction: column; gap: var(--space-2);">
+          <li>• Paleta: #242424, #DFD7C8, #F2EFE9, #d5d1c7</li>
+          <li>• Estética: warm minimalism, orgânico, terroso</li>
+          <li>• Motion: GSAP ScrollTrigger, stagger 0.08–0.12s</li>
+          <li>• Efeitos: blur 3–12px, opacity fades via gradient masks</li>
+          <li>• Typography: clamp() responsiva, line-height 1.2 (mobile)</li>
+          <li>• Borders: 1px solid #d5d1c7, circles com 50%</li>
+          <li>• Layout: seções com padding 60px 0, gap 12–48px</li>
+          <li>• Durations: 0.4s–2s ease-out, transições suaves</li>
+        </ul>
+      </div>
+
+      <div class="card" style="max-width: 700px; margin-top: var(--space-4);">
+        <div style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-4); color: var(--accent-light);">
+          Prototype Studio
+        </div>
+        <ul style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed); list-style: none; display: flex; flex-direction: column; gap: var(--space-2);">
+          <li>• Accent: #de0086 (magenta/pink)</li>
+          <li>• Estética: clean gallery, editorial, espaço generoso</li>
+          <li>• Motion: cubic-bezier(.4,0,.2,1), 0.5s ease-in-out</li>
+          <li>• Dark/Light: suporte a temas com toggle animado</li>
+          <li>• Layout: grid com whitespace abundante</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

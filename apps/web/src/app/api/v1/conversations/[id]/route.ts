@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
 
     const conversation = await prisma.conversation.findFirst({
-      where: { id, userId: user.id },
+      where: { id, participants: { some: { userId: user.id, status: 'ACTIVE' } } },
       include: {
         messages: { orderBy: { createdAt: 'asc' } },
       },
@@ -42,7 +42,7 @@ export async function DELETE(
     const { id } = await params;
 
     const conversation = await prisma.conversation.findFirst({
-      where: { id, userId: user.id },
+      where: { id, participants: { some: { userId: user.id, status: 'ACTIVE' } } },
     });
 
     if (!conversation) {

@@ -1,16 +1,21 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../apps/web/.env.local') });
 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({
+  adapter,
   log: ['error'],
 });
 
 async function createSuperAdmin() {
-  const email = 'admin';
+  const email = 'admin@teki.com';
   const password = 'admin';
 
   console.log(`Creating super admin user: ${email}`);
