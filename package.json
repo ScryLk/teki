@@ -12,6 +12,8 @@
     "dev:enterprise": "pnpm dev --plan=enterprise --seed=full",
     "dev:onboarding": "pnpm dev --plan=free --seed=empty",
     "dev:limits": "pnpm dev --plan=starter --seed=limit",
+    "setup": "tsx scripts/setup.ts",
+    "setup:dev": "tsx scripts/setup.ts && pnpm dev",
     "seed": "tsx scripts/seed.ts",
     "seed:reset": "tsx scripts/seed.ts --reset",
     "build:web": "pnpm --filter @teki/web build",

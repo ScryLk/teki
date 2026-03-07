@@ -1,38 +1,35 @@
 import AbacatePay from 'abacatepay-nodejs-sdk';
+import { PLANS } from './plans';
+import type { PlanTier } from '@prisma/client';
 
 const ABACATEPAY_API_KEY = process.env.ABACATEPAY_API_KEY!;
 
 const abacate = AbacatePay(ABACATEPAY_API_KEY);
 
-const PLAN_PRICES: Record<string, number> = {
-  starter: 2900,  // R$ 29,00 in cents
-  pro: 7900,      // R$ 79,00 in cents
-};
-
-const PLAN_NAMES: Record<string, string> = {
-  starter: 'Teki Starter',
-  pro: 'Teki Pro',
-};
-
 interface CreateBillingParams {
   userEmail: string;
   userName: string;
   userTaxId?: string;
-  planId: 'starter' | 'pro';
+  planId: PlanTier;
   backUrl: string;
   completionUrl: string;
 }
 
 export async function createBilling(params: CreateBillingParams) {
+  const plan = PLANS[params.planId];
+  if (!plan || plan.price <= 0) {
+    throw new Error(`Plano "${params.planId}" nao disponivel para cobranca.`);
+  }
+
   const response = await abacate.billing.create({
     frequency: 'ONE_TIME',
     methods: ['PIX'],
     products: [
       {
-        externalId: `teki-plan-${params.planId}`,
-        name: PLAN_NAMES[params.planId],
+        externalId: `teki-plan-${params.planId.toLowerCase()}`,
+        name: `Teki ${plan.name}`,
         quantity: 1,
-        price: PLAN_PRICES[params.planId],
+        price: plan.price * 100, // R$ to cents
       },
     ],
     returnUrl: params.backUrl,

@@ -77,7 +77,7 @@ export default function CheckoutPage() {
       const subRes = await fetch('/api/v1/billing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: planId.toLowerCase() }),
+        body: JSON.stringify({ planId }),
       });
 
       const subData = await subRes.json();

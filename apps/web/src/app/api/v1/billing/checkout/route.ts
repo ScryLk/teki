@@ -61,61 +61,76 @@ export async function POST(req: NextRequest) {
     }
 
     const plan = getPlan(planId);
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    // Save billing data + activate plan
+    // Save billing data
     await prisma.user.update({
       where: { id: user.id },
       data: {
         billingName,
         billingCompany: billingCompany || null,
         billingTaxId: taxIdResult.clean,
-        planActivatedAt: now,
-        planExpiresAt: expiresAt,
-        planCancelledAt: null,
       },
     });
 
-    // Update tenant plan
-    const membership = await prisma.tenantMember.findFirst({
-      where: { userId: user.id, status: 'ACTIVE' },
-      orderBy: { createdAt: 'asc' },
-    });
+    // In simulation mode: activate plan immediately
+    if (isSimulationMode()) {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    if (membership) {
-      await prisma.tenant.update({
-        where: { id: membership.tenantId },
+      await prisma.user.update({
+        where: { id: user.id },
         data: {
-          plan: planId,
-          planStartedAt: now,
+          planActivatedAt: now,
           planExpiresAt: expiresAt,
+          planCancelledAt: null,
         },
+      });
+
+      const membership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (membership) {
+        await prisma.tenant.update({
+          where: { id: membership.tenantId },
+          data: {
+            plan: planId,
+            planStartedAt: now,
+            planExpiresAt: expiresAt,
+          },
+        });
+      }
+
+      await prisma.planHistory.create({
+        data: {
+          userId: user.id,
+          fromPlan: user.planId,
+          toPlan: planId,
+          reason: 'simulation',
+          amount: null,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        simulation: true,
+        plan: {
+          id: planId,
+          name: plan.name,
+          activatedAt: now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+        },
+        message: 'Plano ativado com sucesso!',
       });
     }
 
-    // Record history
-    const upgrading = isUpgrade(user.planId, planId);
-    await prisma.planHistory.create({
-      data: {
-        userId: user.id,
-        fromPlan: user.planId,
-        toPlan: planId,
-        reason: isSimulationMode() ? 'simulation' : upgrading ? 'upgrade' : 'downgrade',
-        amount: isSimulationMode() ? null : plan.price,
-      },
-    });
-
+    // In real mode: only save billing data, plan activates via webhook after payment
     return NextResponse.json({
       success: true,
-      plan: {
-        id: planId,
-        name: plan.name,
-        activatedAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      },
-      simulation: isSimulationMode(),
-      message: 'Plano ativado com sucesso!',
+      simulation: false,
+      plan: { id: planId, name: plan.name },
+      message: 'Dados salvos. Prossiga com o pagamento.',
     });
   } catch (error) {
     if (error instanceof AuthError) {

@@ -333,9 +333,11 @@ export default function BillingPage() {
                   )}
                 </div>
               ))}
-              <p className="text-xs text-muted-foreground pt-2">
-                (Modo simulacao: valores simulados)
-              </p>
+              {history.some((e) => e.reason === 'simulation') && (
+                <p className="text-xs text-muted-foreground pt-2">
+                  (Entradas de simulacao marcadas como tal)
+                </p>
+              )}
             </div>
           )}
         </CardContent>
