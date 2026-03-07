@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       userTaxId: dbUser?.billingTaxId ?? undefined,
       planId,
       backUrl: `${appUrl}/settings/billing`,
-      completionUrl: `${appUrl}/settings/billing/success?plan=${planId}`,
+      completionUrl: `${appUrl}/settings/billing/callback?plan=${planId}`,
     });
 
     // Save billing ID to tenant for webhook reconciliation

@@ -54,6 +54,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Clear AbacatePay billing on the tenant (no pending billing to track)
+    if (!isSimulationMode()) {
+      const membership = await prisma.tenantMember.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+        orderBy: { createdAt: 'asc' },
+        include: { tenant: { select: { id: true, abacateBillingId: true } } },
+      });
+
+      if (membership) {
+        // AbacatePay ONE_TIME billings don't need explicit cancellation via API
+        // (they're already paid or expired). Clear the billing reference so
+        // no renewal is generated for this billing.
+        await prisma.tenant.update({
+          where: { id: membership.tenantId },
+          data: { abacateBillingId: null },
+        });
+      }
+    }
+
     // In simulation mode, also downgrade to FREE immediately on the tenant
     if (isSimulationMode()) {
       const membership = await prisma.tenantMember.findFirst({

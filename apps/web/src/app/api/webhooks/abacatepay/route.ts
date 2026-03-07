@@ -1,16 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { PlanTier } from '@prisma/client';
+import crypto from 'crypto';
+
+const WEBHOOK_SECRET = process.env.ABACATEPAY_WEBHOOK_SECRET;
+
+function verifyWebhookSignature(body: string, signatureHeader: string | null): boolean {
+  if (!WEBHOOK_SECRET) {
+    // If no secret configured, skip validation (dev mode)
+    console.warn('[abacatepay webhook] ABACATEPAY_WEBHOOK_SECRET not set, skipping signature verification');
+    return true;
+  }
+
+  if (!signatureHeader) {
+    return false;
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(body)
+    .digest('hex');
+
+  // Support both raw hex and "sha256=hex" formats
+  const receivedSignature = signatureHeader.startsWith('sha256=')
+    ? signatureHeader.slice(7)
+    : signatureHeader;
+
+  return crypto.timingSafeEqual(
+    Buffer.from(expectedSignature, 'hex'),
+    Buffer.from(receivedSignature, 'hex')
+  );
+}
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { event, data } = body;
+  // Read raw body for signature verification
+  const rawBody = await req.text();
 
-    if (event === 'billing.paid' && data) {
+  // Verify webhook signature
+  const signature = req.headers.get('x-signature') ?? req.headers.get('x-webhook-signature');
+  if (!verifyWebhookSignature(rawBody, signature)) {
+    console.warn('[abacatepay webhook] Invalid signature');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  let body: { event?: string; data?: Record<string, unknown> };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+  }
+
+  const { event, data } = body;
+
+  if (!event || !data) {
+    return NextResponse.json({ error: 'Missing event or data' }, { status: 400 });
+  }
+
+  try {
+    if (event === 'billing.paid') {
       const billingId = data.id as string;
       const products = data.products as Array<{ externalId: string }>;
       const customer = data.customer as { id: string; metadata: { email?: string } };
+
+      if (!billingId) {
+        return NextResponse.json({ error: 'Missing billing id' }, { status: 400 });
+      }
 
       // Determine plan from product externalId
       let plan: PlanTier = 'FREE';
@@ -20,7 +74,7 @@ export async function POST(req: NextRequest) {
 
       if (plan === 'FREE') {
         console.warn(`[abacatepay webhook] Unknown plan for billing ${billingId}`);
-        return NextResponse.json({ status: 'unknown plan' });
+        return NextResponse.json({ error: 'Unknown plan' }, { status: 400 });
       }
 
       // Find tenant by abacateBillingId
@@ -45,7 +99,7 @@ export async function POST(req: NextRequest) {
 
       if (!tenant) {
         console.warn(`[abacatepay webhook] Tenant not found for billing ${billingId}`);
-        return NextResponse.json({ status: 'tenant not found' });
+        return NextResponse.json({ error: 'Tenant not found' }, { status: 400 });
       }
 
       const now = new Date();
@@ -90,11 +144,13 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+
+      console.log(`[abacatepay webhook] Plan ${plan} activated for tenant ${tenant.id}`);
     }
 
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
-    console.error('[abacatepay webhook]', error);
-    return NextResponse.json({ status: 'error' }, { status: 200 });
+    console.error('[abacatepay webhook] Internal error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

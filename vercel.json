@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm --filter @teki/web build"
+  "buildCommand": "cd ../.. && pnpm --filter @teki/web build",
+  "crons": [
+    {
+      "path": "/api/cron/billing-renewal",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }

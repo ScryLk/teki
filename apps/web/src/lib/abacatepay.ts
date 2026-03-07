@@ -63,3 +63,23 @@ export async function listBillings() {
   }
   return response.data;
 }
+
+/**
+ * Get the status of a specific billing by listing all and filtering.
+ * AbacatePay SDK doesn't expose a get-by-id, so we filter from list.
+ */
+export async function getBillingStatus(billingId: string) {
+  const billings = await listBillings();
+  const billing = billings.find((b: { id: string }) => b.id === billingId);
+  if (!billing) {
+    return null;
+  }
+  return {
+    id: billing.id,
+    status: billing.status,
+    amount: billing.amount,
+    url: billing.url,
+  };
+}
+
+export { PLAN_PRICES, PLAN_NAMES };
