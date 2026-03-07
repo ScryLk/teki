@@ -48,6 +48,7 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
+      // 1. Save billing data
       const res = await fetch('/api/v1/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +67,28 @@ export default function CheckoutPage() {
         return;
       }
 
-      router.push(`/settings/billing/success?plan=${planId}`);
+      // 2. If simulation mode, go straight to success
+      if (data.simulation) {
+        router.push(`/settings/billing/success?plan=${planId}`);
+        return;
+      }
+
+      // 3. Create AbacatePay billing and redirect to PIX checkout
+      const subRes = await fetch('/api/v1/billing/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: planId.toLowerCase() }),
+      });
+
+      const subData = await subRes.json();
+
+      if (!subRes.ok) {
+        setError(subData.error?.message ?? 'Erro ao gerar cobranca.');
+        return;
+      }
+
+      // Redirect to AbacatePay checkout page (PIX)
+      window.location.href = subData.checkoutUrl;
     } catch {
       setError('Erro de conexao. Tente novamente.');
     } finally {
@@ -201,12 +223,12 @@ export default function CheckoutPage() {
           className="w-full bg-[#2A8F9D] hover:bg-[#2A8F9D]/90 h-12 text-base"
           disabled={submitting}
         >
-          {submitting ? 'Processando...' : 'Confirmar e ativar plano →'}
+          {submitting ? 'Processando...' : 'Confirmar e pagar via PIX →'}
         </Button>
 
         <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
           <Lock size={12} />
-          Modo simulacao: nenhuma cobranca sera feita.
+          Pagamento seguro via PIX (AbacatePay)
         </p>
       </form>
     </div>

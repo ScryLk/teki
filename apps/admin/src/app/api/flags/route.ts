@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
 
   await prisma.tenant.update({
     where: { id: tenantId },
-    data: { settings },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: { settings: settings as any },
   });
 
   return NextResponse.json({ success: true });

@@ -77,7 +77,7 @@ export const ALL_MODELS: AIModel[] = [
   {
     id: 'ollama-custom',
     providerId: 'ollama',
-    apiModelId: 'dynamic',
+    apiModelId: 'gemma3:4b',
     name: 'Modelo Local (Ollama)',
     description: 'IA na sua máquina. Privacidade total.',
     tier: 'pro',

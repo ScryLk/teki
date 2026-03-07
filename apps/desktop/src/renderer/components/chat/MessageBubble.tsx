@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import SourceBadge from './SourceBadge';
-import type { ChatMessage } from '@/hooks/useAlgoliaChat';
+import type { ChatMessage } from '@/hooks/useChat';
 
 interface Source {
   index: string;
@@ -110,9 +110,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, sources }) => {
           }`}
         >
           {isUser ? (
-            <p className="text-sm whitespace-pre-wrap break-words">
-              {message.content}
-            </p>
+            <>
+              {message.image && (
+                <img
+                  src={`data:${message.imageMime ?? 'image/png'};base64,${message.image}`}
+                  alt="Imagem anexada"
+                  className="max-w-full max-h-48 rounded-lg mb-2"
+                />
+              )}
+              <p className="text-sm whitespace-pre-wrap break-words">
+                {message.content}
+              </p>
+            </>
           ) : message.content ? (
             <div className="prose prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
               <ReactMarkdown>{message.content}</ReactMarkdown>

@@ -158,7 +158,7 @@ const ScreenViewer: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {isLoadingSources ? (
             <div className="flex items-center justify-center h-32 text-text-muted text-sm">
               Carregando janelas...
@@ -172,28 +172,29 @@ const ScreenViewer: React.FC = () => {
               <button
                 key={win.id}
                 onClick={() => selectWindow(win)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-surface border border-border hover:border-accent/40 hover:bg-surface-hover transition-all text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-surface border border-border hover:border-accent/40 hover:bg-surface-hover transition-all text-left"
               >
                 <img
                   src={win.thumbnail}
                   alt={win.name}
-                  className="w-24 h-14 object-cover rounded border border-border shrink-0 bg-bg"
+                  className="w-16 h-10 object-cover rounded border border-border shrink-0 bg-bg"
                 />
                 <div className="flex items-center gap-2 min-w-0">
                   {win.appIcon && (
                     <img src={win.appIcon} alt="" className="w-4 h-4 shrink-0" />
                   )}
-                  <span className="text-sm text-text-secondary truncate">{win.name}</span>
+                  <span className="text-xs text-text-secondary truncate">{win.name}</span>
                 </div>
               </button>
             ))
           )}
         </div>
 
-        <div className="flex-shrink-0 flex justify-center py-2 border-t border-border bg-surface">
+        <div className="flex-shrink-0 flex justify-center px-3 py-2.5 border-t border-border bg-surface">
           <button
             onClick={fetchWindows}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs text-text-muted
+                       hover:text-accent hover:bg-surface-hover transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M23 4v6h-6" />

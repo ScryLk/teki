@@ -39,8 +39,10 @@ model Tenant {
   planStartedAt    DateTime? @map("plan_started_at")
   planExpiresAt    DateTime? @map("plan_expires_at")
   billingEmail     String?   @map("billing_email") @db.VarChar(255)
-  stripeCustomerId String?   @map("stripe_customer_id") @db.VarChar(255)
-  mpPreapprovalId  String?   @map("mp_preapproval_id")
+  stripeCustomerId  String?   @map("stripe_customer_id") @db.VarChar(255)
+  mpPreapprovalId   String?   @map("mp_preapproval_id")
+  abacateBillingId  String?   @map("abacate_billing_id")
+  abacateCustomerId String?   @map("abacate_customer_id")
 
   // Estado
   status      TenantStatus @default(ACTIVE)

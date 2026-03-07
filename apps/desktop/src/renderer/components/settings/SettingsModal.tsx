@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/stores/app-store';
 import { ALL_MODELS } from '@teki/shared';
-import type { AIModel, AiProviderId } from '@teki/shared';
+import type { AIModel, AiProviderId, ChannelInfo, OpenClawChannelId, ChannelConfig, ChannelAuthType } from '@teki/shared';
 import { ApiKeyInput, AllApiKeys } from './ApiKeyInput';
+import { useOpenClaw } from '@/hooks/useOpenClaw';
 
 // ─── Provider metadata (for ModelSelect dots) ─────────────────────────────────
 
@@ -16,25 +17,16 @@ const PROVIDER_META: Record<string, { label: string; color: string }> = {
 // ─── OpenClaw data ───────────────────────────────────────────────────────────
 
 const CHANNEL_META: Record<string, { name: string; color: string }> = {
-  whatsapp: { name: 'WhatsApp', color: '#25D366' },
-  telegram: { name: 'Telegram', color: '#2AABEE' },
-  discord:  { name: 'Discord',  color: '#5865F2' },
-  slack:    { name: 'Slack',    color: '#E01E5A' },
+  whatsapp:  { name: 'WhatsApp',        color: '#25D366' },
+  telegram:  { name: 'Telegram',        color: '#2AABEE' },
+  discord:   { name: 'Discord',         color: '#5865F2' },
+  slack:     { name: 'Slack',           color: '#E01E5A' },
+  teams:     { name: 'Microsoft Teams', color: '#6264A7' },
+  gemini:    { name: 'Gemini Live',     color: '#4285F4' },
+  instagram: { name: 'Instagram',       color: '#E4405F' },
 };
 
-interface Channel {
-  id: string;
-  platform: string;
-  detail: string;
-  agent: string;
-}
-
-const DEMO_CHANNELS: Channel[] = [
-  { id: '1', platform: 'whatsapp', detail: '+55 51 9999-8888', agent: 'Suporte Geral' },
-  { id: '2', platform: 'discord',  detail: 'Servidor: TechCorp IT', agent: 'Suporte Rede' },
-];
-
-const MAX_CHANNELS = 3;
+const MAX_CHANNELS = 7;
 
 // Platform SVG icons
 const PlatformIcon: React.FC<{ platform: string; size?: number }> = ({ platform, size = 22 }) => {
@@ -54,10 +46,25 @@ const PlatformIcon: React.FC<{ platform: string; size?: number }> = ({ platform,
       <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.04.03.05a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
     </svg>
   );
-  // slack
-  return (
+  if (platform === 'slack') return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
       <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+    </svg>
+  );
+  if (platform === 'teams') return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.2 6.4h-2.4V4.8a2.4 2.4 0 0 0-2.4-2.4h-4.8a2.4 2.4 0 0 0-2.4 2.4v1.6H4.8A2.4 2.4 0 0 0 2.4 8.8v9.6a2.4 2.4 0 0 0 2.4 2.4h14.4a2.4 2.4 0 0 0 2.4-2.4V8.8a2.4 2.4 0 0 0-2.4-2.4zM9.6 4.8h4.8v1.6H9.6V4.8zm3.6 10.8h-2.4v2.4H9.6v-2.4H7.2v-1.2h2.4v-2.4h1.2v2.4h2.4v1.2z"/>
+    </svg>
+  );
+  if (platform === 'gemini') return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2a7.2 7.2 0 0 1-6-3.22c.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08a7.2 7.2 0 0 1-6 3.22z"/>
+    </svg>
+  );
+  // instagram
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
     </svg>
   );
 };
@@ -162,9 +169,11 @@ const ModelSelect: React.FC<{ value: string; onChange: (id: string) => void }> =
 const ChannelListView: React.FC<{
   onAdd: () => void;
   onSettings: (id: string) => void;
-}> = ({ onAdd, onSettings }) => {
-  const used = DEMO_CHANNELS.length;
-  const empty = MAX_CHANNELS - used;
+  channels: Array<{ id: string; status: string; detail?: string; error?: string }>;
+}> = ({ onAdd, onSettings, channels }) => {
+  const connected = channels.filter((ch) => ch.status === 'connected');
+  const used = connected.length;
+  const empty = Math.max(0, MAX_CHANNELS - used);
 
   return (
     <div className="space-y-5">
@@ -173,7 +182,7 @@ const ChannelListView: React.FC<{
         <div>
           <h3 className="text-sm font-semibold text-text-primary">Canais conectados</h3>
           <p className="text-xs text-[#71717a] mt-1 max-w-xs leading-relaxed">
-            Conecte o Teki ao WhatsApp, Telegram, Discord ou Slack. Seus técnicos podem enviar fotos de erros e receber diagnósticos direto no celular.
+            Conecte o Teki ao WhatsApp, Telegram, Discord, Slack, Teams, Gemini ou Instagram.
           </p>
         </div>
         <span className="flex-shrink-0 ml-3 px-2.5 py-1 rounded-full text-xs font-semibold text-accent bg-accent/10">
@@ -183,25 +192,22 @@ const ChannelListView: React.FC<{
 
       {/* Channel cards */}
       <div className="space-y-2.5">
-        {DEMO_CHANNELS.map((ch) => {
-          const meta = CHANNEL_META[ch.platform];
+        {connected.map((ch) => {
+          const meta = CHANNEL_META[ch.id] ?? { name: ch.id, color: '#888' };
           return (
             <div key={ch.id}
               className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#18181b] border border-[#3f3f46]/50 hover:border-[#3f3f46] transition-colors"
               style={{ minHeight: 72 }}>
-              {/* Icon circle */}
               <div className="relative flex-shrink-0">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: meta.color + '1a', border: `1px solid ${meta.color}4d` }}>
                   <span style={{ color: meta.color }}>
-                    <PlatformIcon platform={ch.platform} size={20} />
+                    <PlatformIcon platform={ch.id} size={20} />
                   </span>
                 </div>
-                {/* Connected dot with pulse */}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#18181b]"
                   style={{ boxShadow: '0 0 0 2px #34d39933' }} />
               </div>
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-[#fafafa]">{meta.name}</span>
@@ -209,13 +215,8 @@ const ChannelListView: React.FC<{
                     Conectado
                   </span>
                 </div>
-                <p className="text-xs text-[#71717a] mt-0.5">{ch.detail}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
-                  <span className="text-xs text-[#71717a]">Agente: {ch.agent}</span>
-                </div>
+                {ch.detail && <p className="text-xs text-[#71717a] mt-0.5">{ch.detail}</p>}
               </div>
-              {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => onSettings(ch.id)}
                   className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717a] hover:text-[#fafafa] hover:bg-white/5 transition-colors"
@@ -223,13 +224,6 @@ const ChannelListView: React.FC<{
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="3" />
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                  </svg>
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717a] hover:text-red-400 hover:bg-red-500/5 transition-colors" title="Desconectar">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                    <line x1="2" y1="2" x2="22" y2="22" />
                   </svg>
                 </button>
               </div>
@@ -273,7 +267,7 @@ const AddStep1View: React.FC<{
   onBack: () => void;
   onSelect: (platform: string) => void;
 }> = ({ onBack, onSelect }) => {
-  const platforms = ['whatsapp', 'telegram', 'discord', 'slack'];
+  const platforms = ['whatsapp', 'telegram', 'discord', 'slack', 'teams', 'gemini', 'instagram'];
   return (
     <div>
       <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#fafafa] transition-colors mb-5">
@@ -319,44 +313,81 @@ const AddStep1View: React.FC<{
   );
 };
 
-// ─── OpenClaw: Add step 2 (QR) ───────────────────────────────────────────────
+// ─── OpenClaw: Add step 2 (Connect) ──────────────────────────────────────────
 
-const QRCodePlaceholder: React.FC = () => (
-  <svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
-    <rect width="160" height="160" fill="white" />
-    {/* Top-left finder */}
-    <rect x="10" y="10" width="40" height="40" fill="#111" rx="4" />
-    <rect x="16" y="16" width="28" height="28" fill="white" rx="2" />
-    <rect x="20" y="20" width="20" height="20" fill="#111" rx="1" />
-    {/* Top-right finder */}
-    <rect x="110" y="10" width="40" height="40" fill="#111" rx="4" />
-    <rect x="116" y="16" width="28" height="28" fill="white" rx="2" />
-    <rect x="120" y="20" width="20" height="20" fill="#111" rx="1" />
-    {/* Bottom-left finder */}
-    <rect x="10" y="110" width="40" height="40" fill="#111" rx="4" />
-    <rect x="16" y="116" width="28" height="28" fill="white" rx="2" />
-    <rect x="20" y="120" width="20" height="20" fill="#111" rx="1" />
-    {/* Data modules (decorative) */}
-    {[60,70,80,90,100].map((x) => [60,70,80,90,100].map((y) =>
-      (x + y) % 20 === 0 ? <rect key={`${x}-${y}`} x={x} y={y} width="8" height="8" fill="#111" rx="1" /> : null
-    ))}
-    {[60,75,90,105].map((x) => [10,25,40].map((y) =>
-      <rect key={`d-${x}-${y}`} x={x} y={y} width="8" height="8" fill="#111" rx="1" />
-    ))}
-    {[10,25,40].map((x) => [60,75,90,105].map((y) =>
-      <rect key={`d2-${x}-${y}`} x={x} y={y} width="8" height="8" fill="#111" rx="1" />
-    ))}
-    {[60,80,100,120,140].map((x) => [130,145].map((y) =>
-      y < 160 && x < 160 ? <rect key={`d3-${x}-${y}`} x={x} y={y} width="8" height="8" fill="#111" rx="1" /> : null
-    ))}
-  </svg>
-);
+const AUTH_TYPE_MAP: Record<string, ChannelAuthType> = {
+  whatsapp: 'qrcode',
+  telegram: 'bottoken',
+  discord: 'bottoken',
+  slack: 'oauth',
+  teams: 'oauth',
+  gemini: 'apikey',
+  instagram: 'apikey',
+};
+
+const CONNECT_INSTRUCTIONS: Record<string, string[]> = {
+  whatsapp: ['Abra o WhatsApp no celular', 'Toque em Configurações → Aparelhos conectados', 'Escaneie o QR code ao lado'],
+  telegram: ['Abra @BotFather no Telegram', 'Crie um bot com /newbot', 'Cole o token abaixo'],
+  discord: ['Acesse o Discord Developer Portal', 'Crie uma Application → Bot', 'Cole o bot token abaixo'],
+  slack: ['Crie um Slack App em api.slack.com', 'Configure Bot Token Scopes e Signing Secret', 'Preencha os campos abaixo'],
+  teams: ['Registre um bot no Azure Portal', 'Configure o App ID e senha', 'Preencha os campos abaixo'],
+  gemini: ['Acesse Google AI Studio', 'Crie uma API key', 'Cole a chave abaixo'],
+  instagram: ['Acesse Meta for Developers', 'Configure Instagram Graph API', 'Cole o token de acesso abaixo'],
+};
 
 const AddStep2View: React.FC<{
   platform: string;
   onBack: () => void;
-}> = ({ platform, onBack }) => {
+  onConnect: (channelId: OpenClawChannelId, config: ChannelConfig) => void;
+  getQR: (channelId: OpenClawChannelId) => Promise<string | null>;
+  getOAuthUrl: (channelId: OpenClawChannelId) => Promise<string | null>;
+  channelStatus?: ChannelInfo;
+}> = ({ platform, onBack, onConnect, getQR, getOAuthUrl, channelStatus }) => {
   const meta = CHANNEL_META[platform];
+  const authType = AUTH_TYPE_MAP[platform] ?? 'bottoken';
+  const instructions = CONNECT_INSTRUCTIONS[platform] ?? [];
+  const [token, setToken] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [signingSecret, setSigningSecret] = useState('');
+  const [appPassword, setAppPassword] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const status = channelStatus?.status ?? 'idle';
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    const config: ChannelConfig = { channelId: platform as OpenClawChannelId };
+    if (authType === 'bottoken') config.botToken = token;
+    if (authType === 'apikey') config.apiKey = apiKey;
+    if (authType === 'oauth' && platform === 'slack') {
+      config.botToken = token;
+      config.signingSecret = signingSecret;
+      config.appId = clientId;
+    }
+    if (authType === 'oauth' && platform === 'teams') {
+      config.appId = clientId;
+      config.appPassword = appPassword;
+    }
+    try {
+      await onConnect(platform as OpenClawChannelId, config);
+      if (authType === 'qrcode') {
+        const qr = await getQR(platform as OpenClawChannelId);
+        if (qr) setQrDataUrl(qr);
+      }
+    } catch (err) {
+      console.error('Connect error:', err);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const refreshQR = async () => {
+    const qr = await getQR(platform as OpenClawChannelId);
+    if (qr) setQrDataUrl(qr);
+  };
+
   return (
     <div>
       <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#fafafa] transition-colors mb-5">
@@ -372,27 +403,38 @@ const AddStep2View: React.FC<{
       </div>
 
       <div className="flex gap-8">
-        {/* QR */}
-        <div className="flex-shrink-0 flex flex-col items-center">
-          <div className="w-44 h-44 rounded-xl overflow-hidden flex items-center justify-center bg-white p-2">
-            <QRCodePlaceholder />
+        {/* Left side: QR or form */}
+        {authType === 'qrcode' ? (
+          <div className="flex-shrink-0 flex flex-col items-center">
+            <div className="w-44 h-44 rounded-xl overflow-hidden flex items-center justify-center bg-white p-2">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-[#71717a] gap-2">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="3" height="3" /><rect x="18" y="14" width="3" height="3" /><rect x="14" y="18" width="3" height="3" /><rect x="18" y="18" width="3" height="3" />
+                  </svg>
+                  <span className="text-[10px]">Clique conectar</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-xs text-[#71717a]">Escaneie com o {meta.name}</p>
+              <button onClick={refreshQR} className="text-[#71717a] hover:text-accent transition-colors" title="Gerar novo código">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <p className="text-xs text-[#71717a]">Escaneie com o {meta.name}</p>
-            <button className="text-[#71717a] hover:text-accent transition-colors" title="Gerar novo código">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10" />
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        ) : null}
 
-        {/* Right side */}
+        {/* Right side: instructions + fields */}
         <div className="flex-1 space-y-4">
-          {/* Instructions */}
           <div className="space-y-1.5">
-            {['Abra o WhatsApp no celular', 'Toque em Configurações → Aparelhos conectados', 'Escaneie o QR code ao lado'].map((step, i) => (
+            {instructions.map((step, i) => (
               <div key={i} className="flex items-start gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#3f3f46] text-[#fafafa] text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                   {i + 1}
@@ -402,23 +444,97 @@ const AddStep2View: React.FC<{
             ))}
           </div>
 
-          {/* Agent selector */}
-          <div>
-            <label className="block text-[11px] text-[#71717a] mb-1.5">Agente vinculado</label>
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] cursor-pointer hover:border-[#3f3f46] transition-colors">
-              <span>Suporte Geral</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#71717a]">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+          {/* Auth fields */}
+          {authType === 'bottoken' && (
+            <div>
+              <label className="block text-[11px] text-[#71717a] mb-1">Bot Token</label>
+              <input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Cole o token do bot..."
+                className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
             </div>
-          </div>
+          )}
+
+          {authType === 'apikey' && (
+            <div>
+              <label className="block text-[11px] text-[#71717a] mb-1">API Key</label>
+              <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Cole a chave de API..."
+                className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+            </div>
+          )}
+
+          {authType === 'oauth' && platform === 'slack' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] text-[#71717a] mb-1">Bot Token (xoxb-...)</label>
+                <input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="xoxb-..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[#71717a] mb-1">Signing Secret</label>
+                <input type="password" value={signingSecret} onChange={(e) => setSigningSecret(e.target.value)} placeholder="Signing secret..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[#71717a] mb-1">App ID</label>
+                <input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="App ID..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+              </div>
+            </div>
+          )}
+
+          {authType === 'oauth' && platform === 'teams' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] text-[#71717a] mb-1">App ID (Azure)</label>
+                <input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="App ID..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[#71717a] mb-1">App Password</label>
+                <input type="password" value={appPassword} onChange={(e) => setAppPassword(e.target.value)} placeholder="App password..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 text-sm text-[#fafafa] placeholder:text-[#52525b] focus:outline-none focus:border-accent transition-colors" />
+              </div>
+            </div>
+          )}
+
+          {/* Connect button */}
+          {authType !== 'qrcode' && (
+            <button onClick={handleConnect} disabled={connecting}
+              className="w-full py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors disabled:opacity-50">
+              {connecting ? 'Conectando...' : 'Conectar'}
+            </button>
+          )}
+          {authType === 'qrcode' && !qrDataUrl && (
+            <button onClick={handleConnect} disabled={connecting}
+              className="w-full py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors disabled:opacity-50">
+              {connecting ? 'Gerando QR...' : 'Iniciar conexão'}
+            </button>
+          )}
 
           {/* Status */}
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0f0f12] border border-[#3f3f46]/30">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-spin flex-shrink-0">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-            </svg>
-            <span className="text-xs text-[#71717a]">Aguardando conexão...</span>
+            {status === 'connected' ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-xs text-emerald-400">Conectado</span>
+              </>
+            ) : status === 'waiting' || status === 'reconnecting' ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-spin flex-shrink-0">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                <span className="text-xs text-[#71717a]">Aguardando conexão...</span>
+              </>
+            ) : status === 'error' ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-xs text-red-400">{channelStatus?.error ?? 'Erro na conexão'}</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-[#52525b]" />
+                <span className="text-xs text-[#71717a]">Desconectado</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -430,12 +546,27 @@ const AddStep2View: React.FC<{
 
 const ChannelSettingsView: React.FC<{
   channelId: string;
+  channel?: ChannelInfo;
   onBack: () => void;
-}> = ({ channelId, onBack }) => {
-  const channel = DEMO_CHANNELS.find((c) => c.id === channelId) ?? DEMO_CHANNELS[0];
-  const meta = CHANNEL_META[channel.platform];
-  const [welcome, setWelcome] = useState('Olá! Sou o Teki, assistente de TI. Me envie uma foto do erro ou descreva o problema.');
+  onDisconnect: (channelId: OpenClawChannelId) => void;
+}> = ({ channelId, channel, onBack, onDisconnect }) => {
+  const meta = CHANNEL_META[channelId] ?? { name: channelId, color: '#888' };
+  const [welcome, setWelcome] = useState(channel?.config?.welcomeMessage ?? 'Olá! Sou o Teki, assistente de TI. Me envie uma foto do erro ou descreva o problema.');
   const [allDay, setAllDay] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const isConnected = channel?.status === 'connected';
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await onDisconnect(channelId as OpenClawChannelId);
+      onBack();
+    } catch (err) {
+      console.error('Disconnect error:', err);
+    } finally {
+      setDisconnecting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -448,25 +579,35 @@ const ChannelSettingsView: React.FC<{
 
       {/* Title */}
       <div className="flex items-center gap-2 mb-5 flex-shrink-0">
-        <span style={{ color: meta.color }}><PlatformIcon platform={channel.platform} size={18} /></span>
+        <span style={{ color: meta.color }}><PlatformIcon platform={channelId} size={18} /></span>
         <h3 className="text-sm font-semibold text-[#fafafa]">{meta.name}</h3>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 leading-none">
-          Conectado
-        </span>
+        {isConnected && (
+          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 leading-none">
+            Conectado
+          </span>
+        )}
+        {channel?.status === 'error' && (
+          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded border border-red-500/30 bg-red-500/10 text-red-400 leading-none">
+            Erro
+          </span>
+        )}
       </div>
 
+      {channel?.error && (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+          {channel.error}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto space-y-5 pr-1">
-        {/* Agente */}
         <FormField label="Agente vinculado">
           <SimpleSelect value="Suporte Geral" />
         </FormField>
 
-        {/* Modelo */}
         <FormField label="Modelo de IA" hint="Substitui o modelo do agente quando configurado">
           <SimpleSelect value="Padrão do agente (Gemini Flash)" />
         </FormField>
 
-        {/* Welcome */}
         <FormField label="Mensagem de boas-vindas" hint="Enviada automaticamente na primeira mensagem de cada conversa">
           <textarea
             value={welcome}
@@ -476,7 +617,6 @@ const ChannelSettingsView: React.FC<{
           />
         </FormField>
 
-        {/* Horário */}
         <FormField label="Horário de atendimento" hint="Fora deste horário, o Teki envia mensagem de ausência">
           <div className="flex items-center gap-2">
             <input type="time" defaultValue="08:00"
@@ -496,13 +636,14 @@ const ChannelSettingsView: React.FC<{
 
         {/* Danger */}
         <div className="pt-3 border-t border-[#3f3f46]/30">
-          <button className="flex items-center gap-1.5 text-xs text-red-400 hover:underline transition-colors">
+          <button onClick={handleDisconnect} disabled={disconnecting}
+            className="flex items-center gap-1.5 text-xs text-red-400 hover:underline transition-colors disabled:opacity-50">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
               <line x1="2" y1="2" x2="22" y2="22" />
             </svg>
-            Desconectar {meta.name}
+            {disconnecting ? 'Desconectando...' : `Desconectar ${meta.name}`}
           </button>
           <p className="text-[11px] text-[#71717a] mt-1 ml-5">O canal será removido e o slot ficará disponível.</p>
         </div>
@@ -1260,9 +1401,29 @@ const KnowledgeBaseTab: React.FC = () => {
   );
 };
 
+// ─── Hotkey Row ──────────────────────────────────────────────────────────────
+
+const HotkeyRow: React.FC<{ keys: string[]; description: string }> = ({ keys, description }) => (
+  <div className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/[0.03] transition-colors">
+    <span className="text-sm text-[#e4e4e7]">{description}</span>
+    <div className="flex items-center gap-1">
+      {keys.map((key, i) => (
+        <React.Fragment key={key}>
+          {i > 0 && <span className="text-[10px] text-[#52525b] mx-0.5">+</span>}
+          <kbd className="inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded-md
+                          bg-[#27272a] border border-[#3f3f46] text-[11px] font-medium text-[#a1a1aa]
+                          shadow-[0_1px_0_1px_#18181b] font-mono">
+            {key}
+          </kbd>
+        </React.Fragment>
+      ))}
+    </div>
+  </div>
+);
+
 // ─── Tab types ───────────────────────────────────────────────────────────────
 
-type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'geral';
+type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'geral' | 'atalhos';
 type OpenClawView =
   | { type: 'list' }
   | { type: 'add-step1' }
@@ -1281,6 +1442,8 @@ const SettingsModal: React.FC = () => {
   const [ocView, setOcView] = useState<OpenClawView>({ type: 'list' });
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [visible, setVisible] = useState(false);
+
+  const { channels, connect, disconnect, getQR, getOAuthUrl } = useOpenClaw();
 
   const currentModel = ALL_MODELS.find((m) => m.id === selectedModel) ?? ALL_MODELS[0];
   const activeProvider = currentModel.providerId as AiProviderId;
@@ -1341,7 +1504,7 @@ const SettingsModal: React.FC = () => {
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>}
               label="Modelo" />
             <SidebarTab active={activeTab === 'openclaw'} onClick={() => handleTabChange('openclaw')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21c0-3-2.5-5-2.5-8a2.5 2.5 0 0 1 5 0c0 3-2.5 5-2.5 8"/><path d="M6.5 17c1.5-2 1-5 1-7.5a2 2 0 0 1 4 0"/><path d="M17.5 17c-1.5-2-1-5-1-7.5a2 2 0 0 0-4 0"/><path d="M4 14c1-1.5.5-4 .5-6a1.5 1.5 0 0 1 3 0"/><path d="M20 14c-1-1.5-.5-4-.5-6a1.5 1.5 0 0 0-3 0"/></svg>}
               label="OpenClaw" />
             <SidebarTab active={activeTab === 'kb'} onClick={() => handleTabChange('kb')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>}
@@ -1352,6 +1515,9 @@ const SettingsModal: React.FC = () => {
             <SidebarTab active={activeTab === 'geral'} onClick={() => handleTabChange('geral')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>}
               label="Geral" />
+            <SidebarTab active={activeTab === 'atalhos'} onClick={() => handleTabChange('atalhos')}
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>}
+              label="Atalhos" />
           </nav>
 
           {/* Content */}
@@ -1383,6 +1549,7 @@ const SettingsModal: React.FC = () => {
                   <ChannelListView
                     onAdd={() => setOcView({ type: 'add-step1' })}
                     onSettings={(id) => setOcView({ type: 'channel-settings', channelId: id })}
+                    channels={channels}
                   />
                 )}
                 {ocView.type === 'add-step1' && (
@@ -1395,12 +1562,18 @@ const SettingsModal: React.FC = () => {
                   <AddStep2View
                     platform={ocView.platform}
                     onBack={() => setOcView({ type: 'add-step1' })}
+                    onConnect={connect}
+                    getQR={getQR}
+                    getOAuthUrl={getOAuthUrl}
+                    channelStatus={channels.find((c) => c.id === ocView.platform)}
                   />
                 )}
                 {ocView.type === 'channel-settings' && (
                   <ChannelSettingsView
                     channelId={ocView.channelId}
+                    channel={channels.find((c) => c.id === ocView.channelId)}
                     onBack={() => setOcView({ type: 'list' })}
+                    onDisconnect={disconnect}
                   />
                 )}
               </>
@@ -1416,6 +1589,35 @@ const SettingsModal: React.FC = () => {
 
             {/* ── Geral tab ── */}
             {activeTab === 'geral' && <AllApiKeys />}
+
+            {/* ── Atalhos tab ── */}
+            {activeTab === 'atalhos' && (
+              <div className="space-y-6 max-w-md">
+                <div>
+                  <label className="block text-xs font-medium text-[#a1a1aa] uppercase tracking-wider mb-1">Atalhos de Teclado</label>
+                  <p className="text-xs text-[#71717a] mb-4">Atalhos globais disponíveis em qualquer lugar do sistema.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="text-xs font-medium text-[#a1a1aa] uppercase tracking-wider mb-2">Overlay Flutuante</h3>
+                  <HotkeyRow keys={['Ctrl', 'Space']} description="Mostrar / ocultar overlay" />
+                  <HotkeyRow keys={['Ctrl', 'D']} description="Push-to-talk (abre e inicia gravação)" />
+                  <HotkeyRow keys={['Enter']} description="Enviar mensagem no overlay" />
+                  <HotkeyRow keys={['Esc']} description="Fechar overlay" />
+                </div>
+
+                <div className="border-t border-[#3f3f46]/30 pt-4 space-y-1">
+                  <h3 className="text-xs font-medium text-[#a1a1aa] uppercase tracking-wider mb-2">Chat</h3>
+                  <HotkeyRow keys={['Enter']} description="Enviar mensagem" />
+                  <HotkeyRow keys={['Shift', 'Enter']} description="Nova linha" />
+                </div>
+
+                <div className="border-t border-[#3f3f46]/30 pt-4 space-y-1">
+                  <h3 className="text-xs font-medium text-[#a1a1aa] uppercase tracking-wider mb-2">Geral</h3>
+                  <HotkeyRow keys={['Esc']} description="Fechar modal / painel" />
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

@@ -174,7 +174,8 @@ export async function getTableStats(): Promise<
 
   for (const config of MODEL_REGISTRY) {
     try {
-      const delegate = (prisma as Record<string, unknown>)[
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const delegate = (prisma as any)[
         toCamelCase(config.prismaModel)
       ] as Record<string, Function>;
       if (!delegate?.count) continue;

@@ -8,6 +8,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  image?: string;       // base64
+  imageMime?: string;   // e.g. image/png
 }
 
 export function useChat(model?: string) {
@@ -49,7 +51,7 @@ export function useChat(model?: string) {
   }, [activeWindow]);
 
   const sendChatMessage = useCallback(
-    async (text: string) => {
+    async (text: string, image?: string, imageMime?: string) => {
       const trimmed = text.trim();
       if (!trimmed || isLoading) return;
 
@@ -60,6 +62,8 @@ export function useChat(model?: string) {
         role: 'user',
         content: trimmed,
         timestamp: Date.now(),
+        image,
+        imageMime,
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -70,6 +74,13 @@ export function useChat(model?: string) {
 
       try {
         const context = await buildContext();
+
+        // If user attached an image, include it in context
+        if (image) {
+          context.screenshot = image;
+          context.screenshotMimeType = imageMime ?? 'image/png';
+        }
+
         const allMessages = [...messages, userMessage].map((m) => ({
           role: m.role,
           content: m.content,

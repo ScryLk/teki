@@ -1,10 +1,12 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
-  onScreenshot?: () => void;
+  onImageAttach?: (base64: string, mimeType: string) => void;
+  onImageClear?: () => void;
+  attachedImage?: string | null;
   disabled?: boolean;
 }
 
@@ -12,10 +14,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   value,
   onChange,
   onSend,
-  onScreenshot,
+  onImageAttach,
+  onImageClear,
+  attachedImage,
   disabled = false,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -43,25 +48,77 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [disabled, value, onSend]);
 
-  const handleScreenshotClick = useCallback(() => {
-    if (onScreenshot && !disabled) {
-      onScreenshot();
-    }
-  }, [onScreenshot, disabled]);
+  const handleImageClick = useCallback(() => {
+    if (!disabled) fileInputRef.current?.click();
+  }, [disabled]);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onImageAttach) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // result is "data:<mime>;base64,<data>"
+        const mimeMatch = result.match(/^data:([^;]+);base64,/);
+        const mime = mimeMatch?.[1] ?? 'image/png';
+        const base64 = result.replace(/^data:[^;]+;base64,/, '');
+        onImageAttach(base64, mime);
+      };
+      reader.readAsDataURL(file);
+
+      // Reset so same file can be re-selected
+      e.target.value = '';
+    },
+    [onImageAttach]
+  );
 
   return (
-    <div className="flex items-center gap-2 p-3 border-t border-border bg-bg">
-      {/* Screenshot button */}
-      {onScreenshot && (
+    <div className="flex flex-col border-t border-border bg-bg">
+      {/* Image preview */}
+      {attachedImage && (
+        <div className="px-3 pt-3 pb-1">
+          <div className="relative inline-block">
+            <img
+              src={`data:image/png;base64,${attachedImage}`}
+              alt="Anexo"
+              className="h-20 rounded-lg border border-border object-cover"
+            />
+            <button
+              onClick={onImageClear}
+              type="button"
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full
+                         bg-error text-white text-xs flex items-center justify-center
+                         hover:bg-red-500 transition-colors"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 p-3">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Image attach button */}
+      {onImageAttach && (
         <button
-          onClick={handleScreenshotClick}
+          onClick={handleImageClick}
           disabled={disabled}
           className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg
                      border border-border bg-surface text-text-muted
                      hover:bg-surface-hover hover:text-text-secondary
                      disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors"
-          title="Capturar tela"
+          title="Anexar imagem"
           type="button"
         >
           <svg
@@ -74,8 +131,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-            <circle cx="12" cy="13" r="4" />
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
           </svg>
         </button>
       )}
@@ -139,6 +197,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </svg>
         )}
       </button>
+      </div>
     </div>
   );
 };

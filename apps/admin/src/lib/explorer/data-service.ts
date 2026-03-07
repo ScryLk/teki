@@ -7,7 +7,8 @@ function toCamelCase(str: string): string {
 }
 
 function getDelegate(modelName: string) {
-  return (prisma as Record<string, unknown>)[toCamelCase(modelName)] as Record<string, Function>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (prisma as any)[toCamelCase(modelName)] as Record<string, Function>;
 }
 
 /**
@@ -262,7 +263,7 @@ export async function updateRecord(
       subjectId: id.length === 36 ? id : '00000000-0000-0000-0000-000000000000',
       action: 'MODIFY',
       dataCategories: [`admin.explorer.${modelName}.update`],
-      details: { adminEmail, changes, model: modelName, recordId: id },
+      details: JSON.parse(JSON.stringify({ adminEmail, changes, model: modelName, recordId: id })),
       legalBasis: 'LEGITIMATE_INTEREST',
       justification: `Admin explorer edit by ${adminEmail}`,
     },

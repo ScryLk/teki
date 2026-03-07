@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
-import type { TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult } from '@teki/shared';
+import type {
+  TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult,
+  ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId,
+} from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
   // Window watching
@@ -124,6 +127,41 @@ const tekiAPI: TekiAPI = {
 
   logout: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGOUT);
+  },
+
+  // OpenClaw
+  openclawListChannels: (): Promise<ChannelInfo[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_LIST_CHANNELS);
+  },
+
+  openclawConnect: (channelId: OpenClawChannelId, config: ChannelConfig): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_CONNECT, channelId, config);
+  },
+
+  openclawDisconnect: (channelId: OpenClawChannelId): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_DISCONNECT, channelId);
+  },
+
+  openclawGetQR: (channelId: OpenClawChannelId): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_GET_QR, channelId);
+  },
+
+  openclawGetOAuthUrl: (channelId: OpenClawChannelId): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_GET_OAUTH_URL, channelId);
+  },
+
+  openclawGetStatus: (channelId: OpenClawChannelId): Promise<ChannelInfo | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_STATUS, channelId);
+  },
+
+  onOpenclawStatusChanged: (callback: (event: ChannelStatusEvent) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: ChannelStatusEvent) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.OPENCLAW_STATUS_CHANGED, listener);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.OPENCLAW_STATUS_CHANGED, listener);
+  },
+
+  openclawUpdateConfig: (channelId: OpenClawChannelId, config: Partial<ChannelConfig>): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_UPDATE_CONFIG, channelId, config);
   },
 };
 

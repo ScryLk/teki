@@ -23,6 +23,7 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/preload/index.ts'),
           'tray-popup': resolve(__dirname, 'src/preload/tray-popup.ts'),
+          floating: resolve(__dirname, 'src/preload/floating.ts'),
         },
       },
     },
@@ -40,6 +41,7 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
           'tray-popup': resolve(__dirname, 'src/renderer/tray-popup.html'),
+          floating: resolve(__dirname, 'src/renderer/floating.html'),
         },
       },
     },

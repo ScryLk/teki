@@ -1,8 +1,11 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, globalShortcut } from 'electron';
 import { join } from 'path';
 const is = { get dev() { return !app.isPackaged; } };
 import { registerIPCHandlers } from './ipc-handlers';
+import { registerOpenClawIPC } from './openclaw/ipc/openclawIpc';
 import { createTray, destroyTray, initTrayIcons } from './tray';
+import { createFloatingWindow, toggleFloating, startRecording, destroyFloating } from './floating-window';
+import { registerFloatingIPC } from './floating-ipc';
 // import { startPolling, stopPolling } from './services/window-detector';
 
 let mainWindow: BrowserWindow | null = null;
@@ -70,11 +73,24 @@ if (!gotTheLock) {
 
     // Register IPC handlers
     registerIPCHandlers(mainWindow);
+    registerOpenClawIPC(mainWindow);
 
     // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);
     mainWindow.webContents.once('did-finish-load', () => {
       initTrayIcons(mainWindow!);
+    });
+
+    // Create floating voice overlay
+    createFloatingWindow();
+    registerFloatingIPC();
+
+    // Register global hotkeys
+    globalShortcut.register('CommandOrControl+Space', () => {
+      toggleFloating();
+    });
+    globalShortcut.register('CommandOrControl+D', () => {
+      startRecording();
     });
 
     // Start active window detection polling
@@ -97,6 +113,8 @@ if (!gotTheLock) {
 
   app.on('window-all-closed', () => {
     // stopPolling();
+    globalShortcut.unregisterAll();
+    destroyFloating();
     destroyTray();
 
     // On macOS, apps typically stay active until explicitly quit via Cmd+Q

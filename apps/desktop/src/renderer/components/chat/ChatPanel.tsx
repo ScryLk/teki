@@ -16,6 +16,8 @@ const ChatPanel: React.FC = () => {
   const { messages, isLoading, error, sendMessage, clearChat } =
     useChat(selectedModel);
   const [input, setInput] = useState('');
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedMime, setAttachedMime] = useState<string>('image/png');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -28,10 +30,11 @@ const ChatPanel: React.FC = () => {
 
   const handleSend = useCallback(() => {
     const text = input.trim();
-    if (!text) return;
+    if (!text && !attachedImage) return;
     setInput('');
-    sendMessage(text);
-  }, [input, sendMessage]);
+    sendMessage(text || 'Analise esta imagem.', attachedImage ?? undefined, attachedMime);
+    setAttachedImage(null);
+  }, [input, sendMessage, attachedImage, attachedMime]);
 
   const handleQuickSuggestion = useCallback(
     (text: string) => {
@@ -39,15 +42,6 @@ const ChatPanel: React.FC = () => {
     },
     [sendMessage]
   );
-
-  const handleScreenshot = useCallback(() => {
-    const { currentFrame } = useAppStore.getState();
-    if (currentFrame) {
-      setInput(
-        (prev) => prev + (prev ? '\n' : '') + '[Screenshot da tela será incluído]'
-      );
-    }
-  }, []);
 
   return (
     <div className="flex flex-col h-full bg-bg">
@@ -175,7 +169,12 @@ const ChatPanel: React.FC = () => {
         value={input}
         onChange={setInput}
         onSend={handleSend}
-        onScreenshot={handleScreenshot}
+        onImageAttach={(base64, mime) => {
+          setAttachedImage(base64);
+          setAttachedMime(mime);
+        }}
+        onImageClear={() => setAttachedImage(null)}
+        attachedImage={attachedImage}
         disabled={isLoading}
       />
     </div>

@@ -61,8 +61,8 @@ export default function PlansPage() {
 
   const planOrder = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
   const sortedPlans = planOrder.map((p) => ({
-    plan: p,
     ...(plans.find((x) => x.plan === p) || { count: 0, activeCount: 0 }),
+    plan: p,
   }));
 
   return (

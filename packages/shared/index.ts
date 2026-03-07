@@ -1,5 +1,6 @@
 export * from './types/chat';
 export * from './types/context';
+export * from './types/openclaw';
 export * from './types/conversation';
 export * from './types/ipc';
 export * from './types/models';

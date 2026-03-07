@@ -15,7 +15,8 @@ export async function getRegisteredModels(): Promise<ModelSummary[]> {
 
   for (const config of MODEL_REGISTRY) {
     try {
-      const delegate = (prisma as Record<string, unknown>)[toCamelCase(config.prismaModel)] as Record<string, Function>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const delegate = (prisma as any)[toCamelCase(config.prismaModel)] as Record<string, Function>;
       if (!delegate?.count) continue;
 
       const count = await delegate.count(

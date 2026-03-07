@@ -119,7 +119,7 @@ export default function RecordDetail({
           <p className="text-sm font-medium truncate">
             {String(record[config.titleField] || record.id)}
           </p>
-          {config.subtitleField && record[config.subtitleField] && (
+          {config.subtitleField && record[config.subtitleField] != null && (
             <p className="text-xs text-muted-foreground truncate">
               {String(record[config.subtitleField])}
             </p>

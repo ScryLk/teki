@@ -175,7 +175,7 @@ export default function AuditPage() {
                 <p className="text-muted-foreground">User Agent</p>
                 <p className="truncate">{row.userAgent ? truncate(row.userAgent, 100) : '-'}</p>
               </div>
-              {row.details && (
+              {row.details != null && (
                 <div className="col-span-2">
                   <p className="text-muted-foreground">Detalhes</p>
                   <pre className="text-[10px] bg-muted p-2 rounded mt-1 overflow-x-auto">

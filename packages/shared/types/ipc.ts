@@ -1,4 +1,5 @@
 import type { WindowSource, WindowFrame } from './context';
+import type { ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId } from './openclaw';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
@@ -50,6 +51,16 @@ export const IPC_CHANNELS = {
   AUTH_SET_API_KEY: 'auth:setApiKey',
   AUTH_GET_STATUS: 'auth:getStatus',
   AUTH_LOGOUT: 'auth:logout',
+
+  // OpenClaw
+  OPENCLAW_LIST_CHANNELS: 'openclaw:listChannels',
+  OPENCLAW_CONNECT: 'openclaw:connect',
+  OPENCLAW_DISCONNECT: 'openclaw:disconnect',
+  OPENCLAW_GET_QR: 'openclaw:getQR',
+  OPENCLAW_GET_OAUTH_URL: 'openclaw:getOAuthUrl',
+  OPENCLAW_STATUS: 'openclaw:status',
+  OPENCLAW_STATUS_CHANGED: 'openclaw:statusChanged',
+  OPENCLAW_UPDATE_CONFIG: 'openclaw:updateConfig',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -88,6 +99,16 @@ export interface TekiAPI {
   setApiKey: (key: string) => Promise<boolean>;
   getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }>;
   logout: () => Promise<void>;
+
+  // OpenClaw
+  openclawListChannels: () => Promise<ChannelInfo[]>;
+  openclawConnect: (channelId: OpenClawChannelId, config: ChannelConfig) => Promise<void>;
+  openclawDisconnect: (channelId: OpenClawChannelId) => Promise<void>;
+  openclawGetQR: (channelId: OpenClawChannelId) => Promise<string | null>;
+  openclawGetOAuthUrl: (channelId: OpenClawChannelId) => Promise<string | null>;
+  openclawGetStatus: (channelId: OpenClawChannelId) => Promise<ChannelInfo | null>;
+  onOpenclawStatusChanged: (callback: (event: ChannelStatusEvent) => void) => () => void;
+  openclawUpdateConfig: (channelId: OpenClawChannelId, config: Partial<ChannelConfig>) => Promise<void>;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
