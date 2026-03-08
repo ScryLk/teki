@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
-import { getPlan, isUpgrade, PLAN_ORDER } from '@/lib/plans';
+import { getPlan, PLAN_ORDER } from '@/lib/plans';
 import { isSimulationMode } from '@/lib/billing-mode';
 import { validateTaxId, cleanTaxId } from '@/lib/tax-id';
 import { prisma } from '@/lib/prisma';

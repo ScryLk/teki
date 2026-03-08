@@ -26,13 +26,15 @@ export async function POST(req: NextRequest) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://teki.com.br';
 
+    // Note: AbacatePay completionUrl receives the user after payment.
+    // We use the callback URL which polls for payment confirmation via webhook.
     const result = await createBilling({
       userEmail: user.email,
       userName: dbUser?.billingName ?? `${user.firstName} ${user.lastName ?? ''}`.trim(),
       userTaxId: dbUser?.billingTaxId ?? undefined,
       planId: rawPlanId,
       backUrl: `${appUrl}/settings/billing`,
-      completionUrl: `${appUrl}/settings/billing/success?plan=${rawPlanId}`,
+      completionUrl: `${appUrl}/settings/billing/callback?plan=${rawPlanId}`,
     });
 
     // Save billing ID to tenant for webhook reconciliation

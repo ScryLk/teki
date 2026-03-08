@@ -87,7 +87,8 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Redirect to AbacatePay checkout page (PIX)
+      // Store billingId for callback page, then redirect to AbacatePay PIX checkout
+      sessionStorage.setItem('teki_billing_id', subData.billingId);
       window.location.href = subData.checkoutUrl;
     } catch {
       setError('Erro de conexao. Tente novamente.');
