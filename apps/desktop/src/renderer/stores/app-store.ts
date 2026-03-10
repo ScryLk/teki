@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import type { ConnectionHealth } from '@teki/shared';
+import { DEFAULT_CONNECTION_HEALTH } from '@teki/shared';
 
-export type LayoutMode = 'split' | 'chat-only' | 'screen-only' | 'compact';
+export type LayoutMode = 'split' | 'chat-only' | 'screen-only' | 'compact' | 'monitor';
 
 export type CatState = 'idle' | 'watching' | 'thinking' | 'happy' | 'alert' | 'sleeping';
 
@@ -35,6 +37,7 @@ interface AppState {
 
   // Connection
   connectionStatus: ConnectionStatus;
+  connectionHealth: ConnectionHealth;
 
   // AI model selection
   selectedModel: string;
@@ -53,6 +56,7 @@ interface AppState {
   setActiveWindow: (activeWindow: ActiveWindowInfo | null) => void;
   setCurrentFrame: (frame: string | null) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
+  setConnectionHealth: (health: ConnectionHealth) => void;
   setSelectedModel: (model: string) => void;
   requestWindowSelector: boolean;
   triggerWindowSelector: () => void;
@@ -95,6 +99,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Connection
   connectionStatus: 'online',
+  connectionHealth: DEFAULT_CONNECTION_HEALTH,
 
   // Window selector trigger
   requestWindowSelector: false,
@@ -130,6 +135,12 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentFrame: (currentFrame) => set({ currentFrame }),
 
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
+
+  setConnectionHealth: (connectionHealth) => {
+    // Derive overall status from health
+    const allOnline = connectionHealth.internet === 'online' && connectionHealth.backend === 'online';
+    set({ connectionHealth, connectionStatus: allOnline ? 'online' : 'offline' });
+  },
 
   setSelectedModel: (model) => {
     try {

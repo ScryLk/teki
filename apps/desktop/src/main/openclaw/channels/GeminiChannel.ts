@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig } from '@teki/shared';
+import { withTimeout } from '@teki/shared';
 
 export class GeminiChannel extends BaseChannel {
   id = 'gemini' as const;
@@ -20,7 +21,7 @@ export class GeminiChannel extends BaseChannel {
 
       // Validate by listing models
       const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-      const result = await model.generateContent('ping');
+      const result = await withTimeout(model.generateContent('ping'), 10_000, 'gemini:ping');
       const text = result.response.text();
 
       if (text) {

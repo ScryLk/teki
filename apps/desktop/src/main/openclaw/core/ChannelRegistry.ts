@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { IPC_CHANNELS } from '@teki/shared';
+import { IPC_CHANNELS, withTimeout } from '@teki/shared';
 import type { ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId } from '@teki/shared';
 import { BaseChannel } from './types';
 import { AgentRouter } from './AgentRouter';
@@ -105,13 +105,28 @@ export class ChannelRegistry {
 
   async reconnectSaved(): Promise<void> {
     const saved = sessionStore.getAllSessions();
-    for (const [id, data] of Object.entries(saved)) {
-      if (!data.autoReconnect) continue;
-      try {
+    const entries = Object.entries(saved).filter(([, data]) => data.autoReconnect);
+
+    if (entries.length === 0) return;
+
+    console.log(`[OpenClaw] Reconectando ${entries.length} canal(is) em paralelo...`);
+
+    const results = await Promise.allSettled(
+      entries.map(([id, data]) => {
         console.log(`[OpenClaw] Reconectando ${id}...`);
-        await this.connect(id as OpenClawChannelId, data.config);
-      } catch (err) {
-        console.error(`[OpenClaw] Falha ao reconectar ${id}:`, err);
+        return withTimeout(
+          this.connect(id as OpenClawChannelId, data.config),
+          15_000,
+          `reconnect:${id}`,
+        );
+      }),
+    );
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const id = entries[i][0];
+      if (result.status === 'rejected') {
+        console.error(`[OpenClaw] Falha ao reconectar ${id}:`, result.reason);
       }
     }
   }

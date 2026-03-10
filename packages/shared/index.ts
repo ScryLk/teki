@@ -10,3 +10,6 @@ export * from './constants/ai-models';
 export * from './config/permissions';
 export * from './services/preferences.service';
 export * from './services/anonymization.service';
+export * from './types/connection';
+export * from './types/monitor';
+export * from './utils/withTimeout';

@@ -1,11 +1,16 @@
 import { app, BrowserWindow, shell, globalShortcut } from 'electron';
 import { join } from 'path';
 const is = { get dev() { return !app.isPackaged; } };
+
+// Prevent EPIPE crash when parent process (electron-vite dev) closes the stdio pipe
+process.stdout?.on('error', () => {});
+process.stderr?.on('error', () => {});
 import { registerIPCHandlers } from './ipc-handlers';
 import { registerOpenClawIPC } from './openclaw/ipc/openclawIpc';
 import { createTray, destroyTray, initTrayIcons } from './tray';
 import { createFloatingWindow, toggleFloating, startRecording, destroyFloating } from './floating-window';
 import { registerFloatingIPC } from './floating-ipc';
+import { setupConnectionHealth } from './connection/setupConnectionHealth';
 // import { startPolling, stopPolling } from './services/window-detector';
 
 let mainWindow: BrowserWindow | null = null;
@@ -74,6 +79,7 @@ if (!gotTheLock) {
     // Register IPC handlers
     registerIPCHandlers(mainWindow);
     registerOpenClawIPC(mainWindow);
+    setupConnectionHealth(mainWindow);
 
     // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);

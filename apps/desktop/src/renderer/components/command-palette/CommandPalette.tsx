@@ -280,6 +280,8 @@ const CommandPalette: React.FC = () => {
   const setLayout = useAppStore((s) => s.setLayout);
   const setCaptureState = useAppStore((s) => s.setCaptureState);
   const isCapturing = useAppStore((s) => s.isCapturing);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
+  const clearAuth = useAppStore((s) => s.clearAuth);
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -429,7 +431,7 @@ const CommandPalette: React.FC = () => {
         icon: <HistoryIcon className={iconClass} />,
         group: 'App',
         action: () => {
-          // placeholder/future
+          setLayout('chat-only' as LayoutMode);
           close();
         },
       },
@@ -439,7 +441,7 @@ const CommandPalette: React.FC = () => {
         icon: <SettingsIcon className={iconClass} />,
         group: 'App',
         action: () => {
-          // placeholder/future
+          setSettingsOpen(true);
           close();
         },
       },
@@ -448,12 +450,14 @@ const CommandPalette: React.FC = () => {
         label: 'Sair',
         icon: <LogOutIcon className={iconClass} />,
         group: 'App',
-        action: () => {
-          window.tekiAPI.close();
+        action: async () => {
+          await window.tekiAPI.logout();
+          clearAuth();
+          close();
         },
       },
     ];
-  }, [isCapturing, close, setCaptureState, setLayout]);
+  }, [isCapturing, close, setCaptureState, setLayout, setSettingsOpen, clearAuth]);
 
   // Filter commands by query
   const filteredCommands = useMemo(() => {

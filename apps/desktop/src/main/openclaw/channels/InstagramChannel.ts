@@ -1,6 +1,7 @@
 import { IgApiClient } from 'instagram-private-api';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig, IncomingMessage } from '@teki/shared';
+import { withTimeout } from '@teki/shared';
 
 export class InstagramChannel extends BaseChannel {
   id = 'instagram' as const;
@@ -23,7 +24,7 @@ export class InstagramChannel extends BaseChannel {
       this.ig = new IgApiClient();
       this.ig.state.generateDevice(config.username);
 
-      await this.ig.account.login(config.username, config.password);
+      await withTimeout(this.ig.account.login(config.username, config.password), 10_000, 'instagram:login');
       this.emitStatus('connected', `@${config.username}`);
 
       // Poll for new DMs every 10 seconds

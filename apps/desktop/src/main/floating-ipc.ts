@@ -16,7 +16,7 @@ export function registerFloatingIPC(): void {
   ipcMain.handle('floating:send-to-agent', async (_event, text: string) => {
     try {
       const response = await router.route({
-        channelId: 'discord', // reuse as generic
+        channelId: 'floating',
         senderId: 'local-user',
         senderName: 'Usuário',
         text,

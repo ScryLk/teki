@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppStore } from '@/stores/app-store';
+import logomarca from '@/assets/logomarca.png';
 
 const TitleBar: React.FC = () => {
   const isCapturing = useAppStore((s) => s.isWatching);
@@ -25,8 +26,16 @@ const TitleBar: React.FC = () => {
       className="drag-region flex items-center bg-surface border-b border-border select-none"
       style={{ height: 40, minHeight: 40 }}
     >
-      {/* Left: space reserved for macOS traffic lights (x:16, width ~70px) */}
-      <div style={{ width: 80, minWidth: 80 }} />
+      {/* Left: logo / home button (also reserves space for macOS traffic lights) */}
+      <div className="flex items-center" style={{ width: 80, minWidth: 80 }}>
+        <button
+          onClick={() => useAppStore.getState().setLayout('split')}
+          className="no-drag flex items-center justify-center w-8 h-8 ml-2 rounded hover:bg-surface-hover transition-colors"
+          title="Início"
+        >
+          <img src={logomarca} alt="Teki" className="w-7 h-7 object-contain" draggable={false} />
+        </button>
+      </div>
 
       {/* Center: command palette trigger */}
       <div className="flex-1 flex items-center justify-center">

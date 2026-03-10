@@ -18,7 +18,7 @@ export function createFloatingWindow(): void {
     y: workAreaSize.height - 80,
     show: false,
     frame: false,
-    transparent: true,
+    transparent: false,
     resizable: false,
     movable: true,
     minimizable: false,
@@ -26,7 +26,8 @@ export function createFloatingWindow(): void {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    hasShadow: true,
+    hasShadow: false,
+    backgroundColor: '#0f1117',
     webPreferences: {
       preload: join(__dirname, '../preload/floating.js'),
       contextIsolation: true,

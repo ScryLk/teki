@@ -68,7 +68,7 @@ const styles = `
     bottom: 8px;
     right: 8px;
     pointer-events: none;
-    z-index: 10;
+    z-index: 1;
   }
 
   .cat-mascot-root.\!pointer-events-auto {
@@ -390,9 +390,6 @@ export const CatMascot: React.FC<CatMascotProps> = ({
         viewBox={viewBox}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* ---- Speech bubble ---- */}
-        {renderBubble}
-
         {/* ---- Tail ---- */}
         {/* Outer <g> translates to the tail base inside the body right side.
             The inner animated group rotates around (0,0) = tail base. */}
@@ -529,6 +526,9 @@ export const CatMascot: React.FC<CatMascotProps> = ({
           fill="#000000"
           opacity="0.15"
         />
+
+        {/* ---- Speech bubble (rendered last to appear on top) ---- */}
+        {renderBubble}
       </svg>
     </div>
   );

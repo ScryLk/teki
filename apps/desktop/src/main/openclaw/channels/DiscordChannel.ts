@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits, Events } from 'discord.js';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig, IncomingMessage } from '@teki/shared';
+import { withTimeout } from '@teki/shared';
 
 export class DiscordChannel extends BaseChannel {
   id = 'discord' as const;
@@ -50,7 +51,7 @@ export class DiscordChannel extends BaseChannel {
         this.emitStatus('error', undefined, err.message);
       });
 
-      await this.client.login(config.botToken);
+      await withTimeout(this.client.login(config.botToken), 10_000, 'discord:login');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       this.emitStatus('error', undefined, message);

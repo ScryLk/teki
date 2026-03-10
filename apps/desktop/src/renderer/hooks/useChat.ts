@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAppStore } from '@/stores/app-store';
-import { sendMessage, parseSSEStream } from '@/services/ai-service';
-import type { ChatContext } from '@/services/ai-service';
+import { sendMessage } from '@/services/ai-service';
+import type { ChatContext, ProviderId } from '@/services/ai-service';
 
 export interface ChatMessage {
   id: string;
@@ -10,6 +10,9 @@ export interface ChatMessage {
   timestamp: number;
   image?: string;       // base64
   imageMime?: string;   // e.g. image/png
+  provider?: ProviderId;
+  fallback?: boolean;
+  failedProviders?: Array<{ provider: ProviderId; error: string }>;
 }
 
 export function useChat(model?: string) {
@@ -75,7 +78,6 @@ export function useChat(model?: string) {
       try {
         const context = await buildContext();
 
-        // If user attached an image, include it in context
         if (image) {
           context.screenshot = image;
           context.screenshotMimeType = imageMime ?? 'image/png';
@@ -86,15 +88,23 @@ export function useChat(model?: string) {
           content: m.content,
         }));
 
-        const response = await sendMessage(allMessages, context, model);
+        const aiResponse = await sendMessage(allMessages, context, model);
 
         setMessages((prev) => [
           ...prev,
-          { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() },
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            timestamp: Date.now(),
+            provider: aiResponse.provider,
+            fallback: aiResponse.fallback,
+            failedProviders: aiResponse.failedProviders,
+          },
         ]);
 
         let fullContent = '';
-        for await (const chunk of parseSSEStream(response)) {
+        for await (const chunk of aiResponse.stream) {
           fullContent += chunk;
           const current = fullContent;
           setMessages((prev) =>
@@ -110,7 +120,7 @@ export function useChat(model?: string) {
         setError(errorMessage);
         setCatState('alert');
 
-        const errorContent = 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.';
+        const errorContent = 'Desculpe, todos os provedores de IA falharam. Verifique sua conexão ou configure uma chave de API nas configurações.';
         setMessages((prev) => {
           const hasAssistant = prev.some((m) => m.id === assistantId);
           if (hasAssistant) {

@@ -59,8 +59,9 @@ const ScreenViewer: React.FC = () => {
     const unsubFrame = window.tekiAPI.onWindowFrame((frame) => {
       setLocalFrame(frame.image);
       setCurrentFrame(frame.image);
-      if (frame.windowName !== windowName) {
+      if (frame.windowName && frame.windowName !== windowName) {
         setWindowName(frame.windowName);
+        setWatching(true, frame.windowName);
       }
     });
 

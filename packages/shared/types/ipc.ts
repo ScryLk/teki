@@ -1,5 +1,10 @@
 import type { WindowSource, WindowFrame } from './context';
 import type { ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId } from './openclaw';
+import type { ConnectionHealth, ConnectionHealthEvent } from './connection';
+import type {
+  MonitoredService, PingResult, PingHistoryQuery,
+  HourlyAggregate, ServiceStats, AlertEvent, DetectedPattern,
+} from './monitor';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
@@ -61,6 +66,26 @@ export const IPC_CHANNELS = {
   OPENCLAW_STATUS: 'openclaw:status',
   OPENCLAW_STATUS_CHANGED: 'openclaw:statusChanged',
   OPENCLAW_UPDATE_CONFIG: 'openclaw:updateConfig',
+
+  // Connection Health
+  CONNECTION_HEALTH_GET: 'connection:health:get',
+  CONNECTION_HEALTH_STATUS: 'connection:health:status',
+
+  // Display
+  DISPLAY_SWITCH: 'display:switch',
+
+  // Monitor
+  MONITOR_LIST_SERVICES: 'monitor:services:list',
+  MONITOR_ADD_SERVICE: 'monitor:services:add',
+  MONITOR_UPDATE_SERVICE: 'monitor:services:update',
+  MONITOR_REMOVE_SERVICE: 'monitor:services:remove',
+  MONITOR_PROBE_NOW: 'monitor:probe:now',
+  MONITOR_PROBE_RESULT: 'monitor:probe:result',
+  MONITOR_QUERY_HISTORY: 'monitor:history:query',
+  MONITOR_QUERY_HOURLY: 'monitor:history:hourly',
+  MONITOR_GET_STATS: 'monitor:stats:get',
+  MONITOR_ALERT: 'monitor:alert',
+  MONITOR_GET_PATTERNS: 'monitor:patterns:get',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -109,6 +134,26 @@ export interface TekiAPI {
   openclawGetStatus: (channelId: OpenClawChannelId) => Promise<ChannelInfo | null>;
   onOpenclawStatusChanged: (callback: (event: ChannelStatusEvent) => void) => () => void;
   openclawUpdateConfig: (channelId: OpenClawChannelId, config: Partial<ChannelConfig>) => Promise<void>;
+
+  // Display
+  switchDisplay: () => Promise<{ success: boolean; error?: string }>;
+
+  // Connection Health
+  getConnectionHealth: () => Promise<ConnectionHealth>;
+  onConnectionHealthChange: (callback: (event: ConnectionHealthEvent) => void) => () => void;
+
+  // Monitor
+  monitorListServices: () => Promise<MonitoredService[]>;
+  monitorAddService: (service: Omit<MonitoredService, 'id'>) => Promise<MonitoredService>;
+  monitorUpdateService: (service: MonitoredService) => Promise<void>;
+  monitorRemoveService: (serviceId: string) => Promise<void>;
+  monitorProbeNow: (serviceId: string) => Promise<PingResult>;
+  onMonitorProbeResult: (callback: (result: PingResult) => void) => () => void;
+  monitorQueryHistory: (query: PingHistoryQuery) => Promise<PingResult[]>;
+  monitorQueryHourly: (query: PingHistoryQuery) => Promise<HourlyAggregate[]>;
+  monitorGetStats: (serviceId: string, period: string) => Promise<ServiceStats>;
+  onMonitorAlert: (callback: (alert: AlertEvent) => void) => () => void;
+  monitorGetPatterns: () => Promise<DetectedPattern[]>;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

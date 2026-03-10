@@ -3,6 +3,9 @@ import { IPC_CHANNELS } from '@teki/shared';
 import type {
   TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult,
   ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId,
+  ConnectionHealth, ConnectionHealthEvent,
+  MonitoredService, PingResult, PingHistoryQuery, HourlyAggregate, ServiceStats,
+  AlertEvent, DetectedPattern,
 } from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
@@ -162,6 +165,71 @@ const tekiAPI: TekiAPI = {
 
   openclawUpdateConfig: (channelId: OpenClawChannelId, config: Partial<ChannelConfig>): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_UPDATE_CONFIG, channelId, config);
+  },
+
+  // Display
+  switchDisplay: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DISPLAY_SWITCH);
+  },
+
+  // Connection Health
+  getConnectionHealth: (): Promise<ConnectionHealth> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.CONNECTION_HEALTH_GET);
+  },
+
+  onConnectionHealthChange: (callback: (event: ConnectionHealthEvent) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: ConnectionHealthEvent) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.CONNECTION_HEALTH_STATUS, listener);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.CONNECTION_HEALTH_STATUS, listener);
+  },
+
+  // Monitor
+  monitorListServices: (): Promise<MonitoredService[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_LIST_SERVICES);
+  },
+
+  monitorAddService: (service: Omit<MonitoredService, 'id'>): Promise<MonitoredService> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_ADD_SERVICE, service);
+  },
+
+  monitorUpdateService: (service: MonitoredService): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_UPDATE_SERVICE, service);
+  },
+
+  monitorRemoveService: (serviceId: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_REMOVE_SERVICE, serviceId);
+  },
+
+  monitorProbeNow: (serviceId: string): Promise<PingResult> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_PROBE_NOW, serviceId);
+  },
+
+  onMonitorProbeResult: (callback: (result: PingResult) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: PingResult) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.MONITOR_PROBE_RESULT, listener);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.MONITOR_PROBE_RESULT, listener);
+  },
+
+  monitorQueryHistory: (query: PingHistoryQuery): Promise<PingResult[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_QUERY_HISTORY, query);
+  },
+
+  monitorQueryHourly: (query: PingHistoryQuery): Promise<HourlyAggregate[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_QUERY_HOURLY, query);
+  },
+
+  monitorGetStats: (serviceId: string, period: string): Promise<ServiceStats> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_GET_STATS, serviceId, period);
+  },
+
+  onMonitorAlert: (callback: (alert: AlertEvent) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: AlertEvent) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.MONITOR_ALERT, listener);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.MONITOR_ALERT, listener);
+  },
+
+  monitorGetPatterns: (): Promise<DetectedPattern[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_GET_PATTERNS);
   },
 };
 

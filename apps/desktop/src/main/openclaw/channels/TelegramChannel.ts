@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig, IncomingMessage } from '@teki/shared';
+import { withTimeout } from '@teki/shared';
 
 export class TelegramChannel extends BaseChannel {
   id = 'telegram' as const;
@@ -19,7 +20,7 @@ export class TelegramChannel extends BaseChannel {
       this.bot = new TelegramBot(config.botToken, { polling: true });
 
       // Validate by getting bot info
-      const me = await this.bot.getMe();
+      const me = await withTimeout(this.bot.getMe(), 10_000, 'telegram:getMe');
       this.emitStatus('connected', `@${me.username}`);
 
       this.bot.on('message', (msg) => {

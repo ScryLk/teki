@@ -1,6 +1,7 @@
 import { App as SlackApp } from '@slack/bolt';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig, IncomingMessage } from '@teki/shared';
+import { withTimeout } from '@teki/shared';
 
 export class SlackChannel extends BaseChannel {
   id = 'slack' as const;
@@ -42,7 +43,7 @@ export class SlackChannel extends BaseChannel {
         this.onMessage?.(incoming);
       });
 
-      await this.app.start();
+      await withTimeout(this.app.start(), 10_000, 'slack:start');
       this.emitStatus('connected', 'Workspace conectado');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';

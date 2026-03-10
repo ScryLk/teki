@@ -140,14 +140,24 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, sources }) => {
           </div>
         )}
 
-        {/* Timestamp */}
-        <span
-          className={`text-[10px] text-text-muted mt-1 ${
-            isUser ? 'text-right pr-1' : 'pl-1'
-          }`}
-        >
-          {formatTimestamp(message.timestamp)}
-        </span>
+        {/* Fallback indicator + Timestamp */}
+        <div className={`flex items-center gap-1.5 mt-1 ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
+          {!isUser && message.fallback && message.provider && (
+            <span
+              className="text-[10px] text-amber-400"
+              title={
+                message.failedProviders
+                  ?.map((f) => `${f.provider}: ${f.error}`)
+                  .join('\n') ?? ''
+              }
+            >
+              via {message.provider}
+            </span>
+          )}
+          <span className="text-[10px] text-text-muted">
+            {formatTimestamp(message.timestamp)}
+          </span>
+        </div>
       </div>
 
       {/* User avatar (right) */}

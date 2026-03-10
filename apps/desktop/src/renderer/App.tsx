@@ -8,6 +8,9 @@ import ScreenViewer from './components/screen/ScreenViewer';
 import CommandPalette from './components/command-palette/CommandPalette';
 import SettingsModal from './components/settings/SettingsModal';
 import DesktopLogin from './components/auth/DesktopLogin';
+import ConnectionAlert from './components/connection/ConnectionAlert';
+import MonitorDashboard from './components/monitor/MonitorDashboard';
+import { useConnectionHealth } from './hooks/useConnectionHealth';
 
 const App: React.FC = () => {
   const layout = useAppStore((s) => s.layout);
@@ -17,6 +20,9 @@ const App: React.FC = () => {
   const setAuth = useAppStore((s) => s.setAuth);
   const setLayout = useAppStore((s) => s.setLayout);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
+
+  // Start connection health monitoring
+  useConnectionHealth();
 
   // Check auth status on mount
   useEffect(() => {
@@ -40,6 +46,9 @@ const App: React.FC = () => {
       } else if (isCtrl && e.key === '3') {
         e.preventDefault();
         setLayout('compact');
+      } else if (isCtrl && e.key === '4') {
+        e.preventDefault();
+        setLayout('monitor');
       } else if (isCtrl && e.key === 'k') {
         e.preventDefault();
         toggleCommandPalette();
@@ -71,6 +80,8 @@ const App: React.FC = () => {
             </div>
           </div>
         );
+      case 'monitor':
+        return <MonitorDashboard />;
       default:
         return (
           <SplitLayout
@@ -96,6 +107,7 @@ const App: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-bg">
       <TitleBar />
+      <ConnectionAlert />
       <main className="flex-1 overflow-hidden">
         {renderContent()}
       </main>

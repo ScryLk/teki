@@ -48,8 +48,10 @@ export function registerOpenClawIPC(mainWindow: BrowserWindow): void {
     },
   );
 
-  // Auto-reconnect saved channels after a short delay
+  // Auto-reconnect saved channels after a short delay (non-blocking)
   setTimeout(() => {
-    channelRegistry.reconnectSaved();
+    channelRegistry.reconnectSaved().catch((err) => {
+      console.error('[OpenClaw] Erro ao reconectar canais salvos:', err);
+    });
   }, 3000);
 }

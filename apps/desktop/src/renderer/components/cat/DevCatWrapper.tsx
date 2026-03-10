@@ -105,7 +105,7 @@ export const DevCatWrapper: React.FC<DevCatWrapperProps> = ({
     <>
       <div
         onClick={handleClick}
-        className="group absolute bottom-2 right-2 z-10"
+        className="group absolute bottom-2 right-2 z-[1]"
         style={{ cursor: 'pointer' }}
       >
         <CatMascot
