@@ -13,6 +13,9 @@ export function middleware(req: NextRequest) {
   const isAuthRoute = pathname.startsWith('/api/auth/');
   const isAuthPage = pathname.startsWith('/auth/');
 
+  // Health check
+  const isHealth = pathname === '/api/health';
+
   // Webhook routes — auth via signature verification
   const isWebhook = pathname.startsWith('/api/webhooks/');
 
@@ -30,7 +33,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith('/api/channels') ||
     pathname.startsWith('/api/kb');
 
-  if (isPublic || isWebhook || isApi || isAuthRoute || isAuthPage || isDev || isLegacyApi) {
+  if (isPublic || isHealth || isWebhook || isApi || isAuthRoute || isAuthPage || isDev || isLegacyApi) {
     return NextResponse.next();
   }
 

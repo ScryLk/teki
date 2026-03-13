@@ -42,7 +42,8 @@ async function getApiKey(): Promise<string> {
 export async function sendMessage(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   screenshotDataUrl?: string | null,
-  windowName?: string | null
+  windowName?: string | null,
+  kbContext?: string | null,
 ): Promise<Response> {
   const apiKey = await getApiKey();
 
@@ -83,7 +84,7 @@ export async function sendMessage(
       model: ANTHROPIC_MODEL,
       max_tokens: 2048,
       stream: true,
-      system: SYSTEM_PROMPT,
+      system: kbContext ? `${SYSTEM_PROMPT}\n\n${kbContext}` : SYSTEM_PROMPT,
       messages: anthropicMessages,
     }),
   });

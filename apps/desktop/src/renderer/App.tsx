@@ -24,6 +24,8 @@ const App: React.FC = () => {
   // Start connection health monitoring
   useConnectionHealth();
 
+  const clearAuth = useAppStore((s) => s.clearAuth);
+
   // Check auth status on mount
   useEffect(() => {
     if (window.tekiAPI?.getAuthStatus) {
@@ -32,6 +34,14 @@ const App: React.FC = () => {
       });
     }
   }, [setAuth]);
+
+  // Listen for auth expiration — auto-redirect to login
+  useEffect(() => {
+    const unsub = window.tekiAPI?.onAuthExpired?.(() => {
+      clearAuth();
+    });
+    return () => unsub?.();
+  }, [clearAuth]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

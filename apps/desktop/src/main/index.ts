@@ -11,6 +11,8 @@ import { createTray, destroyTray, initTrayIcons } from './tray';
 import { createFloatingWindow, toggleFloating, startRecording, destroyFloating } from './floating-window';
 import { registerFloatingIPC } from './floating-ipc';
 import { setupConnectionHealth } from './connection/setupConnectionHealth';
+import { setupKnowledgeBase } from './services/kb-ipc';
+import { startLogService, stopLogService, logAction, setAuthExpiredCallback } from './services/log-service';
 // import { startPolling, stopPolling } from './services/window-detector';
 
 let mainWindow: BrowserWindow | null = null;
@@ -80,11 +82,23 @@ if (!gotTheLock) {
     registerIPCHandlers(mainWindow);
     registerOpenClawIPC(mainWindow);
     setupConnectionHealth(mainWindow);
+    setupKnowledgeBase(mainWindow);
 
     // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);
     mainWindow.webContents.once('did-finish-load', () => {
       initTrayIcons(mainWindow!);
+    });
+
+    // Start log service
+    startLogService();
+    logAction('Aplicacao desktop iniciada', { version: app.getVersion() });
+
+    // Handle auth expiration — notify renderer to redirect to login
+    setAuthExpiredCallback(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('auth:expired');
+      }
     });
 
     // Create floating voice overlay
@@ -119,6 +133,8 @@ if (!gotTheLock) {
 
   app.on('window-all-closed', () => {
     // stopPolling();
+    logAction('Aplicacao desktop encerrada');
+    stopLogService();
     globalShortcut.unregisterAll();
     destroyFloating();
     destroyTray();

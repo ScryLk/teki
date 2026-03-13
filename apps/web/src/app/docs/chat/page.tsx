@@ -70,7 +70,7 @@ export default function ChatPage() {
   "conversationId": "conv_xyz789",
   "content": "Para resetar a senha no AD...",
   "sources": ["runbook-ad.pdf", "kb-windows.pdf"],
-  "model": "gemini-2.0-flash",
+  "model": "gemini-2.5-flash",
   "usage": {
     "messagesUsed": 12,
     "messagesLimit": 500,

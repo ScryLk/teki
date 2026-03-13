@@ -22,11 +22,10 @@ const CHANNEL_META: Record<string, { name: string; color: string }> = {
   discord:   { name: 'Discord',         color: '#5865F2' },
   slack:     { name: 'Slack',           color: '#E01E5A' },
   teams:     { name: 'Microsoft Teams', color: '#6264A7' },
-  gemini:    { name: 'Gemini Live',     color: '#4285F4' },
   instagram: { name: 'Instagram',       color: '#E4405F' },
 };
 
-const MAX_CHANNELS = 7;
+const MAX_CHANNELS = 6;
 
 // Platform SVG icons
 const PlatformIcon: React.FC<{ platform: string; size?: number }> = ({ platform, size = 22 }) => {
@@ -38,7 +37,7 @@ const PlatformIcon: React.FC<{ platform: string; size?: number }> = ({ platform,
   );
   if (platform === 'telegram') return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+      <path d="M11.99432,2a10,10,0,1,0,10,10A9.99917,9.99917,0,0,0,11.99432,2Zm3.17951,15.15247a.70547.70547,0,0,1-1.002.3515l-2.71467-2.10938L9.71484,17.002a.29969.29969,0,0,1-.285.03894l.334-2.98846.01069.00848.00683-.059s4.885-4.44751,5.084-4.637c.20147-.189.135-.23.135-.23.01147-.23053-.36152,0-.36152,0L8.16632,13.299l-2.69549-.918s-.414-.1485-.453-.475c-.041-.324.46649-.5.46649-.5l10.717-4.25751s.881-.39252.881.25751Z"/>
     </svg>
   );
   if (platform === 'discord') return (
@@ -53,12 +52,14 @@ const PlatformIcon: React.FC<{ platform: string; size?: number }> = ({ platform,
   );
   if (platform === 'teams') return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19.2 6.4h-2.4V4.8a2.4 2.4 0 0 0-2.4-2.4h-4.8a2.4 2.4 0 0 0-2.4 2.4v1.6H4.8A2.4 2.4 0 0 0 2.4 8.8v9.6a2.4 2.4 0 0 0 2.4 2.4h14.4a2.4 2.4 0 0 0 2.4-2.4V8.8a2.4 2.4 0 0 0-2.4-2.4zM9.6 4.8h4.8v1.6H9.6V4.8zm3.6 10.8h-2.4v2.4H9.6v-2.4H7.2v-1.2h2.4v-2.4h1.2v2.4h2.4v1.2z"/>
-    </svg>
-  );
-  if (platform === 'gemini') return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2a7.2 7.2 0 0 1-6-3.22c.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08a7.2 7.2 0 0 1-6 3.22z"/>
+      <path d="M20.1376 9.05555C21.2935 9.05555 22.2306 8.11848 22.2306 6.96253C22.2306 5.80659 21.2935 4.86951 20.1376 4.86951C18.9816 4.86951 18.0446 5.80659 18.0446 6.96253C18.0446 8.11848 18.9816 9.05555 20.1376 9.05555Z"/>
+      <path d="M19.0215 18.7972C19.1561 18.8142 19.2932 18.8229 19.4325 18.8229H19.4478C21.2416 18.8229 22.6957 17.3688 22.6957 15.575V10.8694C22.6957 10.3814 22.3001 9.98572 21.812 9.98572H19.2939C19.4364 10.2554 19.5149 10.5636 19.5096 10.8896V16.236C19.5291 17.144 19.3536 18.0111 19.0215 18.7972Z"/>
+      <path d="M17.2096 17.9435C16.5785 17.3511 16.1842 16.5094 16.1841 15.5755V10.9857H17.5096V16.2588L17.5099 16.2704C17.5237 16.8614 17.416 17.4271 17.2096 17.9435Z"/>
+      <path d="M13.9281 9.03159C15.4559 8.87992 16.6491 7.59093 16.6491 6.02326C16.6491 4.35356 15.2955 3 13.6258 3C11.9561 3 10.6025 4.35356 10.6025 6.02326C10.6025 6.08092 10.6042 6.1382 10.6073 6.19507H12.0755C13.0987 6.19507 13.9281 7.0245 13.9281 8.04762V9.03159Z"/>
+      <path d="M11.9281 8.5252V8.19507H11.5226C11.6478 8.31634 11.7835 8.42688 11.9281 8.5252Z"/>
+      <path d="M8.27593 16.4276C8.2753 16.3677 8.27568 16.3075 8.27708 16.2471V15.1759H8.75V10.6759H10.5V9.98572H11.9281V16.4276H8.27593Z"/>
+      <path d="M8.695 18.4276H12.0755C13.0987 18.4276 13.9281 17.5982 13.9281 16.5751V9.98572H17.6571C18.1393 9.99765 18.5208 10.3979 18.5096 10.8801V16.2471C18.577 19.1412 16.2873 21.5428 13.3934 21.6136C11.2731 21.5617 9.47723 20.2588 8.695 18.4276Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M12.0757 7.19507H3.54823C3.07739 7.19507 2.69568 7.57677 2.69568 8.04762V16.5751C2.69568 17.0459 3.07738 17.4276 3.54823 17.4276H12.0757C12.5465 17.4276 12.9282 17.0459 12.9282 16.5751V8.04762C12.9282 7.57677 12.5465 7.19507 12.0757 7.19507ZM5.5 10.6759H7.25V15.1759H8.25V10.6759H10V9.6759H5.5V10.6759Z"/>
     </svg>
   );
   // instagram
@@ -182,7 +183,7 @@ const ChannelListView: React.FC<{
         <div>
           <h3 className="text-sm font-semibold text-text-primary">Canais conectados</h3>
           <p className="text-xs text-[#71717a] mt-1 max-w-xs leading-relaxed">
-            Conecte o Teki ao WhatsApp, Telegram, Discord, Slack, Teams, Gemini ou Instagram.
+            Conecte o Teki ao WhatsApp, Telegram, Discord, Slack, Teams ou Instagram.
           </p>
         </div>
         <span className="flex-shrink-0 ml-3 px-2.5 py-1 rounded-full text-xs font-semibold text-accent bg-accent/10">
@@ -231,9 +232,9 @@ const ChannelListView: React.FC<{
           );
         })}
 
-        {/* Empty slots */}
-        {Array.from({ length: empty }).map((_, i) => (
-          <button key={i} onClick={onAdd}
+        {/* Add channel button */}
+        {empty > 0 && (
+          <button onClick={onAdd}
             className="w-full flex items-center justify-center gap-2 px-4 rounded-xl border-2 border-dashed border-[#3f3f46]/40 text-[#71717a] hover:border-accent/40 hover:text-accent transition-colors group"
             style={{ minHeight: 72 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -243,7 +244,7 @@ const ChannelListView: React.FC<{
             </svg>
             <span className="text-sm font-medium">Adicionar canal</span>
           </button>
-        ))}
+        )}
       </div>
 
       {/* Info box */}
@@ -267,7 +268,7 @@ const AddStep1View: React.FC<{
   onBack: () => void;
   onSelect: (platform: string) => void;
 }> = ({ onBack, onSelect }) => {
-  const platforms = ['whatsapp', 'telegram', 'discord', 'slack', 'teams', 'gemini', 'instagram'];
+  const platforms = ['whatsapp', 'telegram', 'discord', 'slack', 'teams', 'instagram'];
   return (
     <div>
       <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-[#71717a] hover:text-[#fafafa] transition-colors mb-5">
@@ -279,12 +280,12 @@ const AddStep1View: React.FC<{
       <h3 className="text-sm font-semibold text-[#fafafa] mb-1">Adicionar canal</h3>
       <p className="text-xs text-[#71717a] mb-5">Escolha a plataforma para conectar ao Teki.</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2.5">
         {platforms.map((p) => {
           const meta = CHANNEL_META[p];
           return (
             <button key={p} onClick={() => onSelect(p)}
-              className="flex flex-col items-center justify-center gap-2.5 py-5 px-4 rounded-xl border transition-all group"
+              className="flex flex-col items-center justify-center gap-2 py-3.5 px-3 rounded-xl border transition-all group"
               style={{
                 backgroundColor: meta.color + '0d',
                 borderColor: meta.color + '33',
@@ -299,7 +300,7 @@ const AddStep1View: React.FC<{
               }}
             >
               <span style={{ color: meta.color }}>
-                <PlatformIcon platform={p} size={28} />
+                <PlatformIcon platform={p} size={24} />
               </span>
               <span className="text-xs font-semibold text-[#fafafa]">{meta.name}</span>
             </button>
@@ -678,38 +679,19 @@ const SimpleSelect: React.FC<{ value: string }> = ({ value }) => (
 
 // ─── Account Tab ─────────────────────────────────────────────────────────────
 
-function usageColor(pct: number) {
-  if (pct >= 85) return '#EF4444';
-  if (pct >= 60) return '#F59E0B';
-  return '#2A8F9D';
-}
-
-const UsageBar: React.FC<{ label: string; current: number; total: number; unit?: string }> = ({ label, current, total, unit = '' }) => {
-  const pct = Math.min(100, Math.round((current / total) * 100));
-  const color = usageColor(pct);
-  const fmt = (v: number) => unit ? `${v} ${unit}` : String(v);
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-[11px] text-[#71717a]">{label}</span>
-        <span className="text-[11px] text-[#71717a]">{fmt(current)} / {fmt(total)}</span>
-      </div>
-      <div className="w-full h-1.5 rounded-full bg-[#27272a] overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
-    </div>
-  );
-};
-
-const DEMO_API_KEYS = [
-  { id: '1', name: 'Produção',  key: 'tk_live_7k2m', dot: '#34D399' },
-  { id: '2', name: 'Teste',     key: 'tk_test_9m4x', dot: '#FCD34D' },
-];
-
-const AccountTab: React.FC<{ onOpenPlan: () => void }> = ({ onOpenPlan }) => {
+const AccountTab: React.FC = () => {
   const [editingProfile, setEditingProfile] = useState(false);
-  const [name, setName] = useState('Lucas Klein');
-  const [email, setEmail] = useState('lucas@merito.dev');
+  const storedName = useAppStore((s) => s.userName);
+  const storedEmail = useAppStore((s) => s.userEmail);
+  const [name, setName] = useState(storedName ?? '');
+  const [email, setEmail] = useState(storedEmail ?? '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const clearAuth = useAppStore((s) => s.clearAuth);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
   const initials = name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
@@ -737,7 +719,6 @@ const AccountTab: React.FC<{ onOpenPlan: () => void }> = ({ onOpenPlan }) => {
             <div className="flex-1 min-w-0">
               <p className="text-base font-bold text-[#fafafa] leading-tight">{name}</p>
               <p className="text-[13px] text-[#71717a] mt-0.5">{email}</p>
-              <p className="text-[11px] text-[#52525b] font-mono mt-0.5">ID: usr_7k2m9x</p>
             </div>
             {/* Edit btn */}
             <button onClick={() => setEditingProfile(true)}
@@ -794,106 +775,35 @@ const AccountTab: React.FC<{ onOpenPlan: () => void }> = ({ onOpenPlan }) => {
 
       <div className="border-t border-[#3f3f46]/30 my-1" />
 
-      {/* ── Plan ── */}
+      {/* ── Sessão ── */}
       <div className="py-5">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[14px] font-bold text-[#fafafa]">Plano atual</span>
-          <button onClick={onOpenPlan} className="text-[13px] text-[#2A8F9D] hover:underline transition-colors">
-            Alterar plano →
+        <p className="text-[14px] font-bold text-[#fafafa] mb-3">Sessão</p>
+        <div className="flex items-center gap-3 py-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#71717a] flex-shrink-0">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <div className="flex-1 min-w-0">
+            <span className="text-[13px] text-[#fafafa]">Sair da conta</span>
+            <span className="text-[12px] text-[#71717a] mx-2">·</span>
+            <span className="text-[12px] text-[#71717a]">Encerrar sessão neste dispositivo</span>
+          </div>
+          <button
+            disabled={loggingOut}
+            onClick={async () => {
+              setLoggingOut(true);
+              try {
+                await window.tekiAPI?.logout();
+                clearAuth();
+                setSettingsOpen(false);
+              } finally {
+                setLoggingOut(false);
+              }
+            }}
+            className="flex-shrink-0 px-3 py-1 rounded-lg border border-[#3f3f46]/50 text-[12px] text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#3f3f46] transition-colors disabled:opacity-50"
+          >
+            {loggingOut ? 'Saindo...' : 'Sair'}
           </button>
         </div>
-        <div className="rounded-xl bg-[#18181b] border border-[#3f3f46]/50 p-4 space-y-4">
-          <div className="flex items-start justify-between">
-            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/30">
-              Starter
-            </span>
-            <div className="text-right">
-              <p className="text-[14px] font-bold text-[#fafafa]">R$ 29/mês</p>
-              <p className="text-[11px] text-[#71717a]">Renova em 15 mar</p>
-            </div>
-          </div>
-          <UsageBar label="Mensagens este mês" current={347} total={500} />
-          <UsageBar label="Armazenamento KB" current={8.2} total={25} unit="MB" />
-          <div>
-            <UsageBar label="Agentes ativos" current={1} total={1} />
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 flex-shrink-0">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <span className="text-[11px] text-amber-400">Limite de agentes atingido.</span>
-              <button onClick={onOpenPlan} className="text-[11px] text-[#2A8F9D] hover:underline">Upgrade para Pro →</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-[#3f3f46]/30 my-1" />
-
-      {/* ── API Keys ── */}
-      <div className="py-5">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[14px] font-bold text-[#fafafa]">Chaves de API</span>
-          <button className="px-4 py-1.5 rounded-lg bg-[#2A8F9D] text-[13px] text-white hover:bg-[#238490] transition-colors">
-            + Nova chave
-          </button>
-        </div>
-        <p className="text-[12px] text-[#71717a] mb-3">Use chaves de API para integrar o Teki nos seus sistemas.</p>
-        <div className="space-y-2">
-          {DEMO_API_KEYS.map((k) => (
-            <div key={k.id} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#18181b] border border-[#3f3f46]/50 hover:border-[#3f3f46] transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#71717a] flex-shrink-0">
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-              </svg>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-[#fafafa]">{k.name}</span>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: k.dot }} />
-                </div>
-                <p className="text-[12px] text-[#71717a] font-mono">{k.key}••••••••••••</p>
-              </div>
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <button className="w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:text-[#fafafa] hover:bg-white/5 transition-colors" title="Copiar">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>
-                </button>
-                <button className="w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:text-red-400 hover:bg-red-500/5 transition-colors" title="Revogar">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-[#52525b] mt-2">Chaves de teste não consomem mensagens do plano. Limite: 5 chaves ativas.</p>
-      </div>
-
-      <div className="border-t border-[#3f3f46]/30 my-1" />
-
-      {/* ── Segurança ── */}
-      <div className="py-5 space-y-1">
-        <p className="text-[14px] font-bold text-[#fafafa] mb-3">Segurança</p>
-        {[
-          {
-            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-            label: 'Alterar senha', detail: 'Última alteração: 12 jan 2026', btn: 'Alterar',
-          },
-          {
-            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
-            label: 'Sessões ativas', detail: '3 dispositivos', btn: 'Gerenciar',
-          },
-        ].map((row) => (
-          <div key={row.label} className="flex items-center gap-3 py-2">
-            <span className="text-[#71717a] flex-shrink-0">{row.icon}</span>
-            <div className="flex-1 min-w-0">
-              <span className="text-[13px] text-[#fafafa]">{row.label}</span>
-              <span className="text-[12px] text-[#71717a] mx-2">·</span>
-              <span className="text-[12px] text-[#71717a]">{row.detail}</span>
-            </div>
-            <button className="flex-shrink-0 px-3 py-1 rounded-lg border border-[#3f3f46]/50 text-[12px] text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#3f3f46] transition-colors">{row.btn}</button>
-          </div>
-        ))}
       </div>
 
       <div className="border-t border-[#3f3f46]/30 my-1" />
@@ -912,171 +822,79 @@ const AccountTab: React.FC<{ onOpenPlan: () => void }> = ({ onOpenPlan }) => {
           </div>
           <button className="flex-shrink-0 px-3 py-1 rounded-lg border border-[#3f3f46]/50 text-[12px] text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#3f3f46] transition-colors">Exportar</button>
         </div>
-        <div className="flex items-center gap-3 py-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" style={{ color: 'rgba(239,68,68,0.6)' }}>
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-          <div className="flex-1 min-w-0">
-            <span className="text-[13px] text-red-400">Excluir conta</span>
-            <span className="text-[12px] mx-2" style={{ color: 'rgba(239,68,68,0.5)' }}>·</span>
-            <span className="text-[12px]" style={{ color: 'rgba(239,68,68,0.5)' }}>Todos os dados serão removidos permanentemente</span>
-          </div>
-          <button className="flex-shrink-0 px-3 py-1 rounded-lg border text-[12px] transition-colors"
-            style={{ borderColor: 'rgba(239,68,68,0.3)', color: 'rgba(239,68,68,0.7)' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#EF4444'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(239,68,68,0.7)'; }}>
-            Excluir
-          </button>
-        </div>
-      </div>
 
-    </div>
-  );
-};
-
-// ─── Plan Modal ───────────────────────────────────────────────────────────────
-
-const PLANS = [
-  {
-    id: 'free', label: 'FREE', price: 'R$ 0', period: '/mês',
-    badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-    borderClass: 'border-[#3f3f46]/50',
-    features: [
-      { star: false, text: '1 agente' },
-      { star: false, text: '50 mensagens/mês' },
-      { star: false, text: '2 docs na KB (5 MB)' },
-      { star: false, text: '1 modelo (Gemini Flash)' },
-      { star: false, text: 'Web + Desktop' },
-      { star: false, text: 'Visão de tela' },
-      { star: false, text: '7 dias de histórico' },
-    ],
-    btn: { label: 'Downgrade', disabled: false, className: 'border border-[#3f3f46]/50 text-[#71717a] hover:text-[#fafafa] hover:border-[#3f3f46]' },
-    current: false, recommended: false,
-  },
-  {
-    id: 'starter', label: 'STARTER', price: 'R$ 29', period: '/mês',
-    badgeClass: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-    borderClass: 'border-blue-500/40',
-    features: [
-      { star: false, text: '1 agente' },
-      { star: false, text: '500 mensagens/mês' },
-      { star: false, text: '5 docs na KB (25 MB)' },
-      { star: false, text: '3 modelos de IA' },
-      { star: false, text: 'Web + Desktop' },
-      { star: false, text: 'Visão de tela' },
-      { star: false, text: '30 dias de histórico' },
-      { star: false, text: 'Suporte por email' },
-    ],
-    btn: { label: 'Plano atual', disabled: true, className: 'bg-[#27272a] text-[#52525b] cursor-not-allowed' },
-    current: true, recommended: false,
-  },
-  {
-    id: 'pro', label: 'PRO', price: 'R$ 79', period: '/mês',
-    badgeClass: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-    borderClass: 'border-[#2A8F9D]/50',
-    features: [
-      { star: false, text: '5 agentes' },
-      { star: false, text: '2.000 mensagens/mês' },
-      { star: false, text: '50 docs na KB (100 MB)' },
-      { star: false, text: '7 modelos de IA + Ollama' },
-      { star: false, text: 'Web + Desktop' },
-      { star: false, text: 'Visão de tela' },
-      { star: false, text: 'Histórico ilimitado' },
-      { star: true,  text: 'WhatsApp, Telegram, Discord, Slack' },
-      { star: true,  text: 'BYOK (use sua própria API key)' },
-      { star: false, text: 'Onboarding 1:1' },
-      { star: false, text: 'Suporte prioritário' },
-    ],
-    btn: { label: 'Assinar Pro', disabled: false, className: 'bg-[#2A8F9D] text-white hover:bg-[#238490]' },
-    current: false, recommended: true,
-  },
-];
-
-const PlanModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#111113] border border-[#3f3f46]/50 rounded-2xl shadow-2xl overflow-hidden"
-        style={{ width: 780, maxHeight: '90vh' }}>
-        {/* Header */}
-        <div className="flex items-center justify-center relative px-6 py-5 border-b border-[#3f3f46]/50">
-          <h2 className="text-lg font-bold text-[#fafafa]">Escolha seu plano</h2>
-          <button onClick={onClose}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] hover:bg-white/5 hover:text-[#fafafa] transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        {!showDeleteConfirm ? (
+          <div className="flex items-center gap-3 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" style={{ color: 'rgba(239,68,68,0.6)' }}>
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             </svg>
-          </button>
-        </div>
-
-        {/* Cards */}
-        <div className="flex gap-4 p-6">
-          {PLANS.map((plan) => (
-            <div key={plan.id}
-              className={`flex-1 flex flex-col rounded-xl bg-[#18181b] border ${plan.borderClass} p-5 transition-all`}
-              style={plan.recommended ? { boxShadow: '0 0 20px rgba(42,143,157,0.12)' } : plan.current ? { boxShadow: '0 0 20px rgba(59,130,246,0.08)' } : {}}>
-              {/* Top */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${plan.badgeClass}`}>
-                  {plan.label}
-                </span>
-                {plan.current && <span className="text-[10px] text-[#71717a]">ATUAL</span>}
-                {plan.recommended && (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-[#2A8F9D]/10 text-[#2A8F9D] border border-[#2A8F9D]/30">
-                    POPULAR
-                  </span>
-                )}
-              </div>
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-[#fafafa]">{plan.price}</span>
-                <span className="text-[13px] text-[#71717a]">{plan.period}</span>
-              </div>
-
-              {/* Features */}
-              <ul className="flex-1 space-y-2 mb-5">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    {f.star ? (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#2A8F9D] flex-shrink-0 mt-0.5">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                        <span className="text-[12px] text-[#2A8F9D]">{f.text}</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#2A8F9D] flex-shrink-0 mt-0.5">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        <span className="text-[12px] text-[#71717a]">{f.text}</span>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-
-              {/* Button */}
-              <button disabled={plan.btn.disabled}
-                className={`w-full py-2 rounded-lg text-[13px] font-medium transition-colors ${plan.btn.className}`}>
-                {plan.btn.label}
+            <div className="flex-1 min-w-0">
+              <span className="text-[13px] text-red-400">Excluir conta</span>
+              <span className="text-[12px] mx-2" style={{ color: 'rgba(239,68,68,0.5)' }}>·</span>
+              <span className="text-[12px]" style={{ color: 'rgba(239,68,68,0.5)' }}>Todos os dados serão removidos permanentemente</span>
+            </div>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex-shrink-0 px-3 py-1 rounded-lg border text-[12px] transition-colors"
+              style={{ borderColor: 'rgba(239,68,68,0.3)', color: 'rgba(239,68,68,0.7)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLButtonElement).style.color = '#EF4444'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(239,68,68,0.7)'; }}>
+              Excluir
+            </button>
+          </div>
+        ) : (
+          <div className="mt-3 p-4 rounded-lg border" style={{ borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.05)' }}>
+            <p className="text-[13px] text-red-400 font-semibold mb-2">Tem certeza?</p>
+            <p className="text-[12px] text-[#a1a1aa] mb-3">
+              Esta ação é irreversível. Todos os seus dados, conversas e configurações serão removidos permanentemente.
+              Digite <span className="font-mono text-red-400">EXCLUIR</span> para confirmar.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Digite EXCLUIR"
+              className="w-full px-3 py-1.5 rounded-md bg-[#18181b] border border-[#3f3f46]/50 text-[13px] text-[#fafafa] placeholder-[#52525b] mb-3 focus:outline-none focus:border-red-500/50"
+            />
+            {deleteError && (
+              <p className="text-[12px] text-red-400 mb-2">{deleteError}</p>
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                disabled={deleteConfirmText !== 'EXCLUIR' || deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError(null);
+                  try {
+                    const result = await window.tekiAPI?.deleteAccount();
+                    if (result?.success) {
+                      clearAuth();
+                      setSettingsOpen(false);
+                    } else {
+                      setDeleteError(result?.error ?? 'Erro ao excluir conta');
+                    }
+                  } catch {
+                    setDeleteError('Erro de conexão');
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors disabled:opacity-40"
+                style={{ backgroundColor: 'rgba(239,68,68,0.8)', color: '#fff' }}
+              >
+                {deleting ? 'Excluindo...' : 'Excluir minha conta'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError(null); }}
+                className="px-3 py-1.5 rounded-lg border border-[#3f3f46]/50 text-[12px] text-[#a1a1aa] hover:text-[#fafafa] transition-colors"
+              >
+                Cancelar
               </button>
             </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="text-center pb-5 text-[11px] text-[#52525b]">
-          🏢 Enterprise?{' '}
-          <button className="text-[#2A8F9D] hover:underline">Fale conosco →</button>
-          {' · '}Pagamento via Mercado Pago. Cancele quando quiser.
-        </div>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
@@ -1084,11 +902,12 @@ const PlanModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 // ─── Knowledge Base Tab ──────────────────────────────────────────────────────
 
 type DocStatus = 'indexed' | 'indexing' | 'error';
+type KBDocType = 'pdf' | 'md' | 'txt' | 'docx';
 
 interface KBDoc {
   id: string;
   name: string;
-  type: 'pdf' | 'md' | 'txt' | 'docx';
+  type: KBDocType;
   size: string;
   status: DocStatus;
   progress?: number;
@@ -1097,13 +916,6 @@ interface KBDoc {
   words?: number;
 }
 
-const DEMO_DOCS: KBDoc[] = [
-  { id: '1', name: 'Guia de Suporte Nivel 1.pdf', type: 'pdf', size: '2.4 MB', status: 'indexed', indexedAt: '15 jan 2026', chunks: 42, words: 8300 },
-  { id: '2', name: 'Procedimentos de Rede.md',    type: 'md',  size: '48 KB',  status: 'indexed', indexedAt: '18 jan 2026', chunks: 11, words: 2100 },
-  { id: '3', name: 'FAQ Impressoras.txt',          type: 'txt', size: '120 KB', status: 'indexing', progress: 65 },
-];
-
-const MAX_DOCS = 5;
 const KB_TOTAL_MB = 25;
 
 function DocTypeIcon({ type }: { type: KBDoc['type'] }) {
@@ -1140,51 +952,110 @@ function DocStatusBadge({ status }: { status: DocStatus }) {
   );
 }
 
+function mapKBDoc(doc: { id: string; name: string; type: string; sizeBytes: number; status: string; chunksCount: number; wordsCount: number; createdAt: string; indexedAt?: string }): KBDoc {
+  const sizeStr = doc.sizeBytes >= 1024 * 1024
+    ? `${(doc.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.round(doc.sizeBytes / 1024)} KB`;
+  return {
+    id: doc.id,
+    name: doc.name,
+    type: doc.type as KBDocType,
+    size: sizeStr,
+    status: doc.status === 'processing' ? 'indexing' : doc.status as DocStatus,
+    indexedAt: doc.indexedAt,
+    chunks: doc.chunksCount,
+    words: doc.wordsCount,
+  };
+}
+
 const KnowledgeBaseTab: React.FC = () => {
-  const [docs, setDocs] = useState<KBDoc[]>(DEMO_DOCS);
+  const [docs, setDocs] = useState<KBDoc[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadName, setUploadName] = useState('');
   const [detailDoc, setDetailDoc] = useState<KBDoc | null>(null);
+  const [docChunks, setDocChunks] = useState<Array<{ chunkIndex: number; content: string; wordCount: number }>>([]);
+  const [chunksLoading, setChunksLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [usedMB, setUsedMB] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const usedMB = 8.2;
   const usedPct = Math.round((usedMB / KB_TOTAL_MB) * 100);
-  const slots = MAX_DOCS - docs.length;
 
-  const simulateUpload = (name: string) => {
-    setUploadName(name);
-    setUploading(true);
-    setUploadProgress(0);
-    let p = 0;
-    const iv = setInterval(() => {
-      p += Math.random() * 15 + 5;
-      if (p >= 100) {
-        clearInterval(iv);
-        setUploadProgress(100);
-        setTimeout(() => {
-          setUploading(false);
-          const ext = name.split('.').pop()?.toLowerCase() as KBDoc['type'] ?? 'txt';
-          setDocs((prev) => [...prev, { id: String(Date.now()), name, type: ext, size: '~', status: 'indexing', progress: 0 }]);
-        }, 400);
-      } else {
-        setUploadProgress(p);
-      }
-    }, 200);
-  };
+  // Load docs on mount
+  useEffect(() => {
+    window.tekiAPI.kbListDocs().then((list) => {
+      setDocs(list.map(mapKBDoc));
+    });
+    window.tekiAPI.kbGetStats().then((stats) => {
+      setUsedMB(+(stats.totalSizeBytes / (1024 * 1024)).toFixed(1));
+    });
+  }, []);
 
-  const handleFiles = (files: FileList | null) => {
+  // Listen for doc status updates from main process
+  useEffect(() => {
+    return window.tekiAPI.onKbDocStatus((event) => {
+      setDocs((prev) =>
+        prev.map((d) => {
+          if (d.id !== event.docId) return d;
+          const status: DocStatus = event.status === 'processing' ? 'indexing' : event.status;
+          return {
+            ...d,
+            status,
+            chunks: event.chunksCount ?? d.chunks,
+            words: event.wordsCount ?? d.words,
+          };
+        }),
+      );
+      // Refresh stats
+      window.tekiAPI.kbGetStats().then((stats) => {
+        setUsedMB(+(stats.totalSizeBytes / (1024 * 1024)).toFixed(1));
+      });
+    });
+  }, []);
+
+  const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    simulateUpload(files[0].name);
+    const file = files[0];
+    setUploadName(file.name);
+    setUploading(true);
+    setUploadProgress(30);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      setUploadProgress(60);
+      const doc = await window.tekiAPI.kbUploadDoc({ name: file.name, buffer });
+      setUploadProgress(100);
+      setTimeout(() => {
+        setUploading(false);
+        setDocs((prev) => [mapKBDoc(doc), ...prev]);
+      }, 300);
+    } catch (err) {
+      console.error('[KB] Upload failed:', err);
+      setUploading(false);
+    }
   };
 
-  const removeDoc = (id: string) => {
+  const removeDoc = async (id: string) => {
+    await window.tekiAPI.kbRemoveDoc(id);
     setDocs((prev) => prev.filter((d) => d.id !== id));
     setMenuOpen(null);
     if (detailDoc?.id === id) setDetailDoc(null);
+    window.tekiAPI.kbGetStats().then((stats) => {
+      setUsedMB(+(stats.totalSizeBytes / (1024 * 1024)).toFixed(1));
+    });
   };
+
+  // Load chunks when detail doc is selected
+  useEffect(() => {
+    if (!detailDoc) { setDocChunks([]); return; }
+    setChunksLoading(true);
+    window.tekiAPI.kbGetDocChunks(detailDoc.id).then((chunks) => {
+      setDocChunks(chunks);
+      setChunksLoading(false);
+    }).catch(() => setChunksLoading(false));
+  }, [detailDoc?.id]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -1217,34 +1088,36 @@ const KnowledgeBaseTab: React.FC = () => {
   }
 
   return (
+    <>
+    {/* Header — always full width */}
+    <div className="flex items-start justify-between mb-3 flex-shrink-0">
+      <div>
+        <h3 className="text-sm font-semibold text-[#fafafa]">Base de Conhecimento</h3>
+        <p className="text-xs text-[#71717a] mt-0.5">Documentos indexados para uso nas respostas</p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#18181b] border border-[#3f3f46]/50 text-xs text-[#71717a]">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span>{usedMB} / {KB_TOTAL_MB} MB</span>
+          <div className="w-10 h-1 rounded-full bg-[#3f3f46] overflow-hidden">
+            <div className="h-full rounded-full bg-accent" style={{ width: `${usedPct}%` }} />
+          </div>
+        </div>
+        <button onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-medium hover:bg-[#238490] transition-colors">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Enviar
+        </button>
+      </div>
+    </div>
+
     <div className="flex flex-1 min-h-0 gap-0">
       {/* Main column */}
       <div className={`flex flex-col min-w-0 transition-all duration-200 ${detailDoc ? 'w-[54%] pr-5' : 'w-full'}`}>
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3 flex-shrink-0">
-          <div>
-            <h3 className="text-sm font-semibold text-[#fafafa]">Base de Conhecimento</h3>
-            <p className="text-xs text-[#71717a] mt-0.5">Documentos indexados para uso nas respostas</p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#18181b] border border-[#3f3f46]/50 text-xs text-[#71717a]">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-              </svg>
-              <span>{usedMB} / {KB_TOTAL_MB} MB</span>
-              <div className="w-10 h-1 rounded-full bg-[#3f3f46] overflow-hidden">
-                <div className="h-full rounded-full bg-accent" style={{ width: `${usedPct}%` }} />
-              </div>
-            </div>
-            <button onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-medium hover:bg-[#238490] transition-colors">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Enviar
-            </button>
-          </div>
-        </div>
 
         {/* Upload in progress */}
         {uploading && (
@@ -1332,11 +1205,6 @@ const KnowledgeBaseTab: React.FC = () => {
               </div>
             </div>
           ))}
-          {slots > 0 && (
-            <p className="text-[11px] text-[#52525b] text-center py-1">
-              {slots} slot{slots !== 1 ? 's' : ''} restante{slots !== 1 ? 's' : ''}
-            </p>
-          )}
         </div>
 
         {/* Info bar */}
@@ -1345,7 +1213,7 @@ const KnowledgeBaseTab: React.FC = () => {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
           <p className="text-[11px] text-[#71717a] leading-relaxed">
-            Documentos ficam disponíveis para todos os agentes. Máx. {MAX_DOCS} docs / {KB_TOTAL_MB} MB no plano Starter.
+            Documentos ficam disponíveis para todos os agentes. Máx. {KB_TOTAL_MB} MB.
           </p>
         </div>
       </div>
@@ -1384,6 +1252,41 @@ const KnowledgeBaseTab: React.FC = () => {
                 <span className="text-[12px] text-[#fafafa] font-medium">{row.value}</span>
               </div>
             ))}
+
+            {/* Chunks / Pontos analisados */}
+            <div className="mt-3">
+              <h5 className="text-[11px] font-semibold text-[#fafafa] uppercase tracking-wider mb-2">
+                Trechos analisados
+              </h5>
+              {chunksLoading ? (
+                <div className="flex items-center gap-2 py-3">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-spin">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                  <span className="text-[11px] text-[#71717a]">Carregando trechos...</span>
+                </div>
+              ) : docChunks.length === 0 ? (
+                <p className="text-[11px] text-[#52525b] py-2">Nenhum trecho disponível.</p>
+              ) : (
+                <div className="space-y-2">
+                  {docChunks.map((chunk) => (
+                    <div key={chunk.chunkIndex} className="rounded-lg bg-[#0f0f12] border border-[#3f3f46]/30 p-2.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-semibold text-accent">
+                          Trecho {chunk.chunkIndex + 1}
+                        </span>
+                        <span className="text-[10px] text-[#52525b]">
+                          {chunk.wordCount} palavras
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#a1a1aa] leading-relaxed whitespace-pre-wrap break-words line-clamp-6">
+                        {chunk.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="pt-3 flex-shrink-0">
@@ -1398,6 +1301,7 @@ const KnowledgeBaseTab: React.FC = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
@@ -1440,7 +1344,6 @@ const SettingsModal: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>('ia');
   const [ocView, setOcView] = useState<OpenClawView>({ type: 'list' });
-  const [planModalOpen, setPlanModalOpen] = useState(false);
   const [visible, setVisible] = useState(false);
 
   const { channels, connect, disconnect, getQR, getOAuthUrl } = useOpenClaw();
@@ -1460,10 +1363,10 @@ const SettingsModal: React.FC = () => {
 
   useEffect(() => {
     if (!settingsOpen) return;
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape' && !planModalOpen) close(); };
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [settingsOpen, close, planModalOpen]);
+  }, [settingsOpen, close]);
 
   // Reset OC view when switching away
   const handleTabChange = (tab: Tab) => {
@@ -1478,7 +1381,6 @@ const SettingsModal: React.FC = () => {
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-150 ${visible ? 'opacity-100' : 'opacity-0'}`}
       onClick={(e) => { if (e.target === e.currentTarget) close(); }}
     >
-      {planModalOpen && <PlanModal onClose={() => setPlanModalOpen(false)} />}
       <div
         className={`bg-[#111113] border border-[#3f3f46]/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-150 ${
           visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2'
@@ -1512,9 +1414,6 @@ const SettingsModal: React.FC = () => {
             <SidebarTab active={activeTab === 'conta'} onClick={() => handleTabChange('conta')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               label="Conta" />
-            <SidebarTab active={activeTab === 'geral'} onClick={() => handleTabChange('geral')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>}
-              label="Geral" />
             <SidebarTab active={activeTab === 'atalhos'} onClick={() => handleTabChange('atalhos')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>}
               label="Atalhos" />
@@ -1533,12 +1432,8 @@ const SettingsModal: React.FC = () => {
                   <p className="text-xs text-[#71717a] mt-2">{currentModel.description}</p>
                 </div>
                 <div className="border-t border-[#3f3f46]/30 pt-5">
-                  <label className="block text-xs font-medium text-[#a1a1aa] uppercase tracking-wider mb-3">Chave de API</label>
-                  <ApiKeyInput provider={activeProvider} />
+                  <AllApiKeys />
                 </div>
-                <p className="text-[11px] text-[#3f3f46] border-t border-[#3f3f46]/20 pt-4">
-                  Suas chaves são armazenadas localmente e nunca enviadas ao servidor do Teki.
-                </p>
               </div>
             )}
 
@@ -1584,11 +1479,10 @@ const SettingsModal: React.FC = () => {
 
             {/* ── Conta tab ── */}
             {activeTab === 'conta' && (
-              <AccountTab onOpenPlan={() => setPlanModalOpen(true)} />
+              <AccountTab />
             )}
 
             {/* ── Geral tab ── */}
-            {activeTab === 'geral' && <AllApiKeys />}
 
             {/* ── Atalhos tab ── */}
             {activeTab === 'atalhos' && (

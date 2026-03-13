@@ -6,6 +6,7 @@ import type {
   ConnectionHealth, ConnectionHealthEvent,
   MonitoredService, PingResult, PingHistoryQuery, HourlyAggregate, ServiceStats,
   AlertEvent, DetectedPattern,
+  KBDocument, KBUploadPayload, KBSearchResult, KBStats, KBDocStatusEvent, KBChunk,
 } from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
@@ -132,6 +133,20 @@ const tekiAPI: TekiAPI = {
     return ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGOUT);
   },
 
+  deleteAccount: (): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_DELETE_ACCOUNT);
+  },
+
+  registerAccount: (data: { email: string; firstName: string; lastName?: string; password: string }): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_REGISTER, data);
+  },
+
+  onAuthExpired: (callback: () => void): (() => void) => {
+    const listener = () => callback();
+    ipcRenderer.on('auth:expired', listener);
+    return () => ipcRenderer.removeListener('auth:expired', listener);
+  },
+
   // OpenClaw
   openclawListChannels: (): Promise<ChannelInfo[]> => {
     return ipcRenderer.invoke(IPC_CHANNELS.OPENCLAW_LIST_CHANNELS);
@@ -230,6 +245,39 @@ const tekiAPI: TekiAPI = {
 
   monitorGetPatterns: (): Promise<DetectedPattern[]> => {
     return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_GET_PATTERNS);
+  },
+
+  // Knowledge Base
+  kbListDocs: (): Promise<KBDocument[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_LIST_DOCS);
+  },
+  kbUploadDoc: (payload: KBUploadPayload): Promise<KBDocument> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_UPLOAD_DOC, payload);
+  },
+  kbRemoveDoc: (docId: string): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_REMOVE_DOC, docId);
+  },
+  kbGetDoc: (docId: string): Promise<KBDocument | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_GET_DOC, docId);
+  },
+  kbSearch: (query: string, topK?: number): Promise<KBSearchResult[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_SEARCH, query, topK);
+  },
+  kbGetStats: (): Promise<KBStats> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_GET_STATS);
+  },
+  kbGetDocChunks: (docId: string): Promise<KBChunk[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.KB_DOC_CHUNKS, docId);
+  },
+  onKbDocStatus: (callback: (event: KBDocStatusEvent) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: KBDocStatusEvent) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.KB_DOC_STATUS, listener);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.KB_DOC_STATUS, listener);
+  },
+
+  // Logging
+  logAction: (event: string, details?: Record<string, unknown>): void => {
+    ipcRenderer.invoke('log:action', event, details);
   },
 };
 

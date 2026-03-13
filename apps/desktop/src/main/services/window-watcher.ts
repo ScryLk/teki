@@ -1,6 +1,7 @@
 import { desktopCapturer, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
 import type { WindowSource, WindowFrame } from '@teki/shared';
+import { logAction } from './log-service';
 
 let watchTimer: ReturnType<typeof setTimeout> | null = null;
 let watchedSourceId: string | null = null;
@@ -37,6 +38,8 @@ export function startWatching(
   onClosedCallback = onClosed ?? null;
   let lastWindowName = '';
 
+  logAction('Monitoramento de janela iniciado', { sourceId }, 'view', ['activity']);
+
   // Use recursive setTimeout instead of setInterval to prevent callback
   // accumulation. desktopCapturer.getSources() is async and can take longer
   // than 1 second — with setInterval, callbacks would pile up, each allocating
@@ -45,14 +48,14 @@ export function startWatching(
     if (!watchTimer) return; // stopped while awaiting
 
     if (!mainWindow || mainWindow.isDestroyed()) {
-      watchTimer = setTimeout(captureLoop, 1000);
+      watchTimer = setTimeout(captureLoop, 3000);
       return;
     }
 
     try {
       const sources = await desktopCapturer.getSources({
         types: ['window'],
-        thumbnailSize: { width: 1280, height: 720 },
+        thumbnailSize: { width: 800, height: 450 },
       });
 
       if (!watchTimer) return; // stopped while awaiting
@@ -72,7 +75,7 @@ export function startWatching(
       const frame: WindowFrame = {
         sourceId,
         windowName: target.name,
-        image: target.thumbnail.toDataURL(),
+        image: `data:image/jpeg;base64,${target.thumbnail.toJPEG(70).toString('base64')}`,
         timestamp: Date.now(),
       };
 
@@ -83,7 +86,7 @@ export function startWatching(
 
     // Schedule next capture only after the current one completes
     if (watchTimer) {
-      watchTimer = setTimeout(captureLoop, 1000);
+      watchTimer = setTimeout(captureLoop, 3000);
     }
   };
 
@@ -95,6 +98,7 @@ export function stopWatching(): void {
   if (watchTimer) {
     clearTimeout(watchTimer);
     watchTimer = null;
+    logAction('Monitoramento de janela encerrado', { sourceId: watchedSourceId }, 'view', ['activity']);
   }
   watchedSourceId = null;
   onClosedCallback = null;

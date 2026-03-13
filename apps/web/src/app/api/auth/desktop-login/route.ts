@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createApiKey } from '@/lib/api-keys';
 import bcrypt from 'bcryptjs';
+import { logDataAccess } from '@/lib/services/data-access-log.service';
 
 /**
  * POST /api/auth/desktop-login
@@ -68,6 +69,22 @@ export async function POST(req: NextRequest) {
 
     // Create API key for desktop
     const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE');
+
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+    const userAgent = req.headers.get('user-agent') ?? undefined;
+
+    // Log desktop login
+    logDataAccess({
+      accessorId: user.id,
+      accessorType: 'user',
+      subjectId: user.id,
+      action: 'view',
+      dataCategories: ['auth_tokens'],
+      details: { method: 'desktop-login', device: 'desktop' },
+      justification: 'Login via credenciais (desktop)',
+      ipAddress,
+      userAgent,
+    }).catch(() => {});
 
     return NextResponse.json({
       apiKey: key,

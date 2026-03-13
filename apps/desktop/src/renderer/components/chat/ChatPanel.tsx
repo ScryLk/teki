@@ -3,6 +3,7 @@ import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import { useChat } from '@/hooks/useChat';
 import { useAppStore } from '@/stores/app-store';
+import { AVAILABLE_MODELS } from '@/services/ai-service';
 
 const QUICK_SUGGESTIONS = [
   'Excel nao abre apos atualizacao do Windows',
@@ -13,12 +14,28 @@ const QUICK_SUGGESTIONS = [
 
 const ChatPanel: React.FC = () => {
   const selectedModel = useAppStore((s) => s.selectedModel);
+  const setSelectedModel = useAppStore((s) => s.setSelectedModel);
   const { messages, isLoading, error, sendMessage, clearChat } =
     useChat(selectedModel);
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [attachedMime, setAttachedMime] = useState<string>('image/png');
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModel) ?? AVAILABLE_MODELS[0];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -46,28 +63,63 @@ const ChatPanel: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-bg">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface flex-shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Small teki cat icon */}
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-accent"
-          >
-            <path d="M12 22c4.97 0 9-2.69 9-6v-2c0-3.31-4.03-6-9-6s-9 2.69-9 6v2c0 3.31 4.03 6 9 6z" />
-            <path d="M3 14V6l4 4" />
-            <path d="M21 14V6l-4 4" />
-            <circle cx="9" cy="14" r="1" fill="currentColor" />
-            <circle cx="15" cy="14" r="1" fill="currentColor" />
-            <path d="M12 17v-1" />
-          </svg>
-          <h2 className="text-sm font-semibold text-text-primary">Chat Teki</h2>
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Model selector */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+                         bg-bg border border-border text-text-secondary
+                         hover:text-text-primary hover:border-accent/40
+                         transition-all"
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: currentModel.provider === 'gemini' ? '#4285F4' : currentModel.provider === 'anthropic' ? '#D97757' : currentModel.provider === 'ollama' ? '#22c55e' : '#00d4ff' }}
+              />
+              {currentModel.label}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="opacity-50">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {modelDropdownOpen && (
+              <div
+                className="absolute top-full left-0 mt-1 w-52 rounded-xl overflow-hidden z-50 shadow-xl"
+                style={{ background: '#151921', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                {AVAILABLE_MODELS.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setSelectedModel(model.id);
+                      setModelDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors
+                      ${model.id === selectedModel
+                        ? 'bg-accent/10 text-text-primary'
+                        : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                      }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: model.provider === 'gemini' ? '#4285F4' : model.provider === 'anthropic' ? '#D97757' : model.provider === 'ollama' ? '#22c55e' : '#00d4ff' }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium">{model.label}</div>
+                      <div className="text-[10px] text-text-muted">{model.description}</div>
+                    </div>
+                    {model.id === selectedModel && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Clear chat button (only when there are messages) */}

@@ -1,4 +1,4 @@
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-3-flash-preview';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const SYSTEM_PROMPT = `Você é o Teki, um assistente de suporte técnico com IA integrado ao desktop do usuário.
@@ -39,7 +39,8 @@ async function getApiKey(): Promise<string> {
 export async function sendMessage(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   screenshotDataUrl?: string | null,
-  windowName?: string | null
+  windowName?: string | null,
+  kbContext?: string | null,
 ): Promise<Response> {
   const apiKey = await getApiKey();
 
@@ -75,7 +76,7 @@ export async function sendMessage(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: kbContext ? `${SYSTEM_PROMPT}\n\n${kbContext}` : SYSTEM_PROMPT }] },
         contents,
         generationConfig: {
           temperature: 0.7,

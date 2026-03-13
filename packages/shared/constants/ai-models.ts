@@ -5,7 +5,7 @@ export const ALL_MODELS: AIModel[] = [
   {
     id: 'gemini-flash',
     providerId: 'gemini',
-    apiModelId: 'gemini-2.0-flash',
+    apiModelId: 'gemini-2.5-flash',
     name: 'Gemini Flash',
     description: 'Rápido e econômico. Ideal para suporte básico.',
     tier: 'free',

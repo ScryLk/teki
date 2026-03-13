@@ -57,7 +57,7 @@ export default function QuickstartPage() {
   "conversationId": "conv_xyz789",
   "content": "Para resetar a senha no Active Directory...",
   "sources": ["runbook-ad.pdf"],
-  "model": "gemini-2.0-flash",
+  "model": "gemini-2.5-flash",
   "usage": {
     "messagesUsed": 1,
     "messagesLimit": 500,

@@ -21,7 +21,9 @@ export class ConnectionHealthManager extends EventEmitter {
 
   constructor(backendUrl?: string) {
     super();
-    this.backendUrl = backendUrl || process.env.TEKI_API_URL || 'https://app.teki.services';
+    const { app } = require('electron');
+    const isDev = !app.isPackaged;
+    this.backendUrl = backendUrl || process.env.TEKI_API_URL || (isDev ? 'http://localhost:3000' : 'https://app.teki.services');
   }
 
   start(): void {

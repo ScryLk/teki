@@ -3,14 +3,19 @@ import { useAppStore } from '../../stores/app-store';
 import { CatMascot } from '../cat/CatMascot';
 
 type AuthState = 'idle' | 'device_flow';
+type AuthMode = 'login' | 'register';
 
 const DesktopLogin: React.FC = () => {
   const [authState, setAuthState] = useState<AuthState>('idle');
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [userCode, setUserCode] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(600);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -79,6 +84,47 @@ const DesktopLogin: React.FC = () => {
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !firstName || !password) return;
+
+    if (password.length < 8) {
+      setError('Senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    try {
+      const result = await window.tekiAPI.registerAccount({
+        email,
+        firstName,
+        lastName: lastName || undefined,
+        password,
+      });
+
+      if (result.success) {
+        setSuccess('Conta criada! Verifique seu email para ativar.');
+        // Switch to login after 3s
+        setTimeout(() => {
+          setMode('login');
+          setSuccess(null);
+          setFirstName('');
+          setLastName('');
+          setPassword('');
+        }, 3000);
+      } else {
+        setError(result.error || 'Erro ao criar conta.');
+      }
+    } catch {
+      setError('Erro de conexão. Verifique se o servidor está rodando.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeviceFlow = async () => {
     setError(null);
     setAuthState('device_flow');
@@ -118,6 +164,12 @@ const DesktopLogin: React.FC = () => {
     setError(null);
   };
 
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setError(null);
+    setSuccess(null);
+  };
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -155,10 +207,24 @@ const DesktopLogin: React.FC = () => {
           </div>
         )}
 
+        {/* Success alert */}
+        {success && (
+          <div
+            className="flex items-center gap-2.5 text-emerald-400 rounded-xl px-4 py-3 text-sm"
+            style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            {success}
+          </div>
+        )}
+
         {/* Card */}
         <div className="rounded-2xl p-6 space-y-5" style={{ background: 'rgba(30,41,59,0.5)', border: '1px solid rgba(255,255,255,0.06)' }}>
           {/* Idle state */}
-          {authState === 'idle' && (
+          {authState === 'idle' && mode === 'login' && (
             <>
               {/* Email + Password form */}
               <form onSubmit={handleCredentialsLogin} className="space-y-4">
@@ -201,6 +267,17 @@ const DesktopLogin: React.FC = () => {
                   ) : 'Entrar'}
                 </button>
               </form>
+
+              {/* Create account link */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => switchMode('register')}
+                  className="text-xs text-text-muted hover:text-accent transition-colors"
+                >
+                  Não tem conta? <span className="text-accent font-medium">Criar conta</span>
+                </button>
+              </div>
 
               {/* Divider */}
               <div className="flex items-center gap-3">
@@ -251,6 +328,87 @@ const DesktopLogin: React.FC = () => {
                     </button>
                   </div>
                 )}
+              </div>
+            </>
+          )}
+
+          {/* Register form */}
+          {authState === 'idle' && mode === 'register' && (
+            <>
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-1.5">
+                    <label className="block text-xs font-medium text-text-secondary ml-0.5">Nome</label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Seu nome"
+                      className="w-full h-11 px-4 text-sm bg-bg border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-all"
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <label className="block text-xs font-medium text-text-secondary ml-0.5">Sobrenome</label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Opcional"
+                      className="w-full h-11 px-4 text-sm bg-bg border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-text-secondary ml-0.5">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="w-full h-11 px-4 text-sm bg-bg border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-text-secondary ml-0.5">Senha</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mínimo 8 caracteres"
+                    className="w-full h-11 px-4 text-sm bg-bg border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-all"
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || !email || !firstName || !password || password.length < 8}
+                  className="w-full h-11 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                      </svg>
+                      Criando conta...
+                    </span>
+                  ) : 'Criar conta'}
+                </button>
+              </form>
+
+              {/* Back to login link */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className="text-xs text-text-muted hover:text-accent transition-colors"
+                >
+                  Já tem conta? <span className="text-accent font-medium">Entrar</span>
+                </button>
               </div>
             </>
           )}

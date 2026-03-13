@@ -13,6 +13,12 @@ export class TelegramChannel extends BaseChannel {
   async connect(config: ChannelConfig): Promise<void> {
     if (!config.botToken) throw new Error('Bot token é obrigatório');
 
+    // Stop any existing polling before starting a new one
+    if (this.bot) {
+      try { await this.bot.stopPolling(); } catch { /* ignore */ }
+      this.bot = null;
+    }
+
     this.config = config;
     this.emitStatus('waiting', 'Conectando...');
 

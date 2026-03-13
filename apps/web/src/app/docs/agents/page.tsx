@@ -60,7 +60,7 @@ export default function AgentsPage() {
     "name": "Agente de Rede",
     "description": "Especialista em infraestrutura e redes",
     "systemPrompt": "Você é um especialista em redes Linux. Responda sempre com comandos práticos.",
-    "model": "gemini-2.0-flash",
+    "model": "gemini-2.5-flash",
     "temperature": 0.3
   }'`}
       />
@@ -72,7 +72,7 @@ export default function AgentsPage() {
   "id": "agent_net01",
   "name": "Agente de Rede",
   "description": "Especialista em infraestrutura e redes",
-  "model": "gemini-2.0-flash",
+  "model": "gemini-2.5-flash",
   "temperature": 0.3,
   "createdAt": "2026-02-22T14:00:00Z",
   "documentsCount": 0

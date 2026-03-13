@@ -74,6 +74,57 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const { user } = await requireAuth(req);
+
+    // Anonymize user data instead of hard delete (LGPD compliance)
+    const anonymized = `deleted_${user.id.slice(0, 8)}`;
+    await prisma.$transaction([
+      // Remove sessions
+      prisma.nextAuthSession.deleteMany({ where: { userId: user.id } }),
+      // Remove device codes
+      prisma.deviceCode.deleteMany({ where: { userId: user.id } }),
+      // Remove credentials
+      prisma.userCredential.deleteMany({ where: { userId: user.id } }),
+      // Remove auth providers
+      prisma.userAuthProvider.deleteMany({ where: { userId: user.id } }),
+      // Remove NextAuth accounts
+      prisma.nextAuthAccount.deleteMany({ where: { userId: user.id } }),
+      // Remove API keys
+      prisma.apiKey.deleteMany({ where: { userId: user.id } }),
+      // Remove provider keys
+      prisma.providerKey.deleteMany({ where: { userId: user.id } }),
+      // Anonymize user record
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: `${anonymized}@deleted.teki.com.br`,
+          firstName: 'Conta',
+          lastName: 'Excluída',
+          displayName: 'Conta Excluída',
+          name: 'Conta Excluída',
+          phone: null,
+          avatarUrl: null,
+          status: 'DEACTIVATED',
+          deactivatedAt: new Date(),
+          deactivatedReason: 'Exclusão solicitada pelo usuário',
+          anonymizedAt: new Date(),
+          anonymizedBy: user.id,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
+    }
+    console.error('[DELETE /api/v1/user]', error);
+    return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);

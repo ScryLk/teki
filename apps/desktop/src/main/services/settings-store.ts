@@ -44,6 +44,9 @@ const defaults: TekiSettings = {
   anthropicKeyStatus: 'unconfigured',
   ollamaKeyStatus: 'unconfigured',
 
+  // Knowledge Base
+  kbEnabled: true,
+
   // Auth
   authApiKey: null,
   authEmail: null,

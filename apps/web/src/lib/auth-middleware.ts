@@ -5,6 +5,51 @@ import { authenticateApiKey } from './api-keys';
 import { prisma } from './prisma';
 import { resolvePermissions, hasPermission } from '@teki/shared';
 import type { Permissions, MemberRole } from '@teki/shared';
+import { logDataAccess } from './services/data-access-log.service';
+
+// ─── Request logging (debounced per user+path) ─────────────────
+const recentLogs = new Map<string, number>();
+const LOG_DEBOUNCE_MS = 30_000; // same user+path within 30s = skip
+
+function shouldLogRequest(userId: string, pathname: string): boolean {
+  const key = `${userId}:${pathname}`;
+  const now = Date.now();
+  const last = recentLogs.get(key);
+  if (last && now - last < LOG_DEBOUNCE_MS) return false;
+  recentLogs.set(key, now);
+  // Cleanup old entries every 100 inserts
+  if (recentLogs.size > 500) {
+    for (const [k, v] of recentLogs) {
+      if (now - v > LOG_DEBOUNCE_MS * 2) recentLogs.delete(k);
+    }
+  }
+  return true;
+}
+
+function logApiAccess(req: NextRequest, userId: string, authMethod: string) {
+  const pathname = new URL(req.url).pathname;
+  // Skip high-frequency/polling endpoints
+  if (pathname.includes('/poll') || pathname.includes('/health')) return;
+  if (!shouldLogRequest(userId, pathname)) return;
+
+  const method = req.method;
+  const action = method === 'GET' ? 'view' as const
+    : method === 'DELETE' ? 'delete' as const
+    : 'process' as const;
+
+  logDataAccess({
+    accessorId: userId,
+    accessorType: authMethod === 'apikey' ? 'api' : 'user',
+    subjectId: userId,
+    action,
+    dataCategories: ['activity'],
+    details: { method, pathname },
+    legalBasis: 'LEGITIMATE_INTEREST',
+    justification: `${method} ${pathname}`,
+    ipAddress: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+    userAgent: req.headers.get('user-agent') ?? undefined,
+  }).catch(() => {});
+}
 
 export interface AuthenticatedUser {
   id: string;
@@ -161,6 +206,10 @@ export async function requireAuth(
       'Nao autenticado. Envie um header Authorization: Bearer tk_live_...'
     );
   }
+
+  // Log authenticated API access (fire-and-forget, debounced)
+  logApiAccess(req, result.user.id, result.authMethod);
+
   return result;
 }
 

@@ -28,7 +28,7 @@ function statusDotClass(status: ServiceStatus): string {
 
 function overallLabel(internet: ServiceStatus, backend: ServiceStatus, openclaw: ServiceStatus): string {
   if (internet === 'offline') return 'Sem internet';
-  if (backend === 'offline') return 'Servidor indisponivel';
+  if (backend === 'offline') return 'Backend offline';
   if (openclaw === 'offline') return 'Canais offline';
   if (openclaw === 'degraded') return 'Canais parciais';
   if (internet === 'checking' || backend === 'checking') return 'Verificando...';

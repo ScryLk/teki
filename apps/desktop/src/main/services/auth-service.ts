@@ -181,6 +181,56 @@ export function logout(): void {
   settingsStore.set('authAuthenticatedAt' as never, null as never);
 }
 
+export async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
+  const apiKey = settingsStore.get('authApiKey' as never) as string | null;
+  if (!apiKey) {
+    return { success: false, error: 'Não autenticado' };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/user`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { success: false, error: body?.error?.message ?? `Erro ${res.status}` };
+    }
+
+    // Clear local auth data after successful deletion
+    logout();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
+export async function registerAccount(data: {
+  email: string;
+  firstName: string;
+  lastName?: string;
+  password: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const body = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      return { success: false, error: body?.error?.message ?? `Erro ${res.status}` };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
 export async function getAuthStatus(): Promise<{
   isAuthenticated: boolean;
   email: string | null;

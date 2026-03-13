@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { sendVerificationEmail } from '@/lib/auth-email';
 
 /**
  * POST /api/auth/resend-verification
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
-      select: { id: true, status: true },
+      select: { id: true, firstName: true, status: true },
     });
 
     if (!user || user.status !== 'PENDING_VERIFICATION') {
@@ -42,7 +43,10 @@ export async function POST(req: NextRequest) {
       data: { emailVerificationTokenHash: tokenHash },
     });
 
-    // TODO: Send verification email
+    // Send verification email (fire-and-forget)
+    sendVerificationEmail({ email: normalizedEmail, token, firstName: user.firstName })
+      .catch((err) => console.error('[resend-verification] Failed to send email:', err));
+
     if (process.env.NODE_ENV === 'development') {
       console.log(`[resend-verification] Token for ${normalizedEmail}: ${token}`);
     }

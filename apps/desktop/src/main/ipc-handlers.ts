@@ -5,6 +5,7 @@ import settingsStore from './services/settings-store';
 import windowWatcher from './services/window-watcher';
 import { updateTrayState } from './tray';
 import { validateApiKey } from './services/ai-key-validator';
+import { logAction } from './services/log-service';
 import { showFloating, hideFloating } from './floating-window';
 import {
   startDeviceFlow,
@@ -13,6 +14,8 @@ import {
   setApiKeyManually,
   getAuthStatus,
   logout,
+  deleteAccount,
+  registerAccount,
 } from './services/auth-service';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
@@ -97,6 +100,20 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(IPC_CHANNELS.AUTH_LOGOUT, () => {
     logout();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_DELETE_ACCOUNT, async () => {
+    return deleteAccount();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH_REGISTER, async (_event, data: { email: string; firstName: string; lastName?: string; password: string }) => {
+    return registerAccount(data);
+  });
+
+  // ── Logging ────────────────────────────────────────────────────
+
+  ipcMain.handle('log:action', (_event, event: string, details?: Record<string, unknown>) => {
+    logAction(event, details, 'process', ['activity']);
   });
 
   // ── Display ────────────────────────────────────────────────────

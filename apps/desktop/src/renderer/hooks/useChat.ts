@@ -78,6 +78,22 @@ export function useChat(model?: string) {
       try {
         const context = await buildContext();
 
+        // KB RAG: search knowledge base and inject context
+        try {
+          const kbEnabled = await window.tekiAPI.getSetting<boolean>('kbEnabled');
+          if (kbEnabled) {
+            const kbResults = await window.tekiAPI.kbSearch(trimmed, 5);
+            if (kbResults.length > 0) {
+              const kbSnippets = kbResults
+                .map((r, i) => `[${i + 1}] (${r.docName}) ${r.content}`)
+                .join('\n\n');
+              context.kbContext = `=== Contexto da Base de Conhecimento ===\nUse os trechos abaixo para enriquecer sua resposta, se relevantes:\n\n${kbSnippets}`;
+            }
+          }
+        } catch {
+          // KB search is optional, don't block chat
+        }
+
         if (image) {
           context.screenshot = image;
           context.screenshotMimeType = imageMime ?? 'image/png';
@@ -112,6 +128,17 @@ export function useChat(model?: string) {
           );
         }
 
+        // Log AI interaction
+        window.tekiAPI?.logAction('Interacao com IA', {
+          provider: aiResponse.provider,
+          model,
+          fallback: aiResponse.fallback ?? false,
+          hasScreenshot: !!context.screenshot,
+          activeWindow: context.activeWindow,
+          messageLength: trimmed.length,
+          responseLength: fullContent.length,
+        });
+
         setCatState('happy');
         setTimeout(() => setCatState('idle'), 3000);
       } catch (err) {
@@ -119,6 +146,12 @@ export function useChat(model?: string) {
         const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
         setError(errorMessage);
         setCatState('alert');
+
+        // Log AI failure
+        window.tekiAPI?.logAction('Falha na interacao com IA', {
+          error: errorMessage,
+          model,
+        });
 
         const errorContent = 'Desculpe, todos os provedores de IA falharam. Verifique sua conexão ou configure uma chave de API nas configurações.';
         setMessages((prev) => {

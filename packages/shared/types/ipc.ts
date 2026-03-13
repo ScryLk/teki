@@ -5,6 +5,7 @@ import type {
   MonitoredService, PingResult, PingHistoryQuery,
   HourlyAggregate, ServiceStats, AlertEvent, DetectedPattern,
 } from './monitor';
+import type { KBDocument, KBUploadPayload, KBSearchResult, KBStats, KBDocStatusEvent, KBChunk } from './kb';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
@@ -56,6 +57,8 @@ export const IPC_CHANNELS = {
   AUTH_SET_API_KEY: 'auth:setApiKey',
   AUTH_GET_STATUS: 'auth:getStatus',
   AUTH_LOGOUT: 'auth:logout',
+  AUTH_DELETE_ACCOUNT: 'auth:deleteAccount',
+  AUTH_REGISTER: 'auth:register',
 
   // OpenClaw
   OPENCLAW_LIST_CHANNELS: 'openclaw:listChannels',
@@ -86,6 +89,16 @@ export const IPC_CHANNELS = {
   MONITOR_GET_STATS: 'monitor:stats:get',
   MONITOR_ALERT: 'monitor:alert',
   MONITOR_GET_PATTERNS: 'monitor:patterns:get',
+
+  // Knowledge Base
+  KB_LIST_DOCS: 'kb:docs:list',
+  KB_UPLOAD_DOC: 'kb:docs:upload',
+  KB_REMOVE_DOC: 'kb:docs:remove',
+  KB_GET_DOC: 'kb:docs:get',
+  KB_SEARCH: 'kb:search',
+  KB_GET_STATS: 'kb:stats',
+  KB_DOC_STATUS: 'kb:docs:status',
+  KB_DOC_CHUNKS: 'kb:docs:chunks',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -124,6 +137,9 @@ export interface TekiAPI {
   setApiKey: (key: string) => Promise<boolean>;
   getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
+  registerAccount: (data: { email: string; firstName: string; lastName?: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  onAuthExpired: (callback: () => void) => () => void;
 
   // OpenClaw
   openclawListChannels: () => Promise<ChannelInfo[]>;
@@ -154,6 +170,19 @@ export interface TekiAPI {
   monitorGetStats: (serviceId: string, period: string) => Promise<ServiceStats>;
   onMonitorAlert: (callback: (alert: AlertEvent) => void) => () => void;
   monitorGetPatterns: () => Promise<DetectedPattern[]>;
+
+  // Knowledge Base
+  kbListDocs: () => Promise<KBDocument[]>;
+  kbUploadDoc: (payload: KBUploadPayload) => Promise<KBDocument>;
+  kbRemoveDoc: (docId: string) => Promise<void>;
+  kbGetDoc: (docId: string) => Promise<KBDocument | null>;
+  kbSearch: (query: string, topK?: number) => Promise<KBSearchResult[]>;
+  kbGetStats: () => Promise<KBStats>;
+  kbGetDocChunks: (docId: string) => Promise<KBChunk[]>;
+  onKbDocStatus: (callback: (event: KBDocStatusEvent) => void) => () => void;
+
+  // Logging
+  logAction: (event: string, details?: Record<string, unknown>) => void;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -200,6 +229,9 @@ export interface TekiSettings {
   openaiKeyStatus: ApiKeyStatus;
   anthropicKeyStatus: ApiKeyStatus;
   ollamaKeyStatus: ApiKeyStatus;
+
+  // Knowledge Base
+  kbEnabled: boolean;
 
   // Auth
   authApiKey: string | null;

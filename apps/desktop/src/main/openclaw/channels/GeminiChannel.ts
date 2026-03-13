@@ -20,7 +20,7 @@ export class GeminiChannel extends BaseChannel {
       this.genAI = new GoogleGenerativeAI(config.apiKey);
 
       // Validate by listing models
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const result = await withTimeout(model.generateContent('ping'), 10_000, 'gemini:ping');
       const text = result.response.text();
 

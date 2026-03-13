@@ -15,9 +15,24 @@ export interface ChatContext {
   sistema?: string;
   versao?: string;
   ambiente?: string;
+  kbContext?: string;
 }
 
 export type ProviderId = 'ollama' | 'teki' | 'gemini' | 'anthropic';
+
+export interface ModelOption {
+  id: string;
+  label: string;
+  provider: ProviderId;
+  description: string;
+}
+
+export const AVAILABLE_MODELS: ModelOption[] = [
+  { id: 'gemini-flash', label: 'Gemini Flash', provider: 'gemini', description: 'Rápido e multimodal' },
+  { id: 'anthropic-claude', label: 'Claude', provider: 'anthropic', description: 'Avançado' },
+  { id: 'ollama-local', label: 'Ollama (Local)', provider: 'ollama', description: 'Offline, privado' },
+  { id: 'teki-cloud', label: 'Teki Cloud', provider: 'teki', description: 'Servidor Teki' },
+];
 
 export interface AiResponse {
   provider: ProviderId;
@@ -34,18 +49,15 @@ const SYSTEM_PROMPT = `Você é o Teki, um assistente de suporte técnico com IA
 Você tem acesso visual à tela do usuário quando ele está monitorando uma janela.
 Responda sempre em português do Brasil. Seja direto, técnico e prático.`;
 
-function usesOllama(): boolean {
-  return !TEKI_API_URL;
-}
-
 // ─── Provider: Ollama ────────────────────────────────────────────
 
 async function sendViaOllama(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   context?: ChatContext,
 ): Promise<Response> {
+  const systemContent = context?.kbContext ? `${SYSTEM_PROMPT}\n\n${context.kbContext}` : SYSTEM_PROMPT;
   const ollamaMessages: Array<{ role: string; content: string; images?: string[] }> = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: systemContent },
   ];
 
   if (context?.activeWindow) {
@@ -59,7 +71,9 @@ async function sendViaOllama(
   if (context?.screenshot) {
     const lastUserIdx = ollamaMessages.findLastIndex((m) => m.role === 'user');
     if (lastUserIdx >= 0) {
-      ollamaMessages[lastUserIdx].images = [context.screenshot];
+      // Ollama expects raw base64, strip data URL prefix if present
+      const raw = context.screenshot.replace(/^data:[^;]+;base64,/, '');
+      ollamaMessages[lastUserIdx].images = [raw];
     }
   }
 
@@ -214,6 +228,29 @@ async function isAnthropicAvailable(): Promise<boolean> {
   }
 }
 
+// ─── Provider resolver ──────────────────────────────────────────
+
+function getProviderForModel(modelId?: string): ProviderId {
+  if (!modelId) return 'gemini';
+  const found = AVAILABLE_MODELS.find((m) => m.id === modelId);
+  return found?.provider ?? 'gemini';
+}
+
+async function buildFallbackChain(primary: ProviderId): Promise<ProviderId[]> {
+  const chain: ProviderId[] = [primary];
+  const fallbackOrder: ProviderId[] = ['gemini', 'anthropic', 'ollama', 'teki'];
+
+  for (const p of fallbackOrder) {
+    if (p === primary) continue;
+    if (p === 'gemini' && await isGeminiAvailable()) chain.push(p);
+    else if (p === 'anthropic' && await isAnthropicAvailable()) chain.push(p);
+    else if (p === 'ollama') chain.push(p);
+    else if (p === 'teki' && TEKI_API_URL) chain.push(p);
+  }
+
+  return chain;
+}
+
 // ─── Unified send with fallback ──────────────────────────────────
 
 export async function sendMessage(
@@ -224,15 +261,8 @@ export async function sendMessage(
   const screenshotDataUrl = context?.screenshot ?? null;
   const windowName = context?.activeWindow ?? null;
 
-  // Build the ordered list of providers to try
-  const primary: ProviderId = usesOllama() ? 'ollama' : 'teki';
-  const chain: ProviderId[] = [primary];
-
-  // Add fallback providers (Gemini then Anthropic)
-  if (await isGeminiAvailable()) chain.push('gemini');
-  if (await isAnthropicAvailable()) chain.push('anthropic');
-  // If primary is ollama and we have no cloud fallbacks, still try them last
-  // (they'll fail with a clear "no key" message, but won't crash)
+  const primary = getProviderForModel(model);
+  const chain = await buildFallbackChain(primary);
 
   const failedProviders: Array<{ provider: ProviderId; error: string }> = [];
 
@@ -259,7 +289,7 @@ export async function sendMessage(
           };
         }
         case 'gemini': {
-          const response = await sendGemini(messages, screenshotDataUrl, windowName);
+          const response = await sendGemini(messages, screenshotDataUrl, windowName, context?.kbContext);
           return {
             provider,
             stream: parseGeminiStream(response),
@@ -268,7 +298,7 @@ export async function sendMessage(
           };
         }
         case 'anthropic': {
-          const response = await sendAnthropic(messages, screenshotDataUrl, windowName);
+          const response = await sendAnthropic(messages, screenshotDataUrl, windowName, context?.kbContext);
           return {
             provider,
             stream: parseAnthropicStream(response),
@@ -281,11 +311,9 @@ export async function sendMessage(
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.warn(`[AI Fallback] ${provider} falhou: ${errorMsg}`);
       failedProviders.push({ provider, error: errorMsg });
-      // Continue to next provider
     }
   }
 
-  // All providers failed — throw with details
   const summary = failedProviders
     .map((f) => `${f.provider}: ${f.error}`)
     .join('\n');

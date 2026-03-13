@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/services/session.service';
+import { logDataAccess } from '@/lib/services/data-access-log.service';
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -66,6 +67,20 @@ export async function POST(req: NextRequest) {
             : {}),
         },
       });
+
+      // Log failed login attempt
+      logDataAccess({
+        accessorId: user.id,
+        accessorType: 'system',
+        subjectId: user.id,
+        action: 'view',
+        dataCategories: ['auth_tokens'],
+        details: { failedAttempts, locked: failedAttempts >= LOCKOUT_THRESHOLD },
+        justification: 'Tentativa de login falha (senha incorreta)',
+        ipAddress: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: req.headers.get('user-agent') ?? undefined,
+      }).catch(() => {});
+
       return NextResponse.json(
         { error: { code: 'INVALID_CREDENTIALS', message: 'Email ou senha incorretos' } },
         { status: 401 }
@@ -93,6 +108,18 @@ export async function POST(req: NextRequest) {
       ipAddress,
       userAgent,
     });
+
+    // Log successful login
+    logDataAccess({
+      accessorId: user.id,
+      accessorType: 'user',
+      subjectId: user.id,
+      action: 'view',
+      dataCategories: ['auth_tokens'],
+      justification: 'Login via credenciais (web)',
+      ipAddress,
+      userAgent,
+    }).catch(() => {}); // fire-and-forget
 
     return NextResponse.json({
       sessionToken: session.sessionToken,

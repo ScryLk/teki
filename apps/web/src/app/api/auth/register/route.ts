@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { recordSignupConsents } from '@/lib/services/consent.service';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
+import { sendVerificationEmail } from '@/lib/auth-email';
 
 const CURRENT_POLICY_VERSION = '2026.1';
 
@@ -104,7 +105,10 @@ export async function POST(req: NextRequest) {
       userAgent,
     });
 
-    // TODO: Send verification email with the raw token
+    // Send verification email (fire-and-forget)
+    sendVerificationEmail({ email: normalizedEmail, token: verificationToken, firstName })
+      .catch((err) => console.error('[register] Failed to send verification email:', err));
+
     if (process.env.NODE_ENV === 'development') {
       console.log(`[register] Verification token for ${normalizedEmail}: ${verificationToken}`);
     }

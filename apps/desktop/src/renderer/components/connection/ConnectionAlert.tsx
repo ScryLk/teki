@@ -3,29 +3,67 @@ import { useAppStore } from '@/stores/app-store';
 
 const ConnectionAlert: React.FC = () => {
   const health = useAppStore((s) => s.connectionHealth);
-  const [dismissed, setDismissed] = useState(false);
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const clearAuth = useAppStore((s) => s.clearAuth);
+  const [dismissed, setDismissed] = useState<string | null>(null);
 
-  // Determine alert message
-  let message: string | null = null;
+  // Build list of active issues
+  const alerts: Array<{ key: string; message: string; severity: 'error' | 'warning'; action?: () => void; actionLabel?: string }> = [];
+
   if (health.internet === 'offline') {
-    message = 'Sem conexao com a internet. Verifique sua rede.';
-  } else if (health.backend === 'offline') {
-    message = 'Servidor indisponivel. Tentando reconectar...';
-  } else if (health.openclaw === 'offline') {
-    message = 'Todos os canais estao desconectados.';
-  } else if (health.openclaw === 'degraded') {
-    message = 'Alguns canais estao desconectados.';
+    alerts.push({
+      key: 'internet',
+      message: 'Sem conexao com a internet. Verifique sua rede.',
+      severity: 'error',
+    });
   }
 
-  // Auto-show when a new issue appears (reset dismissed)
-  const hasIssue = message !== null;
+  if (health.backend === 'offline' && health.internet !== 'offline') {
+    alerts.push({
+      key: 'backend',
+      message: 'Servidor Teki indisponivel. Logs e sincronizacao pausados.',
+      severity: 'warning',
+    });
+  }
+
+  if (isAuthenticated && !useAppStore.getState().userEmail) {
+    alerts.push({
+      key: 'auth',
+      message: 'Sessao expirada. Faca login novamente para continuar.',
+      severity: 'error',
+      action: () => {
+        clearAuth();
+        window.tekiAPI?.logout();
+      },
+      actionLabel: 'Fazer login',
+    });
+  }
+
+  if (health.openclaw === 'offline') {
+    alerts.push({
+      key: 'openclaw',
+      message: 'Canais de atendimento desconectados.',
+      severity: 'warning',
+    });
+  } else if (health.openclaw === 'degraded') {
+    alerts.push({
+      key: 'openclaw-degraded',
+      message: 'Alguns canais de atendimento desconectados.',
+      severity: 'warning',
+    });
+  }
+
+  // Show the highest priority alert that hasn't been dismissed
+  const active = alerts.find((a) => a.key !== dismissed);
+
+  // Auto-reset dismissed when issues change
   React.useEffect(() => {
-    if (hasIssue) setDismissed(false);
-  }, [hasIssue, health.internet, health.backend, health.openclaw]);
+    setDismissed(null);
+  }, [health.internet, health.backend, health.openclaw]);
 
-  if (!message || dismissed) return null;
+  if (!active) return null;
 
-  const isError = health.internet === 'offline' || health.backend === 'offline' || health.openclaw === 'offline';
+  const isError = active.severity === 'error';
 
   return (
     <div
@@ -50,10 +88,22 @@ const ConnectionAlert: React.FC = () => {
           <line x1="12" y1="9" x2="12" y2="13" />
           <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
-        <span>{message}</span>
+        <span>{active.message}</span>
+        {active.action && (
+          <button
+            onClick={active.action}
+            className={`ml-2 px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              isError
+                ? 'bg-error/20 hover:bg-error/30 text-error'
+                : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400'
+            }`}
+          >
+            {active.actionLabel}
+          </button>
+        )}
       </div>
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => setDismissed(active.key)}
         className="p-0.5 rounded hover:bg-white/10 transition-colors"
       >
         <svg
