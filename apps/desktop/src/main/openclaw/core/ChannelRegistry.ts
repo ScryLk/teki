@@ -4,6 +4,7 @@ import type { ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId 
 import { BaseChannel } from './types';
 import { AgentRouter } from './AgentRouter';
 import * as sessionStore from './SessionStore';
+import { safeSend } from '../../utils/safe-ipc';
 
 import { DiscordChannel } from '../channels/DiscordChannel';
 import { WhatsAppChannel } from '../channels/WhatsAppChannel';
@@ -185,7 +186,12 @@ export class ChannelRegistry {
   }
 
   private emitStatus(event: ChannelStatusEvent): void {
-    this.mainWindow?.webContents.send(IPC_CHANNELS.OPENCLAW_STATUS_CHANGED, event);
+    safeSend(this.mainWindow, IPC_CHANNELS.OPENCLAW_STATUS_CHANGED, {
+      channelId: event.channelId,
+      status: event.status,
+      detail: event.detail ?? undefined,
+      error: event.error ? String(event.error) : undefined,
+    });
   }
 }
 

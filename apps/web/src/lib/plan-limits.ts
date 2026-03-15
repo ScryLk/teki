@@ -27,6 +27,7 @@ export function getPlanLimits(planId: PlanTier) {
     conversationRetentionDays: plan.limits.conversationRetentionDays,
     openclaw: plan.features.openclaw,
     openclawChannels: plan.features.openclawChannels,
+    apiKeys: plan.features.apiKeys,
   };
 }
 

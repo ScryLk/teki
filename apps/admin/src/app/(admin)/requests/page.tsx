@@ -45,8 +45,9 @@ export default function RequestsPage() {
 
   useEffect(() => {
     fetch(`/api/requests?period=${period}`)
-      .then((r) => r.json())
-      .then(setData);
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then(setData)
+      .catch((err) => console.error('[requests]', err));
   }, [period]);
 
   if (!data) {
@@ -159,34 +160,40 @@ export default function RequestsPage() {
           </CardHeader>
           <CardContent>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data.topEndpoints}
-                  layout="vertical"
-                  margin={{ left: 0 }}
-                >
-                  <XAxis type="number" tick={{ fontSize: 10, fill: 'oklch(0.6 0 0)' }} />
-                  <YAxis
-                    type="category"
-                    dataKey="event"
-                    width={120}
-                    tick={{ fontSize: 10, fill: 'oklch(0.6 0 0)' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'oklch(0.16 0 0)',
-                      border: '1px solid oklch(0.26 0 0)',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="oklch(0.623 0.214 259)"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {data.topEndpoints.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data.topEndpoints}
+                    layout="vertical"
+                    margin={{ left: 0 }}
+                  >
+                    <XAxis type="number" tick={{ fontSize: 10, fill: 'oklch(0.6 0 0)' }} />
+                    <YAxis
+                      type="category"
+                      dataKey="event"
+                      width={120}
+                      tick={{ fontSize: 10, fill: 'oklch(0.6 0 0)' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'oklch(0.16 0 0)',
+                        border: '1px solid oklch(0.26 0 0)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="oklch(0.623 0.214 259)"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                  Nenhum dado disponivel
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

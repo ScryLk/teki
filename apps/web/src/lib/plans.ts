@@ -18,6 +18,7 @@ export interface PlanDefinition {
     byok: boolean;
     openclaw: boolean;
     openclawChannels: number;
+    apiKeys: number;
     prioritySupport: boolean;
   };
   badge?: string;
@@ -43,6 +44,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       byok: false,
       openclaw: false,
       openclawChannels: 0,
+      apiKeys: 0,
       prioritySupport: false,
     },
   },
@@ -64,6 +66,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       byok: false,
       openclaw: false,
       openclawChannels: 0,
+      apiKeys: 3,
       prioritySupport: false,
     },
   },
@@ -95,6 +98,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       byok: true,
       openclaw: true,
       openclawChannels: 3,
+      apiKeys: 5,
       prioritySupport: true,
     },
   },
@@ -124,6 +128,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
       byok: true,
       openclaw: true,
       openclawChannels: 999,
+      apiKeys: 20,
       prioritySupport: true,
     },
   },

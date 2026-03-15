@@ -6,6 +6,7 @@ import type {
   HourlyAggregate, ServiceStats, AlertEvent, DetectedPattern,
 } from './monitor';
 import type { KBDocument, KBUploadPayload, KBSearchResult, KBStats, KBDocStatusEvent, KBChunk } from './kb';
+import type { AudioSource, TranscriptionSegment, AISuggestion, TranscriptionConfig } from './transcription';
 
 // ─── AI Provider types ────────────────────────────────────────────────────────
 
@@ -99,6 +100,23 @@ export const IPC_CHANNELS = {
   KB_GET_STATS: 'kb:stats',
   KB_DOC_STATUS: 'kb:docs:status',
   KB_DOC_CHUNKS: 'kb:docs:chunks',
+
+  // Teki Platform API Keys
+  TEKI_APIKEYS_LIST:   'tekiApiKeys:list',
+  TEKI_APIKEYS_CREATE: 'tekiApiKeys:create',
+  TEKI_APIKEYS_REVOKE: 'tekiApiKeys:revoke',
+  TEKI_APIKEYS_USAGE:  'tekiApiKeys:usage',
+
+  // Transcription
+  TRANSCRIPTION_GET_SOURCES: 'transcription:getSources',
+  TRANSCRIPTION_START:       'transcription:start',
+  TRANSCRIPTION_STOP:        'transcription:stop',
+  TRANSCRIPTION_PAUSE:       'transcription:pause',
+  TRANSCRIPTION_RESUME:      'transcription:resume',
+  TRANSCRIPTION_SEND_CHUNK:  'transcription:sendChunk',
+  TRANSCRIPTION_SEGMENT:     'transcription:segment',
+  TRANSCRIPTION_SUGGESTION:  'transcription:suggestion',
+  TRANSCRIPTION_ERROR:       'transcription:error',
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -135,7 +153,7 @@ export interface TekiAPI {
   onAuthStatus: (callback: (data: { status: string; email?: string; name?: string }) => void) => () => void;
   loginWithCredentials: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   setApiKey: (key: string) => Promise<boolean>;
-  getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null }>;
+  getAuthStatus: () => Promise<{ isAuthenticated: boolean; email: string | null; name: string | null; plan?: string | null }>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   registerAccount: (data: { email: string; firstName: string; lastName?: string; password: string }) => Promise<{ success: boolean; error?: string }>;
@@ -181,8 +199,64 @@ export interface TekiAPI {
   kbGetDocChunks: (docId: string) => Promise<KBChunk[]>;
   onKbDocStatus: (callback: (event: KBDocStatusEvent) => void) => () => void;
 
+  // Teki Platform API Keys
+  tekiApiKeysList: () => Promise<TekiApiKeyListResult>;
+  tekiApiKeysCreate: (data: { name: string; type: 'LIVE' | 'TEST'; expiresAt?: string }) => Promise<TekiApiKeyCreateResult>;
+  tekiApiKeysRevoke: (id: string) => Promise<{ success: boolean }>;
+  tekiApiKeysUsage: (id: string) => Promise<TekiApiKeyUsage>;
+
+  // Transcription
+  transcriptionGetSources: () => Promise<AudioSource[]>;
+  transcriptionStart: (sourceId: string, config?: Partial<TranscriptionConfig>) => Promise<void>;
+  transcriptionStop: () => Promise<{ segments: TranscriptionSegment[] }>;
+  transcriptionPause: () => Promise<void>;
+  transcriptionResume: () => Promise<void>;
+  transcriptionSendChunk: (base64: string) => void;
+  onTranscriptionSegment: (callback: (segment: TranscriptionSegment) => void) => () => void;
+  onTranscriptionSuggestion: (callback: (suggestion: AISuggestion) => void) => () => void;
+  onTranscriptionError: (callback: (error: { message: string }) => void) => () => void;
+
   // Logging
   logAction: (event: string, details?: Record<string, unknown>) => void;
+}
+
+// ─── Teki API Key types ──────────────────────────────────────────────────────
+
+export interface TekiApiKey {
+  id: string;
+  keyPrefix: string;
+  name: string;
+  type: 'LIVE' | 'TEST';
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  isRevoked: boolean;
+  createdAt: string;
+  monthlyUsage: {
+    requests: number;
+    tokensIn: number;
+    tokensOut: number;
+    costUsd: number;
+  };
+}
+
+export interface TekiApiKeyListResult {
+  keys: TekiApiKey[];
+  planLimit: number;
+}
+
+export interface TekiApiKeyCreateResult {
+  id: string;
+  key: string;
+  message: string;
+}
+
+export interface TekiApiKeyUsage {
+  period: string;
+  totalRequests: number;
+  totalTokensIn: number;
+  totalTokensOut: number;
+  totalCostUsd: number;
+  dailyBreakdown: Array<{ date: string; requests: number; tokensIn: number; tokensOut: number; costUsd: number }>;
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

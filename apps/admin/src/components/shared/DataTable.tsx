@@ -104,47 +104,45 @@ export default function DataTable<T extends Record<string, any>>({
                 const rowKey = String(row[keyField]);
                 const isExpanded = expandedRow === rowKey;
                 return (
-                  <tr key={rowKey} className="group">
-                    <td colSpan={columns.length} className="p-0">
-                      <div
-                        className={cn(
-                          'grid transition-colors',
-                          onRowClick && 'cursor-pointer',
-                          'hover:bg-muted/30'
-                        )}
-                        style={{
-                          gridTemplateColumns: columns
-                            .map(() => '1fr')
-                            .join(' '),
-                        }}
-                        onClick={() => {
-                          if (expandedContent) {
-                            setExpandedRow(isExpanded ? null : rowKey);
-                          }
-                          onRowClick?.(row);
-                        }}
-                      >
-                        {columns.map((col) => (
-                          <div
-                            key={col.key}
-                            className={cn(
-                              'px-4 py-2.5 border-b border-border text-foreground',
-                              col.className
-                            )}
-                          >
-                            {col.render
-                              ? col.render(row)
-                              : String(row[col.key] ?? '')}
-                          </div>
-                        ))}
-                      </div>
-                      {expandedContent && isExpanded && (
-                        <div className="px-4 py-3 bg-muted/20 border-b border-border">
-                          {expandedContent(row)}
-                        </div>
+                  <>
+                    <tr
+                      key={rowKey}
+                      className={cn(
+                        'border-b border-border transition-colors hover:bg-muted/30',
+                        onRowClick && 'cursor-pointer'
                       )}
-                    </td>
-                  </tr>
+                      onClick={() => {
+                        if (expandedContent) {
+                          setExpandedRow(isExpanded ? null : rowKey);
+                        }
+                        onRowClick?.(row);
+                      }}
+                    >
+                      {columns.map((col) => (
+                        <td
+                          key={col.key}
+                          className={cn(
+                            'px-4 py-2.5 text-foreground',
+                            col.className
+                          )}
+                        >
+                          {col.render
+                            ? col.render(row)
+                            : String(row[col.key] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                    {expandedContent && isExpanded && (
+                      <tr key={`${rowKey}-expanded`}>
+                        <td
+                          colSpan={columns.length}
+                          className="px-4 py-3 bg-muted/20 border-b border-border"
+                        >
+                          {expandedContent(row)}
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })
             )}

@@ -5,10 +5,11 @@ import crypto from 'crypto';
 import { recordSignupConsents } from '@/lib/services/consent.service';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
 import { sendVerificationEmail } from '@/lib/auth-email';
+import { withRequestLog } from '@/lib/request-logger';
 
 const CURRENT_POLICY_VERSION = '2026.1';
 
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { email, firstName, lastName, password } = await req.json();
 
@@ -125,3 +126,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(_POST);

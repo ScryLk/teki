@@ -89,8 +89,7 @@ export default function FloatingApp() {
         style={{
           background: BG,
           border: `1px solid ${BORDER}`,
-          borderRadius: state === 'idle' ? 26 : 12,
-          boxShadow: `0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px ${ACCENT}11, 0 0 24px ${ACCENT}08`,
+          borderRadius: state === 'idle' ? 9999 : 20,
           overflow: 'hidden',
           transition: 'border-radius 0.2s ease',
           width: '100%',

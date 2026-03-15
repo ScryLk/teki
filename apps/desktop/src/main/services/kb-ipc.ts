@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from '@teki/shared';
 import type { KBUploadPayload, KBDocStatusEvent } from '@teki/shared';
 import { getKBService } from './kb-service';
 import { getKBStore } from './kb-store';
+import { safeSend } from '../utils/safe-ipc';
 
 export function setupKnowledgeBase(mainWindow: BrowserWindow): void {
   const service = getKBService();
@@ -37,9 +38,7 @@ export function setupKnowledgeBase(mainWindow: BrowserWindow): void {
 
   // Push status updates to renderer
   service.on('doc-status', (event: KBDocStatusEvent) => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_CHANNELS.KB_DOC_STATUS, event);
-    }
+    safeSend(mainWindow, IPC_CHANNELS.KB_DOC_STATUS, event);
   });
 
   console.log('[KB] Knowledge Base IPC registered');

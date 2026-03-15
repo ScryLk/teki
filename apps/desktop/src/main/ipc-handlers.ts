@@ -16,6 +16,10 @@ import {
   logout,
   deleteAccount,
   registerAccount,
+  listApiKeys,
+  createPlatformApiKey,
+  revokePlatformApiKey,
+  getApiKeyUsage,
 } from './services/auth-service';
 
 export function registerIPCHandlers(mainWindow: BrowserWindow): void {
@@ -114,6 +118,24 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('log:action', (_event, event: string, details?: Record<string, unknown>) => {
     logAction(event, details, 'process', ['activity']);
+  });
+
+  // ── Teki Platform API Keys ──────────────────────────────────────
+
+  ipcMain.handle(IPC_CHANNELS.TEKI_APIKEYS_LIST, async () => {
+    return listApiKeys();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TEKI_APIKEYS_CREATE, async (_event, data: { name: string; type: 'LIVE' | 'TEST'; expiresAt?: string }) => {
+    return createPlatformApiKey(data);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TEKI_APIKEYS_REVOKE, async (_event, id: string) => {
+    return revokePlatformApiKey(id);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TEKI_APIKEYS_USAGE, async (_event, id: string) => {
+    return getApiKeyUsage(id);
   });
 
   // ── Display ────────────────────────────────────────────────────

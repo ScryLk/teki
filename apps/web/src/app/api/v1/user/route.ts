@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { withRequestLog } from '@/lib/request-logger';
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+async function _DELETE(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
@@ -125,7 +126,7 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-export async function PATCH(req: NextRequest) {
+async function _PATCH(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
     const { firstName, lastName, avatarUrl } = await req.json();
@@ -167,3 +168,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog(_GET);
+export const DELETE = withRequestLog(_DELETE);
+export const PATCH = withRequestLog(_PATCH);

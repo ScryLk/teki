@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { getPlan } from '@/lib/plans';
 import { prisma } from '@/lib/prisma';
+import { withRequestLog } from '@/lib/request-logger';
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
     const plan = getPlan(user.planId);
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
         models: plan.features.models,
         openclaw: plan.features.openclaw,
         byok: plan.features.byok,
+        apiKeys: plan.features.apiKeys,
       },
     });
   } catch (error) {
@@ -57,3 +59,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLog(_GET);

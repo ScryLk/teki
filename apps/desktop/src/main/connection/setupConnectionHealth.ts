@@ -5,6 +5,7 @@ import { getConnectionHealthManager } from './ConnectionHealthManager';
 import { getAlertManager } from './AlertManager';
 import { getHistoryStore } from './HistoryStore';
 import { getPatternDetector } from './PatternDetector';
+import { safeSend } from '../utils/safe-ipc';
 
 export function setupConnectionHealth(mainWindow: BrowserWindow): void {
   const manager = getConnectionHealthManager();
@@ -18,9 +19,7 @@ export function setupConnectionHealth(mainWindow: BrowserWindow): void {
   });
 
   manager.on('health-changed', (event: ConnectionHealthEvent) => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_CHANNELS.CONNECTION_HEALTH_STATUS, event);
-    }
+    safeSend(mainWindow, IPC_CHANNELS.CONNECTION_HEALTH_STATUS, event);
   });
 
   // ─── Monitor: Service CRUD ─────────────────────────────────────────────────
@@ -53,10 +52,7 @@ export function setupConnectionHealth(mainWindow: BrowserWindow): void {
 
   // Push probe results to renderer
   manager.on('probe-result', (result: PingResult) => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_CHANNELS.MONITOR_PROBE_RESULT, result);
-    }
-    // Feed into alert manager
+    safeSend(mainWindow, IPC_CHANNELS.MONITOR_PROBE_RESULT, result);
     alertManager.evaluate(result);
   });
 
@@ -78,9 +74,7 @@ export function setupConnectionHealth(mainWindow: BrowserWindow): void {
   // ─── Monitor: Alerts ───────────────────────────────────────────────────────
 
   alertManager.on('alert', (alert: AlertEvent) => {
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC_CHANNELS.MONITOR_ALERT, alert);
-    }
+    safeSend(mainWindow, IPC_CHANNELS.MONITOR_ALERT, alert);
   });
 
   // ─── Monitor: Patterns ─────────────────────────────────────────────────────

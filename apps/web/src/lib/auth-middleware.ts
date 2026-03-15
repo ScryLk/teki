@@ -74,6 +74,7 @@ export interface AuthenticatedRequest {
   user: AuthenticatedUser;
   isTest: boolean;
   authMethod: 'session' | 'apikey';
+  apiKeyId?: string;
   tenant?: TenantContext;
 }
 
@@ -122,8 +123,23 @@ export async function getAuthenticatedUser(
         user: { ...user, planId },
         isTest: result.isTest,
         authMethod: 'apikey',
+        apiKeyId: result.apiKey.id,
       };
     }
+    // Log failed API key attempt
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+    logDataAccess({
+      accessorId: 'anonymous',
+      accessorType: 'api',
+      subjectId: 'system',
+      action: 'process',
+      dataCategories: ['activity'],
+      details: { event: 'api_key_auth_failure', ip, keyPrefix: key.slice(0, 12) },
+      legalBasis: 'LEGITIMATE_INTEREST',
+      justification: 'Failed API key authentication attempt',
+      ipAddress: ip,
+      userAgent: req.headers.get('user-agent') ?? undefined,
+    }).catch(() => {});
     return null;
   }
 

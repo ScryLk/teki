@@ -68,13 +68,14 @@ export default function MonitoringPage() {
   // Initial data load
   useEffect(() => {
     fetch('/api/monitoring')
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
       .then((data) => {
         setMetrics(data.realtime);
         setConnectors(data.connectors);
         setAiProviders(data.aiProviders);
         setRecentErrors(data.recentErrors);
-      });
+      })
+      .catch((err) => console.error('[monitoring]', err));
   }, []);
 
   // SSE connection

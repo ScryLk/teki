@@ -16,6 +16,8 @@ export class WhatsAppChannel extends BaseChannel {
   private sock: WASocket | null = null;
   private qrCode: string | null = null;
   private intentionalDisconnect = false;
+  private reconnectAttempts = 0;
+  private maxReconnects = 5;
 
   private get authDir(): string {
     return join(app.getPath('userData'), 'whatsapp-auth');
@@ -25,6 +27,17 @@ export class WhatsAppChannel extends BaseChannel {
     this.config = config;
     this.intentionalDisconnect = false;
     this.emitStatus('waiting', 'Gerando QR code...');
+
+    // Clean up previous socket and listeners before creating a new one
+    if (this.sock) {
+      try {
+        this.sock.ev.removeAllListeners('creds.update');
+        this.sock.ev.removeAllListeners('connection.update');
+        this.sock.ev.removeAllListeners('messages.upsert');
+        this.sock.end(undefined);
+      } catch { /* ignore cleanup errors */ }
+      this.sock = null;
+    }
 
     try {
       const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
@@ -46,6 +59,7 @@ export class WhatsAppChannel extends BaseChannel {
 
         if (connection === 'open') {
           this.qrCode = null;
+          this.reconnectAttempts = 0;
           const phone = this.sock?.user?.id?.split(':')[0] ?? '';
           this.emitStatus('connected', phone ? `+${phone}` : 'Conectado');
         }
@@ -55,11 +69,16 @@ export class WhatsAppChannel extends BaseChannel {
             ?.output?.statusCode;
           const loggedOut = statusCode === DisconnectReason.loggedOut;
 
-          if (!this.intentionalDisconnect && !loggedOut) {
-            this.emitStatus('reconnecting', 'Reconectando...');
-            setTimeout(() => this.connect(config), 3000);
+          if (!this.intentionalDisconnect && !loggedOut && this.reconnectAttempts < this.maxReconnects) {
+            this.reconnectAttempts++;
+            this.emitStatus('reconnecting', `Reconectando (${this.reconnectAttempts}/${this.maxReconnects})...`);
+            setTimeout(() => this.connect(config), 3000 * this.reconnectAttempts);
           } else {
-            this.emitStatus('idle');
+            if (this.reconnectAttempts >= this.maxReconnects) {
+              this.emitStatus('error', undefined, 'Máximo de tentativas de reconexão atingido.');
+            } else {
+              this.emitStatus('idle');
+            }
           }
         }
       });

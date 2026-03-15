@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/services/session.service';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
+import { withRequestLog } from '@/lib/request-logger';
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -11,7 +12,7 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
  * POST /api/auth/login
  * Credential-based login. Returns a session token.
  */
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
@@ -142,3 +143,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(_POST);

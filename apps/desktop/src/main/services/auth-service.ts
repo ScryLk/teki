@@ -1,5 +1,6 @@
 import { BrowserWindow, shell } from 'electron';
 import settingsStore from './settings-store';
+import { safeSend } from '../utils/safe-ipc';
 
 const API_BASE =
   process.env.TEKI_API_URL ||
@@ -74,7 +75,7 @@ export async function startDeviceFlow(
             await saveAuth(pollData.apiKey);
           }
 
-          mainWindow.webContents.send('auth:device:status', {
+          safeSend(mainWindow, 'auth:device:status', {
             status: 'authorized',
             email: settingsStore.get('authEmail' as never),
             name: settingsStore.get('authName' as never),
@@ -84,7 +85,7 @@ export async function startDeviceFlow(
         case 'expired':
         case 'denied': {
           cancelDeviceFlow();
-          mainWindow.webContents.send('auth:device:status', {
+          safeSend(mainWindow, 'auth:device:status', {
             status: pollData.status,
           });
           break;
@@ -158,7 +159,7 @@ async function saveAuth(apiKey: string): Promise<boolean> {
       throw new Error('API key invalida ou expirada');
     }
 
-    const profile: UserProfile = await res.json();
+    const profile = await res.json();
 
     settingsStore.set('authApiKey' as never, apiKey as never);
     settingsStore.set('authEmail' as never, profile.email as never);
@@ -167,6 +168,10 @@ async function saveAuth(apiKey: string): Promise<boolean> {
       (profile.displayName || profile.firstName) as never,
     );
     settingsStore.set('authAuthenticatedAt' as never, new Date().toISOString() as never);
+
+    // Save plan from first tenant membership
+    const plan = profile.tenants?.[0]?.plan ?? null;
+    settingsStore.set('authPlan' as never, plan as never);
 
     return true;
   } catch {
@@ -179,6 +184,7 @@ export function logout(): void {
   settingsStore.set('authEmail' as never, null as never);
   settingsStore.set('authName' as never, null as never);
   settingsStore.set('authAuthenticatedAt' as never, null as never);
+  settingsStore.set('authPlan' as never, null as never);
 }
 
 export async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
@@ -201,8 +207,8 @@ export async function deleteAccount(): Promise<{ success: boolean; error?: strin
     // Clear local auth data after successful deletion
     logout();
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message };
+  } catch {
+    return { success: false, error: 'Sem conexao com o servidor. Tente novamente.' };
   }
 }
 
@@ -226,8 +232,8 @@ export async function registerAccount(data: {
     }
 
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message };
+  } catch {
+    return { success: false, error: 'Sem conexao com o servidor. Tente novamente.' };
   }
 }
 
@@ -235,11 +241,12 @@ export async function getAuthStatus(): Promise<{
   isAuthenticated: boolean;
   email: string | null;
   name: string | null;
+  plan: string | null;
 }> {
   const apiKey = settingsStore.get('authApiKey' as never) as string | null;
 
   if (!apiKey) {
-    return { isAuthenticated: false, email: null, name: null };
+    return { isAuthenticated: false, email: null, name: null, plan: null };
   }
 
   // Verify key is still valid
@@ -249,22 +256,89 @@ export async function getAuthStatus(): Promise<{
     });
 
     if (res.ok) {
+      // Refresh plan from API response (handles users who logged in before plan was saved)
+      const profile = await res.json();
+      const plan = profile.tenants?.[0]?.plan ?? null;
+      if (plan) {
+        settingsStore.set('authPlan' as never, plan as never);
+      }
+
       return {
         isAuthenticated: true,
         email: settingsStore.get('authEmail' as never) as string | null,
         name: settingsStore.get('authName' as never) as string | null,
+        plan: plan ?? (settingsStore.get('authPlan' as never) as string | null),
       };
     }
 
     // Key revoked/expired — clear auth
     logout();
-    return { isAuthenticated: false, email: null, name: null };
+    return { isAuthenticated: false, email: null, name: null, plan: null };
   } catch {
     // Network error — assume still authenticated (offline mode)
     return {
       isAuthenticated: true,
       email: settingsStore.get('authEmail' as never) as string | null,
       name: settingsStore.get('authName' as never) as string | null,
+      plan: settingsStore.get('authPlan' as never) as string | null,
     };
   }
+}
+
+// ─── Teki Platform API Keys ─────────────────────────────────
+
+function getAuthHeaders(): Record<string, string> {
+  const apiKey = settingsStore.get('authApiKey' as never) as string | null;
+  if (!apiKey) throw new Error('Não autenticado');
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+export async function listApiKeys() {
+  const res = await fetch(`${API_BASE}/api/v1/api-keys`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? 'Erro ao listar API keys');
+  }
+  return res.json();
+}
+
+export async function createPlatformApiKey(data: { name: string; type: 'LIVE' | 'TEST'; expiresAt?: string }) {
+  const res = await fetch(`${API_BASE}/api/v1/api-keys`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? 'Erro ao criar API key');
+  }
+  return res.json();
+}
+
+export async function revokePlatformApiKey(id: string) {
+  const res = await fetch(`${API_BASE}/api/v1/api-keys/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? 'Erro ao revogar API key');
+  }
+  return { success: true };
+}
+
+export async function getApiKeyUsage(id: string) {
+  const res = await fetch(`${API_BASE}/api/v1/api-keys/${id}/usage`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? 'Erro ao buscar uso da API key');
+  }
+  return res.json();
 }

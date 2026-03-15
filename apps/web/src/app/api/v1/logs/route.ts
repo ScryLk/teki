@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
 import type { DataAccessAction, DataCategory } from '@teki/shared';
+import { withRequestLog } from '@/lib/request-logger';
 
 const VALID_ACTIONS: DataAccessAction[] = ['view', 'export', 'modify', 'delete', 'process', 'share'];
 
@@ -10,7 +11,7 @@ const VALID_ACTIONS: DataAccessAction[] = ['view', 'export', 'modify', 'delete',
  * Receives action logs from the desktop app.
  * Expects: { action, event, details? }
  */
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { user, authMethod } = await requireAuth(req);
 
@@ -61,3 +62,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(_POST);

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Política de Privacidade — Teki</title>
+    <meta name="description" content="Política de privacidade do Teki. Saiba como tratamos seus dados." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg-primary: #07090b; --bg-secondary: #0c1014; --bg-surface: #111519;
+            --text-primary: #e8e6e1; --text-secondary: #9ca3af; --text-muted: #5a6270;
+            --accent: #2A8F9D; --accent-light: #34D8C0;
+            --border: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --radius-md: 8px; --radius-lg: 12px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); }
+        ::selection { background: rgba(42,143,157,0.30); color: var(--text-primary); }
+        .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+        .page-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 56px;
+            display: flex; align-items: center; background: rgba(7,9,11,0.85);
+            backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 24px;
+        }
+        .page-nav .nav-inner { max-width: 760px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 17px; }
+        .nav-back { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent-light); }
+
+        .page-content { padding: 120px 0 80px; }
+        .page-title { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.5rem); font-weight: 800; margin-bottom: 8px; letter-spacing: -0.03em; }
+        .page-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 48px; }
+
+        /* LEGAL TEXT */
+        .legal h2 { font-size: 18px; font-weight: 700; margin: 40px 0 14px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .legal h2:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+        .legal p { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px; }
+        .legal ul { list-style: none; margin: 8px 0 16px; }
+        .legal ul li { font-size: 14px; color: var(--text-secondary); line-height: 1.7; padding-left: 20px; position: relative; margin-bottom: 6px; }
+        .legal ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .legal a { color: var(--accent-light); text-decoration: none; }
+        .legal a:hover { text-decoration: underline; }
+
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; margin-top: 40px; }
+        .footer-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .footer-copy { font-size: 13px; color: var(--text-muted); }
+        .footer-legal { display: flex; gap: 20px; }
+        .footer-legal a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .footer-legal a:hover { color: var(--text-secondary); }
+
+        @media (max-width: 640px) {
+            .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="page-nav">
+        <div class="nav-inner">
+            <a href="page.html" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <circle cx="12" cy="16" r="3" fill="#e8e6e1" /><circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                    <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" /><circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                    <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round" fill="none" />
+                </svg>
+                Teki
+            </a>
+            <a href="page.html" class="nav-back">&larr; Voltar ao site</a>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <h1 class="page-title">Política de Privacidade</h1>
+            <p class="page-meta">Última atualização: 1 de março de 2026</p>
+
+            <div class="legal">
+                <h2>1. Introdução</h2>
+                <p>A Teki ("nós", "nosso") valoriza a privacidade dos nossos usuários. Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos suas informações pessoais quando você utiliza nossos serviços, incluindo o site, aplicativo desktop e integrações com canais de comunicação.</p>
+
+                <h2>2. Dados que coletamos</h2>
+                <p>Podemos coletar os seguintes tipos de dados:</p>
+                <ul>
+                    <li><strong>Dados de cadastro:</strong> nome, email, senha (hash criptográfico)</li>
+                    <li><strong>Dados de uso:</strong> logs de acesso, funcionalidades utilizadas, tempo de sessão</li>
+                    <li><strong>Dados de comunicação:</strong> mensagens enviadas através dos canais integrados para processamento pela IA</li>
+                    <li><strong>Dados técnicos:</strong> endereço IP, tipo de navegador, sistema operacional, identificadores de dispositivo</li>
+                    <li><strong>Dados de pagamento:</strong> processados por nossos parceiros de pagamento (não armazenamos dados de cartão)</li>
+                </ul>
+
+                <h2>3. Como usamos seus dados</h2>
+                <p>Utilizamos seus dados para:</p>
+                <ul>
+                    <li>Fornecer, manter e melhorar nossos serviços</li>
+                    <li>Processar mensagens de suporte técnico com inteligência artificial</li>
+                    <li>Enviar notificações relacionadas ao serviço (verificação de conta, alertas)</li>
+                    <li>Detectar e prevenir fraudes e abusos</li>
+                    <li>Cumprir obrigações legais e regulatórias</li>
+                </ul>
+
+                <h2>4. Compartilhamento de dados</h2>
+                <p>Não vendemos seus dados pessoais. Podemos compartilhar dados com:</p>
+                <ul>
+                    <li><strong>Provedores de IA:</strong> para processamento de linguagem natural (dados são anonimizados quando possível)</li>
+                    <li><strong>Provedores de infraestrutura:</strong> para hospedagem e armazenamento seguro</li>
+                    <li><strong>Processadores de pagamento:</strong> para gestão de cobranças e assinaturas</li>
+                    <li><strong>Autoridades legais:</strong> quando exigido por lei ou ordem judicial</li>
+                </ul>
+
+                <h2>5. Segurança dos dados</h2>
+                <p>Implementamos medidas técnicas e organizacionais para proteger seus dados, incluindo:</p>
+                <ul>
+                    <li>Criptografia em trânsito (TLS) e em repouso</li>
+                    <li>Autenticação segura com tokens e hashing de senhas (bcrypt)</li>
+                    <li>Monitoramento contínuo de segurança e logs de acesso</li>
+                    <li>Controle de acesso baseado em função (RBAC)</li>
+                </ul>
+
+                <h2>6. Retenção de dados</h2>
+                <p>Mantemos seus dados enquanto sua conta estiver ativa ou conforme necessário para fornecer nossos serviços. Ao solicitar exclusão da conta, seus dados pessoais serão anonimizados em conformidade com a LGPD, mantendo apenas dados agregados para fins estatísticos.</p>
+
+                <h2>7. Seus direitos</h2>
+                <p>Em conformidade com a LGPD, você tem direito a:</p>
+                <ul>
+                    <li>Acessar seus dados pessoais</li>
+                    <li>Corrigir dados incompletos ou desatualizados</li>
+                    <li>Solicitar a exclusão dos seus dados</li>
+                    <li>Revogar consentimento a qualquer momento</li>
+                    <li>Solicitar portabilidade dos dados</li>
+                    <li>Ser informado sobre o compartilhamento dos seus dados</li>
+                </ul>
+                <p>Para exercer seus direitos, entre em contato através do email <a href="mailto:privacidade@teki.com.br">privacidade@teki.com.br</a> ou consulte nossa <a href="lgpd.html">página sobre LGPD</a>.</p>
+
+                <h2>8. Cookies</h2>
+                <p>Utilizamos cookies essenciais para o funcionamento do serviço (autenticação, preferências). Não utilizamos cookies de rastreamento para publicidade. Você pode configurar seu navegador para bloquear cookies, mas algumas funcionalidades podem ser afetadas.</p>
+
+                <h2>9. Alterações nesta política</h2>
+                <p>Podemos atualizar esta política periodicamente. Notificaremos sobre mudanças significativas por email ou através do serviço. O uso continuado após as alterações constitui aceitação da política atualizada.</p>
+
+                <h2>10. Contato</h2>
+                <p>Para dúvidas sobre esta política de privacidade:</p>
+                <ul>
+                    <li>Email: <a href="mailto:privacidade@teki.com.br">privacidade@teki.com.br</a></li>
+                    <li>Página de contato: <a href="contato.html">contato.html</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span class="footer-copy">&copy; 2026 Teki &mdash; Todos os direitos reservados</span>
+            <div class="footer-legal">
+                <a href="privacidade.html">Privacidade</a>
+                <a href="termos.html">Termos de Uso</a>
+                <a href="lgpd.html">LGPD</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

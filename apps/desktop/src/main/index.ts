@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, globalShortcut } from 'electron';
+import { app, BrowserWindow, desktopCapturer, session, shell, globalShortcut } from 'electron';
 import { join } from 'path';
 const is = { get dev() { return !app.isPackaged; } };
 
@@ -12,6 +12,8 @@ import { createFloatingWindow, toggleFloating, startRecording, destroyFloating }
 import { registerFloatingIPC } from './floating-ipc';
 import { setupConnectionHealth } from './connection/setupConnectionHealth';
 import { setupKnowledgeBase } from './services/kb-ipc';
+import { setupTranscriptionIPC } from './transcription-ipc';
+import { safeSend, markRendererAlive, markRendererDead } from './utils/safe-ipc';
 import { startLogService, stopLogService, logAction, setAuthExpiredCallback } from './services/log-service';
 // import { startPolling, stopPolling } from './services/window-detector';
 
@@ -34,6 +36,11 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
     },
   });
+
+  // Track renderer lifecycle for safe IPC
+  window.webContents.on('did-finish-load', () => markRendererAlive(window.webContents));
+  window.webContents.on('render-process-gone', () => markRendererDead(window.webContents));
+  window.webContents.on('destroyed', () => markRendererDead(window.webContents));
 
   // Show window when ready to avoid visual flash
   window.on('ready-to-show', () => {
@@ -65,7 +72,7 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', () => {
     // Someone tried to run a second instance — focus the existing window
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) {
         mainWindow.restore();
       }
@@ -78,11 +85,19 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     mainWindow = createWindow();
 
+    // Allow renderer to capture desktop audio via getDisplayMedia().
+    // This avoids the getUserMedia+chromeMediaSourceId crash (Chromium bad_message 263).
+    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+      const sources = await desktopCapturer.getSources({ types: ['screen'] });
+      callback({ video: sources[0], audio: 'loopback' });
+    });
+
     // Register IPC handlers
     registerIPCHandlers(mainWindow);
     registerOpenClawIPC(mainWindow);
     setupConnectionHealth(mainWindow);
     setupKnowledgeBase(mainWindow);
+    setupTranscriptionIPC(mainWindow);
 
     // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);
@@ -96,9 +111,7 @@ if (!gotTheLock) {
 
     // Handle auth expiration — notify renderer to redirect to login
     setAuthExpiredCallback(() => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('auth:expired');
-      }
+      safeSend(mainWindow, 'auth:expired', null);
     });
 
     // Create floating voice overlay

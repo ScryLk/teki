@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getModelById } from '@teki/shared';
 import { getProvider } from '@/lib/ai/router';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
+import { withRequestLog } from '@/lib/request-logger';
 import {
   checkMessageLimit,
   checkModelAccess,
   incrementUsage,
 } from '@/lib/plan-limits';
+import { logApiKeyUsage, estimateCost } from '@/lib/api-keys';
+import { checkRateLimit, PLAN_RPM } from '@/lib/rate-limiter';
 import { getUserProviderKeys } from '@/lib/provider-keys';
 import { searchWithExpansion, formatExpansionContext, buildExpansionMetadata } from '@/lib/kb/query-expansion';
 import { calculateConfidence, buildConfidenceMetadata } from '@/lib/kb/confidence-scorer';
@@ -17,9 +20,9 @@ import type { ProviderMessage } from '@/lib/ai/types';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
-    const { user } = await requireAuth(req);
+    const { user, authMethod, apiKeyId } = await requireAuth(req);
 
     const body = await req.json();
     const {
@@ -33,6 +36,21 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const modelId = requestedModel ?? 'gemini-flash';
+
+    // 0. Rate limit check for API key auth
+    if (authMethod === 'apikey' && apiKeyId) {
+      const rpm = PLAN_RPM[user.planId] ?? 20;
+      const { allowed, retryAfterMs } = checkRateLimit(apiKeyId, rpm, 60_000);
+      if (!allowed) {
+        return NextResponse.json(
+          { error: { code: 'RATE_LIMIT_EXCEEDED', message: `Limite de ${rpm} requisições por minuto atingido.` } },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(Math.ceil((retryAfterMs ?? 60_000) / 1000)) },
+          }
+        );
+      }
+    }
 
     // 1. Validate model exists
     const modelInfo = getModelById(modelId);
@@ -287,6 +305,21 @@ export async function POST(req: NextRequest) {
     // 13. Increment usage
     await incrementUsage(user.id, tokensIn, tokensOut, isByok);
 
+    // 13b. Log per-key usage (API key auth only)
+    if (authMethod === 'apikey' && apiKeyId) {
+      logApiKeyUsage({
+        apiKeyId,
+        userId: user.id,
+        endpoint: '/api/v1/chat',
+        method: 'POST',
+        tokensIn,
+        tokensOut,
+        costUsd: estimateCost(modelId, tokensIn, tokensOut),
+        latencyMs,
+        modelId,
+      });
+    }
+
     // 14. Dispatch webhook (fire-and-forget)
     dispatchWebhook(user.id, 'message.created', {
       conversationId: convId,
@@ -323,3 +356,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(_POST);

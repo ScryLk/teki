@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { createApiKey } from '@/lib/api-keys';
+import { getPlan } from '@/lib/plans';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
+    const period = new Date().toISOString().slice(0, 7);
 
     const keys = await prisma.apiKey.findMany({
       where: { userId: user.id },
@@ -18,11 +20,34 @@ export async function GET(req: NextRequest) {
         expiresAt: true,
         isRevoked: true,
         createdAt: true,
+        usageLogs: {
+          where: { period },
+          select: { tokensIn: true, tokensOut: true, costUsd: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(keys);
+    const plan = getPlan(user.planId);
+
+    const result = keys.map((k) => ({
+      id: k.id,
+      keyPrefix: k.keyPrefix,
+      name: k.name,
+      type: k.type,
+      lastUsedAt: k.lastUsedAt,
+      expiresAt: k.expiresAt,
+      isRevoked: k.isRevoked,
+      createdAt: k.createdAt,
+      monthlyUsage: {
+        requests: k.usageLogs.length,
+        tokensIn: k.usageLogs.reduce((s, l) => s + l.tokensIn, 0),
+        tokensOut: k.usageLogs.reduce((s, l) => s + l.tokensOut, 0),
+        costUsd: k.usageLogs.reduce((s, l) => s + Number(l.costUsd), 0),
+      },
+    }));
+
+    return NextResponse.json({ keys: result, planLimit: plan.features.apiKeys });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
@@ -34,7 +59,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
-    const { name, type = 'LIVE' } = await req.json();
+    const { name, type = 'LIVE', expiresAt } = await req.json();
 
     if (!name) {
       return NextResponse.json(
@@ -50,12 +75,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await createApiKey(user.id, name, type);
+    const expiryDate = expiresAt ? new Date(expiresAt) : undefined;
+
+    const result = await createApiKey(user.id, name, type, user.planId, expiryDate);
 
     return NextResponse.json(
       {
         id: result.id,
-        key: result.key, // Only shown once
+        key: result.key,
         message: 'Guarde esta chave — ela não será exibida novamente.',
       },
       { status: 201 }
@@ -64,7 +91,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
     }
-    if (error instanceof Error && error.message.includes('Limite')) {
+    if (error instanceof Error && (error.message.includes('Limite') || error.message.includes('plano'))) {
       return NextResponse.json(
         { error: { code: 'PLAN_LIMIT_REACHED', message: error.message } },
         { status: 403 }

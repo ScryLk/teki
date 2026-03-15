@@ -4,6 +4,7 @@ import { checkDocumentLimit } from '@/lib/plan-limits';
 import { prisma } from '@/lib/prisma';
 import { uploadFile } from '@/lib/storage';
 import { processDocument } from '@/lib/kb/process-document';
+import { withRequestLog } from '@/lib/request-logger';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
     const agentId = req.nextUrl.searchParams.get('agentId');
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
@@ -128,3 +129,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog(_GET);
+export const POST = withRequestLog(_POST);

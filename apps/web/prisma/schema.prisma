@@ -173,6 +173,7 @@ model User {
   agents           Agent[]
   channels         Channel[]
   apiKeys          ApiKey[]
+  apiKeyUsageLogs  ApiKeyUsageLog[]
   usageCounters    UsageCounter[]
   providerKeys     ProviderKey[]
   webhookEndpoints WebhookEndpoint[]
@@ -723,7 +724,8 @@ model ApiKey {
   isRevoked  Boolean    @default(false)
   createdAt  DateTime   @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageLogs ApiKeyUsageLog[]
 
   @@index([keyHash])
   @@index([userId])
@@ -732,6 +734,30 @@ model ApiKey {
 enum ApiKeyType {
   LIVE
   TEST
+}
+
+model ApiKeyUsageLog {
+  id         String   @id @default(cuid())
+  apiKeyId   String
+  userId     String   @db.Uuid
+  endpoint   String   @db.VarChar(200)
+  method     String   @db.VarChar(10)
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  costUsd    Decimal  @default(0) @db.Decimal(10, 8)
+  latencyMs  Int      @default(0)
+  modelId    String?  @db.VarChar(100)
+  statusCode Int      @default(200)
+  period     String   @db.VarChar(7)
+  createdAt  DateTime @default(now())
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId, createdAt(sort: Desc)])
+  @@index([userId, period])
+  @@index([period, createdAt(sort: Desc)])
+  @@map("api_key_usage_logs")
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1506,6 +1532,25 @@ model WebhookLog {
   endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
 
   @@index([endpointId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HTTP REQUEST LOGS (Automatic API request tracking)
+// ═══════════════════════════════════════════════════════════════
+
+model HttpRequestLog {
+  id         String   @id @default(cuid())
+  method     String   @db.VarChar(10)
+  path       String
+  statusCode Int
+  latencyMs  Int
+  ip         String?
+  userAgent  String?  @db.Text
+  userId     String?  @db.Uuid
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════

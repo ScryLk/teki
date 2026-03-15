@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Database,
+  KeyRound,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -52,6 +53,7 @@ const NAV_SECTIONS = [
       { label: 'Analytics', href: '/analytics', icon: BarChart3 },
       { label: 'Query Expansion', href: '/query-expansion', icon: Sparkles },
       { label: 'Feedback Negativo', href: '/feedback', icon: MessageSquareWarning },
+      { label: 'Uso de API Keys', href: '/api-usage', icon: KeyRound },
     ],
   },
   {

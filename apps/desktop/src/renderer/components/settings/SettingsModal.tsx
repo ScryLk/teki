@@ -3,6 +3,7 @@ import { useAppStore } from '@/stores/app-store';
 import { ALL_MODELS } from '@teki/shared';
 import type { AIModel, AiProviderId, ChannelInfo, OpenClawChannelId, ChannelConfig, ChannelAuthType } from '@teki/shared';
 import { ApiKeyInput, AllApiKeys } from './ApiKeyInput';
+import { ApiKeysTab } from './ApiKeysTab';
 import { useOpenClaw } from '@/hooks/useOpenClaw';
 
 // ─── Provider metadata (for ModelSelect dots) ─────────────────────────────────
@@ -679,10 +680,19 @@ const SimpleSelect: React.FC<{ value: string }> = ({ value }) => (
 
 // ─── Account Tab ─────────────────────────────────────────────────────────────
 
+const PLAN_LABELS: Record<string, { label: string; color: string }> = {
+  FREE: { label: 'Free', color: '#71717a' },
+  STARTER: { label: 'Starter', color: '#2A8F9D' },
+  PRO: { label: 'Pro', color: '#8b5cf6' },
+  BUSINESS: { label: 'Business', color: '#f59e0b' },
+  ENTERPRISE: { label: 'Enterprise', color: '#ef4444' },
+};
+
 const AccountTab: React.FC = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const storedName = useAppStore((s) => s.userName);
   const storedEmail = useAppStore((s) => s.userEmail);
+  const userPlan = useAppStore((s) => s.userPlan);
   const [name, setName] = useState(storedName ?? '');
   const [email, setEmail] = useState(storedEmail ?? '');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -717,7 +727,20 @@ const AccountTab: React.FC = () => {
             </div>
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-base font-bold text-[#fafafa] leading-tight">{name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-base font-bold text-[#fafafa] leading-tight">{name}</p>
+                {userPlan && (() => {
+                  const info = PLAN_LABELS[userPlan] ?? { label: userPlan, color: '#71717a' };
+                  return (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                      style={{ backgroundColor: `${info.color}20`, color: info.color, border: `1px solid ${info.color}40` }}
+                    >
+                      {info.label}
+                    </span>
+                  );
+                })()}
+              </div>
               <p className="text-[13px] text-[#71717a] mt-0.5">{email}</p>
             </div>
             {/* Edit btn */}
@@ -1327,7 +1350,7 @@ const HotkeyRow: React.FC<{ keys: string[]; description: string }> = ({ keys, de
 
 // ─── Tab types ───────────────────────────────────────────────────────────────
 
-type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'geral' | 'atalhos';
+type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'apikeys' | 'geral' | 'atalhos';
 type OpenClawView =
   | { type: 'list' }
   | { type: 'add-step1' }
@@ -1414,6 +1437,9 @@ const SettingsModal: React.FC = () => {
             <SidebarTab active={activeTab === 'conta'} onClick={() => handleTabChange('conta')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               label="Conta" />
+            <SidebarTab active={activeTab === 'apikeys'} onClick={() => handleTabChange('apikeys')}
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>}
+              label="API Keys" />
             <SidebarTab active={activeTab === 'atalhos'} onClick={() => handleTabChange('atalhos')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>}
               label="Atalhos" />
@@ -1481,6 +1507,9 @@ const SettingsModal: React.FC = () => {
             {activeTab === 'conta' && (
               <AccountTab />
             )}
+
+            {/* ── API Keys tab ── */}
+            {activeTab === 'apikeys' && <ApiKeysTab />}
 
             {/* ── Geral tab ── */}
 

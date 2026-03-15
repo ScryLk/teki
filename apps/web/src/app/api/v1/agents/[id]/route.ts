@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { checkModelAccess } from '@/lib/plan-limits';
 import { prisma } from '@/lib/prisma';
+import { withRequestLog } from '@/lib/request-logger';
 
-export async function GET(
+async function _GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -32,7 +33,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+async function _PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -81,7 +82,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+async function _DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -114,3 +115,7 @@ export async function DELETE(
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog(_GET);
+export const PATCH = withRequestLog(_PATCH);
+export const DELETE = withRequestLog(_DELETE);

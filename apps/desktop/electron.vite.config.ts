@@ -19,7 +19,7 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: ['bufferutil', 'utf-8-validate', 'better-sqlite3', 'pg', 'pg-native', 'pdf-parse', 'mammoth'],
+        external: ['bufferutil', 'utf-8-validate', 'better-sqlite3', 'pg', 'pg-native', 'pdf-parse', 'mammoth', 'ws'],
       },
     },
   },

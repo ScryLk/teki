@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Termos de Uso — Teki</title>
+    <meta name="description" content="Termos de uso do Teki. Leia antes de utilizar nossos serviços." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg-primary: #07090b; --bg-secondary: #0c1014; --bg-surface: #111519;
+            --text-primary: #e8e6e1; --text-secondary: #9ca3af; --text-muted: #5a6270;
+            --accent: #2A8F9D; --accent-light: #34D8C0;
+            --border: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --radius-md: 8px; --radius-lg: 12px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); }
+        ::selection { background: rgba(42,143,157,0.30); color: var(--text-primary); }
+        .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+        .page-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 56px;
+            display: flex; align-items: center; background: rgba(7,9,11,0.85);
+            backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 24px;
+        }
+        .page-nav .nav-inner { max-width: 760px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 17px; }
+        .nav-back { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent-light); }
+
+        .page-content { padding: 120px 0 80px; }
+        .page-title { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.5rem); font-weight: 800; margin-bottom: 8px; letter-spacing: -0.03em; }
+        .page-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 48px; }
+
+        .legal h2 { font-size: 18px; font-weight: 700; margin: 40px 0 14px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .legal h2:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+        .legal p { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px; }
+        .legal ul { list-style: none; margin: 8px 0 16px; }
+        .legal ul li { font-size: 14px; color: var(--text-secondary); line-height: 1.7; padding-left: 20px; position: relative; margin-bottom: 6px; }
+        .legal ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .legal a { color: var(--accent-light); text-decoration: none; }
+        .legal a:hover { text-decoration: underline; }
+
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; margin-top: 40px; }
+        .footer-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .footer-copy { font-size: 13px; color: var(--text-muted); }
+        .footer-legal { display: flex; gap: 20px; }
+        .footer-legal a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .footer-legal a:hover { color: var(--text-secondary); }
+
+        @media (max-width: 640px) {
+            .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="page-nav">
+        <div class="nav-inner">
+            <a href="page.html" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <circle cx="12" cy="16" r="3" fill="#e8e6e1" /><circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                    <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" /><circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                    <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round" fill="none" />
+                </svg>
+                Teki
+            </a>
+            <a href="page.html" class="nav-back">&larr; Voltar ao site</a>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <h1 class="page-title">Termos de Uso</h1>
+            <p class="page-meta">Última atualização: 1 de março de 2026</p>
+
+            <div class="legal">
+                <h2>1. Aceitação dos termos</h2>
+                <p>Ao acessar ou utilizar os serviços da Teki, você concorda com estes Termos de Uso. Se você não concorda com algum dos termos, não utilize nossos serviços.</p>
+
+                <h2>2. Descrição do serviço</h2>
+                <p>O Teki é uma plataforma de suporte técnico com inteligência artificial que oferece:</p>
+                <ul>
+                    <li>Atendimento automatizado por IA em canais de comunicação (Slack, WhatsApp, Discord, Telegram, Teams)</li>
+                    <li>Dashboard web e aplicativo desktop para gestão de suporte</li>
+                    <li>API REST para integrações personalizadas</li>
+                    <li>Monitoramento de conexão e alertas</li>
+                </ul>
+
+                <h2>3. Conta de usuário</h2>
+                <p>Para utilizar o Teki, você deve criar uma conta fornecendo informações verdadeiras e atualizadas. Você é responsável por:</p>
+                <ul>
+                    <li>Manter a confidencialidade da sua senha e credenciais de acesso</li>
+                    <li>Todas as atividades realizadas com sua conta</li>
+                    <li>Notificar-nos imediatamente sobre qualquer uso não autorizado</li>
+                </ul>
+
+                <h2>4. Uso aceitável</h2>
+                <p>Ao utilizar nossos serviços, você concorda em não:</p>
+                <ul>
+                    <li>Violar leis ou regulamentações aplicáveis</li>
+                    <li>Enviar conteúdo ilegal, abusivo, difamatório ou que viole direitos de terceiros</li>
+                    <li>Tentar acessar sistemas ou dados sem autorização</li>
+                    <li>Realizar engenharia reversa ou modificar nosso software</li>
+                    <li>Usar o serviço para enviar spam ou comunicações não solicitadas</li>
+                    <li>Sobrecarregar intencionalmente nossa infraestrutura</li>
+                </ul>
+
+                <h2>5. Propriedade intelectual</h2>
+                <p>O Teki, incluindo seu software, design, marcas e conteúdo, são propriedade da Teki ou de seus licenciadores. Você recebe uma licença limitada, não exclusiva e revogável para usar o serviço conforme estes termos.</p>
+                <p>Seus dados e conteúdo permanecem de sua propriedade. Ao enviá-los ao Teki, você nos concede uma licença limitada para processá-los conforme necessário para fornecer o serviço.</p>
+
+                <h2>6. Planos e pagamento</h2>
+                <ul>
+                    <li>Os planos e preços estão disponíveis em nosso site e podem ser alterados com aviso prévio de 30 dias</li>
+                    <li>A cobrança é feita antecipadamente no início de cada ciclo (mensal ou anual)</li>
+                    <li>Reembolsos são concedidos proporcionalmente em caso de cancelamento dentro dos primeiros 7 dias</li>
+                    <li>A falta de pagamento pode resultar na suspensão ou encerramento da conta</li>
+                </ul>
+
+                <h2>7. Disponibilidade do serviço</h2>
+                <p>Nos esforçamos para manter o Teki disponível 24/7, mas não garantimos disponibilidade ininterrupta. Podemos realizar manutenções programadas com aviso prévio. Consulte nossa <a href="status.html">página de status</a> para informações em tempo real.</p>
+
+                <h2>8. Limitação de responsabilidade</h2>
+                <p>O Teki é fornecido "como está". Não nos responsabilizamos por:</p>
+                <ul>
+                    <li>Respostas geradas pela IA que possam ser imprecisas ou incompletas</li>
+                    <li>Interrupções de serviço causadas por fatores externos</li>
+                    <li>Danos indiretos, incidentais ou consequenciais</li>
+                    <li>Perda de dados causada por falhas de terceiros</li>
+                </ul>
+
+                <h2>9. Encerramento</h2>
+                <p>Você pode encerrar sua conta a qualquer momento através das configurações ou entrando em contato conosco. Reservamo-nos o direito de suspender ou encerrar contas que violem estes termos, com notificação prévia quando possível.</p>
+
+                <h2>10. Legislação aplicável</h2>
+                <p>Estes termos são regidos pelas leis da República Federativa do Brasil. Eventuais litígios serão submetidos ao foro da comarca de São Paulo/SP.</p>
+
+                <h2>11. Contato</h2>
+                <p>Para dúvidas sobre estes termos de uso:</p>
+                <ul>
+                    <li>Email: <a href="mailto:legal@teki.com.br">legal@teki.com.br</a></li>
+                    <li>Página de contato: <a href="contato.html">contato.html</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span class="footer-copy">&copy; 2026 Teki &mdash; Todos os direitos reservados</span>
+            <div class="footer-legal">
+                <a href="privacidade.html">Privacidade</a>
+                <a href="termos.html">Termos de Uso</a>
+                <a href="lgpd.html">LGPD</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

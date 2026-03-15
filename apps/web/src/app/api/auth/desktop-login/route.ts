@@ -3,13 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { createApiKey } from '@/lib/api-keys';
 import bcrypt from 'bcryptjs';
 import { logDataAccess } from '@/lib/services/data-access-log.service';
+import { withRequestLog } from '@/lib/request-logger';
 
 /**
  * POST /api/auth/desktop-login
  * Direct email+password login for desktop app.
  * Returns an API key instead of a session cookie.
  */
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
@@ -67,8 +68,16 @@ export async function POST(req: NextRequest) {
       data: { failedAttempts: 0, lockedUntil: null },
     });
 
+    // Resolve user plan for API key limits
+    const membership = await prisma.tenantMember.findFirst({
+      where: { userId: user.id, status: 'ACTIVE' },
+      include: { tenant: { select: { plan: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    const planId = membership?.tenant.plan ?? 'FREE';
+
     // Create API key for desktop
-    const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE');
+    const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE', planId);
 
     const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
     const userAgent = req.headers.get('user-agent') ?? undefined;
@@ -90,12 +99,13 @@ export async function POST(req: NextRequest) {
       apiKey: key,
       email: user.email,
       name: user.displayName ?? user.firstName,
+      plan: planId,
     });
   } catch (error) {
     console.error('[desktop-login]', error);
-    if ((error as Error).message?.includes('Limite de 5')) {
+    if ((error as Error).message?.includes('Limite de') || (error as Error).message?.includes('não permite criar API Keys')) {
       return NextResponse.json(
-        { error: { code: 'LIMIT_REACHED', message: 'Limite de chaves ativas atingido.' } },
+        { error: { code: 'LIMIT_REACHED', message: (error as Error).message } },
         { status: 422 },
       );
     }
@@ -105,3 +115,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(_POST);

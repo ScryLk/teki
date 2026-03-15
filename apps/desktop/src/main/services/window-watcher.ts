@@ -2,6 +2,7 @@ import { desktopCapturer, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
 import type { WindowSource, WindowFrame } from '@teki/shared';
 import { logAction } from './log-service';
+import { safeSend } from '../utils/safe-ipc';
 
 let watchTimer: ReturnType<typeof setTimeout> | null = null;
 let watchedSourceId: string | null = null;
@@ -65,7 +66,7 @@ export function startWatching(
       if (!target) {
         const name = lastWindowName;
         stopWatching();
-        mainWindow.webContents.send(IPC_CHANNELS.WATCH_WINDOW_CLOSED, { sourceId });
+        safeSend(mainWindow, IPC_CHANNELS.WATCH_WINDOW_CLOSED, { sourceId });
         if (name) onClosedCallback?.(name);
         return;
       }
@@ -79,7 +80,7 @@ export function startWatching(
         timestamp: Date.now(),
       };
 
-      mainWindow.webContents.send(IPC_CHANNELS.WATCH_FRAME, frame);
+      safeSend(mainWindow, IPC_CHANNELS.WATCH_FRAME, frame);
     } catch {
       // Silently ignore transient capture errors
     }

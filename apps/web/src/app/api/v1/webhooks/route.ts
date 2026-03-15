@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { withRequestLog } from '@/lib/request-logger';
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function _POST(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
     const { url, events } = await req.json();
@@ -77,3 +78,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog(_GET);
+export const POST = withRequestLog(_POST);

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { withRequestLog } from '@/lib/request-logger';
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   try {
     const { user } = await requireAuth(req);
 
@@ -35,3 +36,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR' } }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog(_GET);

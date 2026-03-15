@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@teki/shared';
 import type { ActiveWindowInfo } from '@teki/shared';
+import { safeSend } from '../utils/safe-ipc';
 
 const POLL_INTERVAL = 2000;
 
@@ -134,9 +135,7 @@ export function startPolling(mainWindow: BrowserWindow): void {
       if (info.title !== lastWindowTitle) {
         lastWindowTitle = info.title;
 
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send(IPC_CHANNELS.WINDOW_ACTIVE, info);
-        }
+        safeSend(mainWindow, IPC_CHANNELS.WINDOW_ACTIVE, info);
       }
     } catch {
       // Silently ignore detection errors

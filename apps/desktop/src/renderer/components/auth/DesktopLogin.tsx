@@ -30,10 +30,11 @@ const DesktopLogin: React.FC = () => {
       status: string;
       email?: string;
       name?: string;
+      plan?: string;
     }) => {
       if (data.status === 'authorized') {
         setLogoHappy(true);
-        setTimeout(() => setAuth(true, data.email || null, data.name || null), 600);
+        setTimeout(() => setAuth(true, data.email || null, data.name || null, data.plan || null), 600);
       } else if (data.status === 'expired') {
         setError('Código expirado. Tente novamente.');
         setAuthState('idle');
@@ -73,7 +74,7 @@ const DesktopLogin: React.FC = () => {
       if (result.success) {
         setLogoHappy(true);
         const status = await window.tekiAPI.getAuthStatus();
-        setTimeout(() => setAuth(true, status.email, status.name), 600);
+        setTimeout(() => setAuth(true, status.email, status.name, status.plan), 600);
       } else {
         setError(result.error || 'Email ou senha incorretos.');
       }
@@ -148,7 +149,7 @@ const DesktopLogin: React.FC = () => {
       if (success) {
         setLogoHappy(true);
         const status = await window.tekiAPI.getAuthStatus();
-        setTimeout(() => setAuth(true, status.email, status.name), 600);
+        setTimeout(() => setAuth(true, status.email, status.name, status.plan), 600);
       } else {
         setError('API key inválida. Verifique e tente novamente.');
       }

@@ -46,10 +46,10 @@ export async function createBilling(params: CreateBillingParams) {
   }
 
   return {
-    billingId: response.data.id,
-    checkoutUrl: response.data.url,
-    amount: response.data.amount,
-    status: response.data.status,
+    billingId: response.data!.id,
+    checkoutUrl: response.data!.url,
+    amount: response.data!.amount,
+    status: response.data!.status,
   };
 }
 

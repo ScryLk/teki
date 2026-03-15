@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const encoder = new TextEncoder();
 
+  let cleanupFn: (() => void) | null = null;
+
   const stream = new ReadableStream({
     async start(controller) {
       const sendEvent = (data: object) => {
@@ -53,16 +55,18 @@ export async function GET() {
       // Poll every 10 seconds
       const interval = setInterval(poll, 10_000);
 
-      // Clean up when client disconnects
-      const cleanup = () => {
+      cleanupFn = () => {
         clearInterval(interval);
-        controller.close();
+        try { controller.close(); } catch {}
       };
 
-      // Handle abort
+      // Max 5 minutes
       setTimeout(() => {
-        cleanup();
-      }, 5 * 60 * 1000); // Max 5 minutes
+        cleanupFn?.();
+      }, 5 * 60 * 1000);
+    },
+    cancel() {
+      cleanupFn?.();
     },
   });
 

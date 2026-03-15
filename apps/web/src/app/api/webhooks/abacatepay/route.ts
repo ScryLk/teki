@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       await prisma.planHistory.create({
         data: {
           userId: ownerMember.userId,
-          fromPlan: ownerMember.user.planId,
+          fromPlan: tenant.plan,
           toPlan: plan,
           reason: 'upgrade',
           amount: billingData.amount ? billingData.amount / 100 : null,

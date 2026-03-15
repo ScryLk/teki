@@ -4,6 +4,40 @@ import ChatInput from './ChatInput';
 import { useChat } from '@/hooks/useChat';
 import { useAppStore } from '@/stores/app-store';
 import { AVAILABLE_MODELS } from '@/services/ai-service';
+import WindowPicker from '@/components/transcription/WindowPicker';
+import TranscriptionPanel from '@/components/transcription/TranscriptionPanel';
+import { useTranscription } from '@/hooks/useTranscription';
+import { useTranscriptionStore } from '@/stores/transcription-store';
+
+type ChatTab = 'chat' | 'transcription';
+
+const TranscriptionError: React.FC = () => {
+  const error = useTranscriptionStore((s) => s.error);
+  const reset = useTranscriptionStore((s) => s.reset);
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-red-400">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+      </div>
+      <h3 className="text-sm font-semibold text-text-primary mb-1">
+        Erro na transcrição
+      </h3>
+      <p className="text-xs text-text-muted mb-4 max-w-xs">
+        {error || 'Não foi possível iniciar a transcrição. Verifique se a chave da API Gemini está configurada em Configurações.'}
+      </p>
+      <button
+        onClick={reset}
+        className="px-4 py-2 rounded-lg text-xs font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  );
+};
 
 const QUICK_SUGGESTIONS = [
   'Excel nao abre apos atualizacao do Windows',
@@ -15,14 +49,21 @@ const QUICK_SUGGESTIONS = [
 const ChatPanel: React.FC = () => {
   const selectedModel = useAppStore((s) => s.selectedModel);
   const setSelectedModel = useAppStore((s) => s.setSelectedModel);
+  const userPlan = useAppStore((s) => s.userPlan);
   const { messages, isLoading, error, sendMessage, clearChat } =
     useChat(selectedModel);
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [attachedMime, setAttachedMime] = useState<string>('image/png');
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ChatTab>('chat');
   const scrollRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const transcriptionStatus = useTranscriptionStore((s) => s.status);
+  const { start: startTranscription, setSelectedSource } = useTranscription();
+
+  const isPro = userPlan && ['PRO', 'ENTERPRISE'].includes(userPlan.toUpperCase());
 
   const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModel) ?? AVAILABLE_MODELS[0];
 
@@ -65,7 +106,40 @@ const ChatPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface flex-shrink-0">
         <div className="flex items-center gap-3">
-          {/* Model selector */}
+          {/* Tab selector */}
+          <div className="flex items-center bg-bg rounded-lg border border-border p-0.5">
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors
+                ${activeTab === 'chat'
+                  ? 'bg-surface text-text-primary shadow-sm'
+                  : 'text-text-muted hover:text-text-secondary'
+                }`}
+              title="Chat com IA"
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('transcription')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1
+                ${activeTab === 'transcription'
+                  ? 'bg-surface text-text-primary shadow-sm'
+                  : 'text-text-muted hover:text-text-secondary'
+                }`}
+              title="Transcrição de chamadas em tempo real"
+            >
+              Transcrição
+              {transcriptionStatus === 'recording' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              )}
+              {!isPro && (
+                <span className="text-[9px] px-1 py-0.5 rounded bg-accent/20 text-accent font-bold ml-0.5">PRO</span>
+              )}
+            </button>
+          </div>
+
+          {/* Model selector (only in chat tab) */}
+          {activeTab === 'chat' && (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
@@ -120,10 +194,11 @@ const ChatPanel: React.FC = () => {
               </div>
             )}
           </div>
+          )}
         </div>
 
-        {/* Clear chat button (only when there are messages) */}
-        {messages.length > 0 && (
+        {/* Clear chat button (only when there are messages in chat tab) */}
+        {activeTab === 'chat' && messages.length > 0 && (
           <button
             onClick={clearChat}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-md
@@ -150,85 +225,122 @@ const ChatPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Messages area */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-      >
-        {messages.length === 0 ? (
-          /* Empty state with quick suggestions */
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            {/* Teki icon large */}
-            <div className="w-16 h-16 rounded-2xl bg-accent-light flex items-center justify-center mb-4">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-accent"
-              >
-                <path d="M12 22c4.97 0 9-2.69 9-6v-2c0-3.31-4.03-6-9-6s-9 2.69-9 6v2c0 3.31 4.03 6 9 6z" />
-                <path d="M3 14V6l4 4" />
-                <path d="M21 14V6l-4 4" />
-                <circle cx="9" cy="14" r="1" fill="currentColor" />
-                <circle cx="15" cy="14" r="1" fill="currentColor" />
-                <path d="M12 17v-1" />
-              </svg>
-            </div>
-            <h3 className="text-base font-semibold text-text-primary mb-1">
-              Ola! Sou o Teki
-            </h3>
-            <p className="text-sm text-text-muted mb-6 max-w-xs">
-              Seu assistente de suporte tecnico com IA. Como posso ajudar?
-            </p>
+      {/* ── Chat tab content ── */}
+      {activeTab === 'chat' && (
+        <>
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+          >
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                <div className="w-16 h-16 rounded-2xl bg-accent-light flex items-center justify-center mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-accent"
+                  >
+                    <path d="M12 22c4.97 0 9-2.69 9-6v-2c0-3.31-4.03-6-9-6s-9 2.69-9 6v2c0 3.31 4.03 6 9 6z" />
+                    <path d="M3 14V6l4 4" />
+                    <path d="M21 14V6l-4 4" />
+                    <circle cx="9" cy="14" r="1" fill="currentColor" />
+                    <circle cx="15" cy="14" r="1" fill="currentColor" />
+                    <path d="M12 17v-1" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-text-primary mb-1">
+                  Ola! Sou o Teki
+                </h3>
+                <p className="text-sm text-text-muted mb-6 max-w-xs">
+                  Seu assistente de suporte tecnico com IA. Como posso ajudar?
+                </p>
 
-            <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
-              {QUICK_SUGGESTIONS.map((text) => (
-                <button
-                  key={text}
-                  onClick={() => handleQuickSuggestion(text)}
-                  className="text-left px-4 py-3 rounded-xl border border-border
-                             bg-surface text-sm text-text-secondary
-                             hover:bg-surface-hover hover:text-text-primary hover:border-accent/30
-                             transition-colors"
-                >
-                  {text}
-                </button>
-              ))}
-            </div>
+                <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
+                  {QUICK_SUGGESTIONS.map((text) => (
+                    <button
+                      key={text}
+                      onClick={() => handleQuickSuggestion(text)}
+                      className="text-left px-4 py-3 rounded-xl border border-border
+                                 bg-surface text-sm text-text-secondary
+                                 hover:bg-surface-hover hover:text-text-primary hover:border-accent/30
+                                 transition-colors"
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))
+            )}
           </div>
-        ) : (
-          /* Chat messages */
-          messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))
-        )}
-      </div>
 
-      {/* Error banner */}
-      {error && (
-        <div className="px-4 py-2 bg-error/10 border-t border-error/20 flex-shrink-0">
-          <p className="text-xs text-error">{error}</p>
-        </div>
+          {error && (
+            <div className="px-4 py-2 bg-error/10 border-t border-error/20 flex-shrink-0">
+              <p className="text-xs text-error">{error}</p>
+            </div>
+          )}
+
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={handleSend}
+            onImageAttach={(base64, mime) => {
+              setAttachedImage(base64);
+              setAttachedMime(mime);
+            }}
+            onImageClear={() => setAttachedImage(null)}
+            attachedImage={attachedImage}
+            disabled={isLoading}
+          />
+        </>
       )}
 
-      {/* Input */}
-      <ChatInput
-        value={input}
-        onChange={setInput}
-        onSend={handleSend}
-        onImageAttach={(base64, mime) => {
-          setAttachedImage(base64);
-          setAttachedMime(mime);
-        }}
-        onImageClear={() => setAttachedImage(null)}
-        attachedImage={attachedImage}
-        disabled={isLoading}
-      />
+      {/* ── Transcription tab content ── */}
+      {activeTab === 'transcription' && (
+        <div className="flex-1 overflow-hidden">
+          {!isPro ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-text-primary mb-1">
+                Transcrição em Tempo Real
+              </h3>
+              <p className="text-sm text-text-muted mb-4 max-w-xs">
+                Transcreva chamadas do Google Meet, Zoom, Teams e Discord com IA.
+              </p>
+              <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-accent/20 text-accent">
+                Disponível no plano PRO
+              </span>
+            </div>
+          ) : transcriptionStatus === 'idle' || transcriptionStatus === 'selecting' ? (
+            <WindowPicker
+              onSelect={(source) => {
+                setSelectedSource(source);
+                startTranscription(source.id);
+              }}
+            />
+          ) : transcriptionStatus === 'error' ? (
+            <TranscriptionError />
+          ) : (
+            <TranscriptionPanel />
+          )}
+        </div>
+      )}
     </div>
   );
 };

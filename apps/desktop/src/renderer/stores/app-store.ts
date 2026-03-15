@@ -63,7 +63,8 @@ interface AppState {
   clearWindowSelector: () => void;
 
   // Auth actions
-  setAuth: (isAuthenticated: boolean, email: string | null, name: string | null) => void;
+  userPlan: string | null;
+  setAuth: (isAuthenticated: boolean, email: string | null, name: string | null, plan?: string | null) => void;
   clearAuth: () => void;
 }
 
@@ -155,8 +156,9 @@ export const useAppStore = create<AppState>((set) => ({
   clearWindowSelector: () => set({ requestWindowSelector: false }),
 
   // Auth actions
-  setAuth: (isAuthenticated, email, name) =>
-    set({ isAuthenticated, userEmail: email, userName: name }),
+  userPlan: null,
+  setAuth: (isAuthenticated, email, name, plan) =>
+    set({ isAuthenticated, userEmail: email, userName: name, userPlan: plan ?? null }),
   clearAuth: () =>
-    set({ isAuthenticated: false, userEmail: null, userName: null }),
+    set({ isAuthenticated: false, userEmail: null, userName: null, userPlan: null }),
 }));

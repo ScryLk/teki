@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Central de ajuda — Teki</title>
+    <meta name="description" content="Encontre respostas para suas dúvidas sobre o Teki." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-primary: #07090b; --bg-secondary: #0c1014; --bg-surface: #111519;
+            --bg-surface-hover: #181d23; --bg-elevated: #1a2028;
+            --text-primary: #e8e6e1; --text-secondary: #9ca3af; --text-muted: #5a6270;
+            --accent: #2A8F9D; --accent-light: #34D8C0;
+            --accent-subtle: rgba(42,143,157,0.08); --border: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12); --border-accent: rgba(42,143,157,0.30);
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px; --radius-full: 9999px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); }
+        ::selection { background: rgba(42,143,157,0.30); color: var(--text-primary); }
+        .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+        .page-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 56px;
+            display: flex; align-items: center; background: rgba(7,9,11,0.85);
+            backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 24px;
+        }
+        .page-nav .nav-inner { max-width: 900px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 17px; }
+        .nav-back { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent-light); }
+
+        .page-content { padding: 120px 0 80px; }
+        .page-title { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.5rem); font-weight: 800; margin-bottom: 12px; letter-spacing: -0.03em; }
+        .page-subtitle { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 48px; max-width: 560px; }
+
+        /* CATEGORIES */
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 56px; }
+        .cat-card {
+            padding: 28px 24px; background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-xl); transition: border-color 0.2s, transform 0.2s; cursor: pointer;
+        }
+        .cat-card:hover { border-color: var(--border-accent); transform: translateY(-2px); }
+        .cat-icon { width: 44px; height: 44px; border-radius: var(--radius-lg); background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 16px; }
+        .cat-icon [data-lucide] { width: 22px; height: 22px; }
+        .cat-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+        .cat-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        .cat-count { font-size: 12px; color: var(--accent); margin-top: 10px; font-weight: 500; }
+
+        /* FAQ */
+        .faq-section { margin-bottom: 56px; }
+        .faq-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .faq-list { display: flex; flex-direction: column; gap: 8px; }
+        .faq-item {
+            background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            overflow: hidden; transition: border-color 0.2s;
+        }
+        .faq-item:hover { border-color: var(--border-hover); }
+        .faq-question {
+            display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
+            cursor: pointer; font-size: 14px; font-weight: 600; user-select: none;
+        }
+        .faq-question [data-lucide] { width: 16px; height: 16px; color: var(--text-muted); transition: transform 0.2s; }
+        .faq-item.open .faq-question [data-lucide] { transform: rotate(180deg); }
+        .faq-answer { padding: 0 20px 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; display: none; }
+        .faq-item.open .faq-answer { display: block; }
+
+        /* CONTACT CTA */
+        .help-cta {
+            padding: 32px; background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-xl); text-align: center;
+        }
+        .help-cta h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .help-cta p { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+        .help-cta a {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px;
+            background: var(--accent); color: #fff; border-radius: var(--radius-md);
+            font-size: 14px; font-weight: 600; text-decoration: none; transition: background 0.2s;
+        }
+        .help-cta a:hover { background: var(--accent-dark); }
+
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; margin-top: 40px; }
+        .footer-inner { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .footer-copy { font-size: 13px; color: var(--text-muted); }
+        .footer-legal { display: flex; gap: 20px; }
+        .footer-legal a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .footer-legal a:hover { color: var(--text-secondary); }
+
+        @media (max-width: 640px) {
+            .categories-grid { grid-template-columns: 1fr; }
+            .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="page-nav">
+        <div class="nav-inner">
+            <a href="page.html" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <circle cx="12" cy="16" r="3" fill="#e8e6e1" /><circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                    <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" /><circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                    <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round" fill="none" />
+                </svg>
+                Teki
+            </a>
+            <a href="page.html" class="nav-back">&larr; Voltar ao site</a>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <h1 class="page-title">Central de ajuda</h1>
+            <p class="page-subtitle">Encontre respostas rápidas ou navegue pelas categorias para resolver sua dúvida.</p>
+
+            <div class="categories-grid">
+                <div class="cat-card">
+                    <div class="cat-icon"><i data-lucide="rocket"></i></div>
+                    <h3>Primeiros passos</h3>
+                    <p>Como criar conta, configurar e começar a usar o Teki.</p>
+                    <span class="cat-count">6 artigos</span>
+                </div>
+                <div class="cat-card">
+                    <div class="cat-icon"><i data-lucide="plug"></i></div>
+                    <h3>Integrações</h3>
+                    <p>Conectar Slack, WhatsApp, Discord, Telegram e Teams.</p>
+                    <span class="cat-count">8 artigos</span>
+                </div>
+                <div class="cat-card">
+                    <div class="cat-icon"><i data-lucide="user"></i></div>
+                    <h3>Conta e cobrança</h3>
+                    <p>Planos, pagamentos, faturas e gestão de conta.</p>
+                    <span class="cat-count">5 artigos</span>
+                </div>
+                <div class="cat-card">
+                    <div class="cat-icon"><i data-lucide="code"></i></div>
+                    <h3>API e automações</h3>
+                    <p>Documentação técnica, endpoints e webhooks.</p>
+                    <span class="cat-count">10 artigos</span>
+                </div>
+            </div>
+
+            <div class="faq-section">
+                <h2>Perguntas frequentes</h2>
+                <div class="faq-list">
+                    <div class="faq-item open">
+                        <div class="faq-question">
+                            <span>Como faço para começar a usar o Teki?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Crie uma conta em nosso site, escolha um plano e conecte seus canais de atendimento (Slack, WhatsApp, etc.). O Teki estará pronto para responder em menos de 5 minutos.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Quais canais o Teki suporta?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Atualmente suportamos Slack, WhatsApp Business, Discord, Telegram e Microsoft Teams. Novos canais são adicionados regularmente.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Posso experimentar gratuitamente?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Sim! Oferecemos um período de teste gratuito de 14 dias com acesso completo a todas as funcionalidades. Não é necessário cartão de crédito.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Como o Teki aprende sobre minha empresa?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Você pode alimentar o Teki com documentação, FAQs e bases de conhecimento da sua empresa. Quanto mais contexto você fornecer, mais precisas serão as respostas.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Meus dados estão seguros?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Absolutamente. Seguimos as normas da LGPD, utilizamos criptografia em trânsito e em repouso, e seus dados nunca são usados para treinar modelos de IA. Consulte nossa <a href="privacidade.html" style="color: var(--accent-light);">política de privacidade</a> para mais detalhes.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Posso cancelar a qualquer momento?</span>
+                            <i data-lucide="chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Sim, você pode cancelar sua assinatura a qualquer momento sem multa ou taxa. O acesso continua até o fim do período já pago.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-cta">
+                <h3>Ainda precisa de ajuda?</h3>
+                <p>Nossa equipe de suporte está disponível para ajudar você.</p>
+                <a href="contato.html"><i data-lucide="mail" style="width:16px;height:16px;"></i> Falar com o suporte</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span class="footer-copy">&copy; 2026 Teki &mdash; Todos os direitos reservados</span>
+            <div class="footer-legal">
+                <a href="privacidade.html">Privacidade</a>
+                <a href="termos.html">Termos de Uso</a>
+                <a href="lgpd.html">LGPD</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.addEventListener('click', () => {
+                const item = q.parentElement;
+                document.querySelectorAll('.faq-item').forEach(i => { if (i !== item) i.classList.remove('open'); });
+                item.classList.toggle('open');
+            });
+        });
+    </script>
+</body>
+
+</html>

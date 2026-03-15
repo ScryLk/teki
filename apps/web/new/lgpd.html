@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>LGPD — Teki</title>
+    <meta name="description" content="Como o Teki se adequa à Lei Geral de Proteção de Dados (LGPD)." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-primary: #07090b; --bg-secondary: #0c1014; --bg-surface: #111519;
+            --bg-surface-hover: #181d23;
+            --text-primary: #e8e6e1; --text-secondary: #9ca3af; --text-muted: #5a6270;
+            --accent: #2A8F9D; --accent-light: #34D8C0;
+            --accent-subtle: rgba(42,143,157,0.08);
+            --border: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+            --border-accent: rgba(42,143,157,0.30);
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); }
+        ::selection { background: rgba(42,143,157,0.30); color: var(--text-primary); }
+        .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+        .page-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 56px;
+            display: flex; align-items: center; background: rgba(7,9,11,0.85);
+            backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 24px;
+        }
+        .page-nav .nav-inner { max-width: 760px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 17px; }
+        .nav-back { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent-light); }
+
+        .page-content { padding: 120px 0 80px; }
+        .page-title { font-size: clamp(1.75rem, 1.5rem + 1vw, 2.5rem); font-weight: 800; margin-bottom: 8px; letter-spacing: -0.03em; }
+        .page-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 48px; }
+        .page-intro { font-size: 16px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 40px; max-width: 640px; }
+
+        /* RIGHTS GRID */
+        .rights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 48px; }
+        .right-card {
+            padding: 20px; background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); transition: border-color 0.2s;
+        }
+        .right-card:hover { border-color: var(--border-hover); }
+        .right-icon { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 12px; }
+        .right-icon [data-lucide] { width: 18px; height: 18px; }
+        .right-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .right-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+        /* LEGAL */
+        .legal h2 { font-size: 18px; font-weight: 700; margin: 40px 0 14px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .legal h2:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+        .legal p { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px; }
+        .legal ul { list-style: none; margin: 8px 0 16px; }
+        .legal ul li { font-size: 14px; color: var(--text-secondary); line-height: 1.7; padding-left: 20px; position: relative; margin-bottom: 6px; }
+        .legal ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .legal a { color: var(--accent-light); text-decoration: none; }
+        .legal a:hover { text-decoration: underline; }
+
+        /* DPO BOX */
+        .dpo-box {
+            padding: 28px; background: var(--bg-surface); border: 1px solid var(--border-accent);
+            border-radius: var(--radius-xl); margin-top: 32px;
+        }
+        .dpo-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--accent-light); }
+        .dpo-box p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 4px; }
+
+        footer { border-top: 1px solid var(--border); padding: 48px 0 32px; margin-top: 40px; }
+        .footer-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .footer-copy { font-size: 13px; color: var(--text-muted); }
+        .footer-legal { display: flex; gap: 20px; }
+        .footer-legal a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .footer-legal a:hover { color: var(--text-secondary); }
+
+        @media (max-width: 640px) {
+            .rights-grid { grid-template-columns: 1fr; }
+            .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="page-nav">
+        <div class="nav-inner">
+            <a href="page.html" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                    <circle cx="12" cy="16" r="3" fill="#e8e6e1" /><circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                    <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" /><circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                    <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round" fill="none" />
+                </svg>
+                Teki
+            </a>
+            <a href="page.html" class="nav-back">&larr; Voltar ao site</a>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="container">
+            <h1 class="page-title">LGPD</h1>
+            <p class="page-meta">Lei Geral de Proteção de Dados — Lei nº 13.709/2018</p>
+
+            <p class="page-intro">O Teki está comprometido com a proteção dos dados pessoais dos seus usuários em conformidade com a Lei Geral de Proteção de Dados (LGPD). Aqui explicamos seus direitos e como exercê-los.</p>
+
+            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Seus direitos como titular</h2>
+            <div class="rights-grid">
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="eye"></i></div>
+                    <h3>Acesso</h3>
+                    <p>Solicitar cópia dos dados pessoais que mantemos sobre você.</p>
+                </div>
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="edit-3"></i></div>
+                    <h3>Correção</h3>
+                    <p>Corrigir dados incompletos, inexatos ou desatualizados.</p>
+                </div>
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="trash-2"></i></div>
+                    <h3>Eliminação</h3>
+                    <p>Solicitar a exclusão dos seus dados pessoais.</p>
+                </div>
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="download"></i></div>
+                    <h3>Portabilidade</h3>
+                    <p>Receber seus dados em formato estruturado e legível.</p>
+                </div>
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="info"></i></div>
+                    <h3>Informação</h3>
+                    <p>Saber com quem seus dados são compartilhados.</p>
+                </div>
+                <div class="right-card">
+                    <div class="right-icon"><i data-lucide="x-circle"></i></div>
+                    <h3>Revogação</h3>
+                    <p>Revogar consentimento dado anteriormente para tratamento de dados.</p>
+                </div>
+            </div>
+
+            <div class="legal">
+                <h2>Bases legais para tratamento</h2>
+                <p>Tratamos dados pessoais com base nas seguintes hipóteses legais previstas na LGPD:</p>
+                <ul>
+                    <li><strong>Execução de contrato (Art. 7º, V):</strong> processamento necessário para fornecer os serviços contratados</li>
+                    <li><strong>Consentimento (Art. 7º, I):</strong> para comunicações de marketing e funcionalidades opcionais</li>
+                    <li><strong>Legítimo interesse (Art. 7º, IX):</strong> para melhoria dos serviços e prevenção de fraudes</li>
+                    <li><strong>Cumprimento de obrigação legal (Art. 7º, II):</strong> para atender exigências fiscais e regulatórias</li>
+                </ul>
+
+                <h2>Como exercer seus direitos</h2>
+                <p>Você pode exercer seus direitos de titular de dados das seguintes formas:</p>
+                <ul>
+                    <li><strong>Pelo app:</strong> acesse Configurações → Conta → Dados pessoais</li>
+                    <li><strong>Por email:</strong> envie sua solicitação para <a href="mailto:dpo@teki.com.br">dpo@teki.com.br</a></li>
+                    <li><strong>Por formulário:</strong> utilize nossa <a href="contato.html">página de contato</a> selecionando o assunto "LGPD"</li>
+                </ul>
+                <p>Responderemos sua solicitação em até 15 dias úteis, conforme previsto na legislação.</p>
+
+                <h2>Medidas de segurança</h2>
+                <p>Adotamos medidas técnicas e administrativas aptas a proteger os dados pessoais:</p>
+                <ul>
+                    <li>Criptografia de dados em trânsito (TLS 1.3) e em repouso (AES-256)</li>
+                    <li>Hashing de senhas com bcrypt (fator de custo 12)</li>
+                    <li>Controle de acesso baseado em funções (RBAC)</li>
+                    <li>Logs de auditoria para rastreabilidade de acessos</li>
+                    <li>Backups automatizados com criptografia</li>
+                    <li>Política de retenção mínima de dados</li>
+                </ul>
+
+                <h2>Exclusão de conta e anonimização</h2>
+                <p>Ao solicitar a exclusão da sua conta, realizamos a anonimização dos dados pessoais conforme a LGPD:</p>
+                <ul>
+                    <li>Nome, email e dados de contato são substituídos por dados anônimos</li>
+                    <li>Sessões ativas e credenciais são revogadas imediatamente</li>
+                    <li>Chaves de API são invalidadas</li>
+                    <li>Dados de pagamento são removidos junto ao processador</li>
+                    <li>Dados anonimizados podem ser mantidos para fins estatísticos (Art. 16, IV)</li>
+                </ul>
+
+                <h2>Transferência internacional</h2>
+                <p>Alguns de nossos provedores de infraestrutura e IA podem processar dados fora do Brasil. Nestes casos, garantimos que os destinatários ofereçam nível de proteção compatível com a LGPD, conforme Art. 33.</p>
+
+                <div class="dpo-box">
+                    <h3>Encarregado de Proteção de Dados (DPO)</h3>
+                    <p>Para questões relacionadas à proteção de dados pessoais:</p>
+                    <p><strong>Email:</strong> <a href="mailto:dpo@teki.com.br" style="color: var(--accent-light);">dpo@teki.com.br</a></p>
+                    <p style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">Conforme Art. 41 da LGPD, o DPO é responsável por aceitar reclamações e comunicações dos titulares, prestar esclarecimentos e adotar providências.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span class="footer-copy">&copy; 2026 Teki &mdash; Todos os direitos reservados</span>
+            <div class="footer-legal">
+                <a href="privacidade.html">Privacidade</a>
+                <a href="termos.html">Termos de Uso</a>
+                <a href="lgpd.html">LGPD</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

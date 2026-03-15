@@ -30,7 +30,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (window.tekiAPI?.getAuthStatus) {
       window.tekiAPI.getAuthStatus().then((status) => {
-        setAuth(status.isAuthenticated, status.email, status.name);
+        setAuth(status.isAuthenticated, status.email, status.name, status.plan);
       });
     }
   }, [setAuth]);

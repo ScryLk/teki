@@ -62,6 +62,7 @@ async function renderSVGtoPNG(
   svgDataURL: string
 ): Promise<Electron.NativeImage | null> {
   try {
+    if (mainWindow.isDestroyed()) return null;
     const pngDataURL: string = await mainWindow.webContents.executeJavaScript(`
       new Promise((resolve) => {
         const img = new Image();

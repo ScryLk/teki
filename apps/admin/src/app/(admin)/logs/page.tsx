@@ -45,11 +45,19 @@ export default function LogsPage() {
     if (search) params.set('search', search);
     if (level) params.set('level', level);
 
-    const res = await fetch(`/api/logs?${params}`);
-    const data = await res.json();
-    setLogs(data.logs);
-    setTotal(data.total);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/logs?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setLogs(data.logs ?? []);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      console.error('[logs]', err);
+      setLogs([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
   }, [search, level]);
 
   useEffect(() => {

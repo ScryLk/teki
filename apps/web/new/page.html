@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Teki — Seu técnico de TI nunca dorme</title>
+    <meta name="description"
+        content="Assistente de suporte técnico com IA. Responde chamados no Slack, WhatsApp, Discord e Teams em menos de 3 segundos." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ══════════════════════════════════════════
+       TOKENS
+    ══════════════════════════════════════════ */
+        :root {
+            --bg-primary: #07090b;
+            --bg-secondary: #0c1014;
+            --bg-surface: #111519;
+            --bg-surface-hover: #181d23;
+            --bg-elevated: #1a2028;
+
+            --text-primary: #e8e6e1;
+            --text-secondary: #9ca3af;
+            --text-muted: #5a6270;
+
+            --accent: #2A8F9D;
+            --accent-light: #34D8C0;
+            --accent-dark: #1E6B75;
+            --accent-subtle: rgba(42, 143, 157, 0.08);
+            --accent-glow: rgba(42, 143, 157, 0.15);
+            --accent-glow-strong: rgba(42, 143, 157, 0.30);
+
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --border-accent: rgba(42, 143, 157, 0.30);
+
+            --success: #17c964;
+            --error: #f31260;
+
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 24px;
+            --radius-full: 9999px;
+
+            --shadow-glow: 0 0 24px var(--accent-glow), 0 0 60px var(--accent-glow);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: var(--accent-glow-strong);
+            color: var(--text-primary);
+        }
+
+        /* ══════════════════════════════════════════
+       LUCIDE ICONS
+    ══════════════════════════════════════════ */
+        [data-lucide] {
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 1.75;
+        }
+
+        .icon-sm {
+            width: 14px;
+            height: 14px;
+        }
+
+        .icon-md {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon-lg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .icon-xl {
+            width: 28px;
+            height: 28px;
+        }
+
+        .icon-2xl {
+            width: 36px;
+            height: 36px;
+        }
+
+        .proof-icon [data-lucide] {
+            width: 15px;
+            height: 15px;
+            color: var(--accent-light);
+        }
+
+        .marquee-item [data-lucide] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .pain-icon [data-lucide] {
+            width: 32px;
+            height: 32px;
+            color: var(--accent);
+        }
+
+        .feature-icon-wrap [data-lucide] {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-light);
+        }
+
+        .step-icon [data-lucide] {
+            width: 26px;
+            height: 26px;
+            color: var(--accent);
+        }
+
+        .int-logo [data-lucide] {
+            width: 40px;
+            height: 40px;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .int-logo svg.brand-icon {
+            width: 40px;
+            height: 40px;
+            fill: var(--text-muted);
+            transition: fill 0.3s;
+        }
+
+        .int-card:hover .int-logo svg.brand-icon {
+            fill: var(--accent-light);
+        }
+
+        .int-card:hover .int-logo [data-lucide] {
+            color: var(--accent-light);
+        }
+
+        .marquee-item svg.brand-icon {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent);
+            vertical-align: middle;
+        }
+
+        .social-link [data-lucide] {
+            width: 15px;
+            height: 15px;
+        }
+
+
+        /* ══════════════════════════════════════════
+       SCROLLBAR
+    ══════════════════════════════════════════ */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-dark);
+            border-radius: 3px;
+        }
+
+        /* ══════════════════════════════════════════
+       CURSOR CUSTOM
+    ══════════════════════════════════════════ */
+        .cursor {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.08s, width 0.2s, height 0.2s, opacity 0.2s;
+            mix-blend-mode: screen;
+        }
+
+        .cursor-ring {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.18s var(--ease-out), width 0.3s, height 0.3s, opacity 0.3s;
+            opacity: 0.5;
+        }
+
+        body:hover .cursor {
+            opacity: 1;
+        }
+
+        /* ══════════════════════════════════════════
+       ISOMETRIC GRID BACKGROUND
+    ══════════════════════════════════════════ */
+        .iso-grid {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.03;
+            background-image:
+                linear-gradient(var(--accent) 1px, transparent 1px),
+                linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* ══════════════════════════════════════════
+       NOISE OVERLAY
+    ══════════════════════════════════════════ */
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-size: 128px;
+        }
+
+        /* ══════════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════════ */
+        .container {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        section {
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-eyebrow::before {
+            content: '';
+            display: block;
+            width: 24px;
+            height: 1px;
+            background: var(--accent);
+        }
+
+        /* ══════════════════════════════════════════
+       NAV
+    ══════════════════════════════════════════ */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 0;
+            transition: padding 0.3s var(--ease-out), background 0.3s, border-color 0.3s;
+            border-bottom: 1px solid transparent;
+        }
+
+        nav.scrolled {
+            padding: 14px 0;
+            background: rgba(7, 9, 11, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom-color: var(--border);
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 14px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out);
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 9px 16px;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-light);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary-lg {
+            padding: 14px 28px;
+            font-size: 15px;
+            border-radius: var(--radius-lg);
+        }
+
+        .btn-outline-lg {
+            background: transparent;
+            color: var(--accent-light);
+            border: 1px solid var(--border-accent);
+            padding: 14px 28px;
+            font-size: 15px;
+            border-radius: var(--radius-lg);
+        }
+
+        .btn-outline-lg:hover {
+            background: var(--accent-subtle);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* ══════════════════════════════════════════
+       HERO
+    ══════════════════════════════════════════ */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-light);
+            background: var(--accent-subtle);
+            border: 1px solid var(--border-accent);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            margin-bottom: 28px;
+        }
+
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        .hero-headline {
+            font-size: clamp(3rem, 5vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            margin-bottom: 24px;
+        }
+
+        .hero-headline em {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 480px;
+            margin-bottom: 40px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+
+        .hero-proof {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .proof-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .proof-icon {
+            color: var(--accent-light);
+            font-size: 15px;
+        }
+
+        /* ── Mockup Window ── */
+        .hero-mockup {
+            position: relative;
+        }
+
+        .mockup-window {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-accent), var(--shadow-glow);
+            animation: float-window 4s ease-in-out infinite;
+        }
+
+        @keyframes float-window {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-0.5deg);
+            }
+
+            50% {
+                transform: translateY(-12px) rotate(0.5deg);
+            }
+        }
+
+        .mockup-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tb-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .tb-close {
+            background: #ff5f56;
+        }
+
+        .tb-min {
+            background: #febc2e;
+        }
+
+        .tb-max {
+            background: #28c840;
+        }
+
+        .tb-title {
+            margin-left: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .mockup-body {
+            padding: 20px;
+        }
+
+        .chat-msg {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            animation: msg-in 0.4s var(--ease-out) both;
+        }
+
+        @keyframes msg-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .avatar-user {
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+        }
+
+        .avatar-teki {
+            background: var(--accent-dark);
+            color: var(--accent-light);
+        }
+
+        .chat-bubble {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--text-primary);
+            max-width: 280px;
+        }
+
+        .chat-bubble.teki {
+            background: rgba(42, 143, 157, 0.08);
+            border-color: var(--border-accent);
+            border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 0;
+        }
+
+        .chat-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-badge {
+            background: rgba(23, 201, 100, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(23, 201, 100, 0.2);
+            padding: 1px 6px;
+            border-radius: var(--radius-full);
+            font-size: 10px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 12px 14px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: typing-bounce 1.2s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing-bounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+       MARQUEE
+    ══════════════════════════════════════════ */
+        .marquee-section {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+
+        .marquee-label {
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .marquee-track {
+            display: flex;
+            animation: marquee 28s linear infinite;
+            width: max-content;
+        }
+
+        .marquee-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marquee {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        .marquee-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 36px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            white-space: nowrap;
+            transition: color 0.2s;
+            cursor: default;
+        }
+
+        .marquee-item:hover {
+            color: var(--accent-light);
+        }
+
+        .marquee-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .marquee-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--border-hover);
+            border-radius: 50%;
+            margin: 0 8px;
+        }
+
+        /* Fade masks */
+        .marquee-section::before,
+        .marquee-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 120px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .marquee-section::before {
+            left: 0;
+            background: linear-gradient(90deg, var(--bg-primary), transparent);
+        }
+
+        .marquee-section::after {
+            right: 0;
+            background: linear-gradient(-90deg, var(--bg-primary), transparent);
+        }
+
+        /* ══════════════════════════════════════════
+       PROBLEM
+    ══════════════════════════════════════════ */
+        #problem {
+            padding: 120px 0;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            margin-bottom: 80px;
+        }
+
+        .problem-headline {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+        }
+
+        .problem-headline span {
+            color: var(--accent-light);
+        }
+
+        .problem-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        .pain-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .pain-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.4s var(--ease-out), box-shadow 0.4s;
+            cursor: default;
+        }
+
+        .pain-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), var(--shadow-glow);
+        }
+
+        .pain-card-num {
+            position: absolute;
+            right: 16px;
+            top: 12px;
+            font-size: 72px;
+            font-weight: 900;
+            color: var(--text-primary);
+            opacity: 0.03;
+            line-height: 1;
+            font-family: var(--font-sans);
+            pointer-events: none;
+        }
+
+        .pain-icon {
+            font-size: 28px;
+            margin-bottom: 14px;
+        }
+
+        .pain-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pain-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* ══════════════════════════════════════════
+       FEATURES
+    ══════════════════════════════════════════ */
+        #features {
+            padding: 120px 0;
+            background: linear-gradient(180deg, transparent, rgba(42, 143, 157, 0.02) 50%, transparent);
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .features-headline {
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .features-sub {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s var(--ease-out), transform 0.4s var(--ease-out), box-shadow 0.4s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), var(--shadow-glow);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-num {
+            position: absolute;
+            right: 20px;
+            top: 16px;
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--text-primary);
+            opacity: 0.03;
+            font-family: var(--font-sans);
+            line-height: 1;
+        }
+
+        .feature-icon-wrap {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-subtle);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 18px;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover .feature-icon-wrap {
+            background: rgba(42, 143, 157, 0.15);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ══════════════════════════════════════════
+       HOW IT WORKS
+    ══════════════════════════════════════════ */
+        #how {
+            padding: 120px 0;
+        }
+
+        .how-header {
+            text-align: center;
+            margin-bottom: 90px;
+        }
+
+        .how-headline {
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            position: relative;
+        }
+
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 14%;
+            right: 14%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-accent), var(--border-accent), transparent);
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .step-num-wrap {
+            width: 56px;
+            height: 56px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-light);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .step-item:hover .step-num-wrap {
+            background: var(--accent-subtle);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .step-icon {
+            font-size: 24px;
+            margin-bottom: 14px;
+        }
+
+        .step-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* ══════════════════════════════════════════
+       INTEGRATIONS
+    ══════════════════════════════════════════ */
+        #integrations {
+            padding: 120px 0;
+            background: linear-gradient(180deg, transparent, rgba(42, 143, 157, 0.02) 50%, transparent);
+        }
+
+        .int-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .int-headline {
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .int-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.3s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+            cursor: default;
+        }
+
+        .int-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .int-logo {
+            font-size: 36px;
+            filter: grayscale(1) opacity(0.6);
+            transition: filter 0.3s;
+        }
+
+        .int-card:hover .int-logo {
+            filter: grayscale(0) opacity(1);
+        }
+
+        .int-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .int-footer {
+            text-align: center;
+        }
+
+        .int-footer a {
+            font-size: 14px;
+            color: var(--accent-light);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border-accent);
+            padding-bottom: 2px;
+            transition: border-color 0.2s;
+        }
+
+        .int-footer a:hover {
+            border-color: var(--accent-light);
+        }
+
+
+
+        /* ══════════════════════════════════════════
+       PRICING
+    ══════════════════════════════════════════ */
+        #pricing {
+            padding: 120px 0;
+            background: linear-gradient(180deg, transparent, rgba(42, 143, 157, 0.02) 50%, transparent);
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .pricing-headline {
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 56px;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .toggle-label.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-full);
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.annual {
+            background: var(--accent);
+        }
+
+        .toggle-thumb {
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s var(--ease-spring);
+        }
+
+        .toggle-switch.annual .toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        .discount-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+            background: rgba(23, 201, 100, 0.1);
+            border: 1px solid rgba(23, 201, 100, 0.2);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 36px 32px;
+            transition: border-color 0.3s, transform 0.3s var(--ease-out);
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-glow);
+            transform: scale(1.03);
+        }
+
+        .pricing-card.popular:hover {
+            transform: scale(1.03) translateY(-4px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 16px;
+            border-radius: var(--radius-full);
+        }
+
+        .plan-name {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .price-currency {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .price-amount {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .price-period {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .plan-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 28px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .plan-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .plan-feature.included {
+            color: var(--text-primary);
+        }
+
+        .feature-check {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .feature-check.yes {
+            background: rgba(23, 201, 100, 0.12);
+            color: var(--success);
+        }
+
+        .feature-check.no {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+        }
+
+        .btn-plan {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-plan-outline {
+            background: transparent;
+            color: var(--accent-light);
+            border: 1px solid var(--border-accent);
+        }
+
+        .btn-plan-outline:hover {
+            background: var(--accent-subtle);
+            border-color: var(--accent);
+        }
+
+        .btn-plan-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-plan-primary:hover {
+            background: var(--accent-light);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* ══════════════════════════════════════════
+       FAQ
+    ══════════════════════════════════════════ */
+        #faq {
+            padding: 120px 0;
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .faq-headline {
+            font-size: clamp(1.8rem, 3vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .faq-list {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .faq-item.open {
+            border-color: var(--border-accent);
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .faq-chevron {
+            color: var(--accent);
+            font-size: 18px;
+            transition: transform 0.3s var(--ease-out);
+            min-width: 20px;
+        }
+
+        .faq-item.open .faq-chevron {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s var(--ease-out), padding 0.3s;
+        }
+
+        .faq-answer-inner {
+            padding: 0 24px 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        /* ══════════════════════════════════════════
+       CTA FINAL
+    ══════════════════════════════════════════ */
+        #cta-final {
+            padding: 140px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(42, 143, 157, 0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-grid-overlay {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--border-accent) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-accent) 1px, transparent 1px);
+            background-size: 48px 48px;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        .cta-headline {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .cta-headline em {
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--accent-light);
+        }
+
+        .cta-sub {
+            font-size: 17px;
+            color: var(--text-secondary);
+            margin-bottom: 44px;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .cta-proof {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ══════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════ */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 72px 0 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.75;
+            margin: 14px 0 20px;
+            max-width: 240px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-link {
+            width: 34px;
+            height: 34px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+        }
+
+        .social-link:hover {
+            border-color: var(--border-accent);
+            color: var(--accent-light);
+            background: var(--accent-subtle);
+        }
+
+        .footer-col h4 {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-light);
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 28px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-legal a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-legal a:hover {
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        /* ══════════════════════════════════════════
+       CAT MASCOT SVG
+    ══════════════════════════════════════════ */
+        .cat-mascot {
+            animation: cat-float 4s ease-in-out infinite;
+        }
+
+        @keyframes cat-float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* ══════════════════════════════════════════
+       SCROLL REVEAL
+    ══════════════════════════════════════════ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.08s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.16s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.24s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.32s;
+        }
+
+        .reveal-delay-5 {
+            transition-delay: 0.40s;
+        }
+
+        .reveal-delay-6 {
+            transition-delay: 0.48s;
+        }
+
+        /* ══════════════════════════════════════════
+       BADGE / TAG
+    ══════════════════════════════════════════ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: var(--radius-full);
+        }
+
+        .badge-success {
+            background: rgba(23, 201, 100, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(23, 201, 100, 0.2);
+        }
+
+        .badge-muted {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pain-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+            }
+
+            .pricing-card.popular {
+                transform: none;
+            }
+
+            .integrations-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-mockup {
+                display: none;
+            }
+
+            .problem-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+
+            .steps-grid::before {
+                display: none;
+            }
+
+            .integrations-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 14px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Custom cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- Background layers -->
+    <div class="iso-grid"></div>
+    <div class="noise"></div>
+
+    <!-- ═══════════════════════════════════════════
+     NAV
+═══════════════════════════════════════════ -->
+    <nav id="nav">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="#" class="nav-logo">
+                    <!-- Cat SVG mini -->
+                    <svg class="cat-mascot" width="32" height="32" viewBox="0 0 32 32" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                        <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                        <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D"
+                            stroke-width="1" />
+                        <circle cx="12" cy="16" r="3" fill="#e8e6e1" />
+                        <circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                        <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                        <circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                        <circle cx="13" cy="16" r="0.7" fill="rgba(255,255,255,0.8)" />
+                        <circle cx="21" cy="16" r="0.7" fill="rgba(255,255,255,0.8)" />
+                        <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round"
+                            fill="none" />
+                        <path d="M8 19 Q6 26 10 27" stroke="#2A8F9D" stroke-width="1.5" stroke-linecap="round"
+                            fill="none" />
+                    </svg>
+                    <span class="nav-logo-text">Teki</span>
+                </a>
+
+                <ul class="nav-links">
+                    <li><a href="#features">Produto</a></li>
+                    <li><a href="#integrations">Integrações</a></li>
+                    <li><a href="#pricing">Planos</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+
+                <div class="nav-cta">
+                    <a href="#" class="btn btn-ghost">Entrar</a>
+                    <a href="#" class="btn btn-primary">Baixar grátis →</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+    <section id="hero">
+        <div class="hero-glow"></div>
+        <div class="container">
+            <div class="hero-grid">
+                <div>
+                    <div class="hero-badge reveal">
+                        <span class="hero-badge-dot"></span>
+                        Assistente de TI com IA
+                    </div>
+
+                    <h1 class="hero-headline reveal reveal-delay-1">
+                        Seu técnico de TI<br>
+                        <em>nunca dorme.</em>
+                    </h1>
+
+                    <p class="hero-sub reveal reveal-delay-2">
+                        O Teki responde chamados, diagnostica problemas e busca soluções
+                        em tempo real — direto no Slack, WhatsApp, Discord ou Teams.
+                        Sem filas. Sem espera. Só respostas.
+                    </p>
+
+                    <div class="hero-actions reveal reveal-delay-3">
+                        <a href="#" class="btn btn-primary btn-primary-lg">
+                            <i data-lucide="download" style="width:16px;height:16px;"></i>
+                            Baixar para Mac
+                        </a>
+                        <a href="#how" class="btn btn-outline-lg">Ver como funciona →</a>
+                    </div>
+
+                    <div class="hero-proof reveal reveal-delay-4">
+                        <div class="proof-item">
+                            <span class="proof-icon"><i data-lucide="star" style="fill:var(--accent-light)"></i></span>
+                            <span>4.9/5 · 200+ usuários</span>
+                        </div>
+                        <div class="proof-item">
+                            <span class="proof-icon"><i data-lucide="zap"></i></span>
+                            <span>Resposta em &lt; 3s</span>
+                        </div>
+                        <div class="proof-item">
+                            <span class="proof-icon"><i data-lucide="building-2"></i></span>
+                            <span>30+ empresas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mockup Window -->
+                <div class="hero-mockup reveal reveal-delay-2">
+                    <div class="mockup-window">
+                        <div class="mockup-titlebar">
+                            <div class="tb-dot tb-close"></div>
+                            <div class="tb-dot tb-min"></div>
+                            <div class="tb-dot tb-max"></div>
+                            <span class="tb-title">Teki — Suporte TI</span>
+                        </div>
+                        <div class="mockup-body">
+                            <div class="chat-msg" style="animation-delay:0.2s">
+                                <div class="chat-avatar avatar-user">MV</div>
+                                <div>
+                                    <div class="chat-bubble">Oi, meu computador não está abrindo o ERP. Já reiniciei mas
+                                        continua com erro.</div>
+                                    <div class="chat-meta">Marcos V. · agora</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-msg" style="animation-delay:0.8s; flex-direction:row-reverse">
+                                <div class="chat-avatar avatar-teki">T</div>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                                    <div class="chat-bubble teki">
+                                        Olá Marcos! Identifiquei o problema: o serviço <code
+                                            style="background:var(--bg-primary);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px;color:var(--accent-light)">ERPService</code>
+                                        parou.
+                                        Para resolver:<br><br>
+                                        1. Pressione <code
+                                            style="background:var(--bg-primary);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px;color:var(--accent-light)">Win+R</code><br>
+                                        2. Digite <code
+                                            style="background:var(--bg-primary);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px;color:var(--accent-light)">services.msc</code><br>
+                                        3. Localize "ERP Service" e clique em Iniciar
+                                    </div>
+                                    <div class="chat-meta">
+                                        <span class="meta-badge">✓ Resolvido · 2.3s</span>
+                                        Teki IA
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chat-msg" style="animation-delay:1.4s">
+                                <div class="chat-avatar avatar-user">MV</div>
+                                <div>
+                                    <div class="chat-bubble">Funcionou! Muito obrigado 🙏</div>
+                                    <div class="chat-meta">Marcos V. · agora</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     MARQUEE
+═══════════════════════════════════════════ -->
+    <div class="marquee-section">
+        <p class="marquee-label">Integra com as ferramentas que sua equipe já usa</p>
+        <div class="marquee-track" id="marqueeTrack">
+            <!-- Items duplicados para loop infinito -->
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Slack</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.76774C5.3009 4.57637 5.70204 4.75358 5.76107 5.10774L5.90051 5.94441C5.93286 6.13849 5.84837 6.33349 5.68466 6.44263L5.18366 6.77664C5.06414 6.37192 5 5.94345 5 5.5V4.76774Z"/><path d="M9.5 10C9.05655 10 8.62808 9.93586 8.22337 9.81634L8.55737 9.31534C8.66651 9.15163 8.86152 9.06714 9.0556 9.09949L9.89227 9.23894C10.2464 9.29796 10.4236 9.6991 10.2323 10H9.5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M1.37898e-05 7.5C1.37898e-05 3.35786 3.35788 0 7.50001 0C11.6421 0 15 3.35786 15 7.5C15 11.6421 11.6421 15 7.50001 15C5.9241 15 4.46057 14.5134 3.25306 13.6825L0.723621 14.9472C0.531126 15.0435 0.298641 15.0057 0.14646 14.8536C-0.00571975 14.7014-0.043447 14.4689 0.0528002 14.2764L1.31752 11.7469C0.486584 10.5394 1.37898e-05 9.07592 1.37898e-05 7.5ZM4.22919 4.07962L4.43582 3.94186C5.3415 3.33808 6.56851 3.86966 6.74746 4.94334L6.88691 5.78001C6.98394 6.36224 6.7305 6.94726 6.23936 7.27468L5.58114 7.7135C5.98392 8.42508 6.57492 9.01608 7.2865 9.41887L7.72532 8.76064C8.05274 8.26951 8.63776 8.01606 9.22 8.1131L10.0567 8.25254C11.1303 8.43149 11.6619 9.65851 11.0581 10.5642L10.9201 10.7712C10.8311 10.9089 10.6762 11 10.5 11H9.5C6.46243 11 4 8.53757 4 5.5V4.5C4 4.32366 4.09129 4.16864 4.22919 4.07962Z"/></svg> WhatsApp</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg> Discord</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.1376 9.05555C21.2935 9.05555 22.2306 8.11848 22.2306 6.96253C22.2306 5.80659 21.2935 4.86951 20.1376 4.86951C18.9816 4.86951 18.0446 5.80659 18.0446 6.96253C18.0446 8.11848 18.9816 9.05555 20.1376 9.05555Z"/><path d="M19.0215 18.7972C19.1561 18.8142 19.2932 18.8229 19.4325 18.8229H19.4478C21.2416 18.8229 22.6957 17.3688 22.6957 15.575V10.8694C22.6957 10.3814 22.3001 9.98572 21.812 9.98572H19.2939C19.4364 10.2554 19.5149 10.5636 19.5096 10.8896V16.236C19.5291 17.144 19.3536 18.0111 19.0215 18.7972Z"/><path d="M17.2096 17.9435C16.5785 17.3511 16.1842 16.5094 16.1841 15.5755V10.9857H17.5096V16.2588L17.5099 16.2704C17.5237 16.8614 17.416 17.4271 17.2096 17.9435Z"/><path d="M13.9281 9.03159C15.4559 8.87992 16.6491 7.59093 16.6491 6.02326C16.6491 4.35356 15.2955 3 13.6258 3C11.9561 3 10.6025 4.35356 10.6025 6.02326C10.6025 6.08092 10.6042 6.1382 10.6073 6.19507H12.0755C13.0987 6.19507 13.9281 7.0245 13.9281 8.04762V9.03159Z"/><path d="M11.9281 8.5252V8.19507H11.5226C11.6478 8.31634 11.7835 8.42688 11.9281 8.5252Z"/><path d="M8.27593 16.4276C8.2753 16.3677 8.27568 16.3075 8.27708 16.2471V15.1759H8.75V10.6759H10.5V9.98572H11.9281V16.4276H8.27593Z"/><path d="M8.695 18.4276H12.0755C13.0987 18.4276 13.9281 17.5982 13.9281 16.5751V9.98572H17.6571C18.1393 9.99765 18.5208 10.3979 18.5096 10.8801V16.2471C18.577 19.1412 16.2873 21.5428 13.3934 21.6136C11.2731 21.5617 9.47723 20.2588 8.695 18.4276Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0757 7.19507H3.54823C3.07739 7.19507 2.69568 7.57677 2.69568 8.04762V16.5751C2.69568 17.0459 3.07738 17.4276 3.54823 17.4276H12.0757C12.5465 17.4276 12.9282 17.0459 12.9282 16.5751V8.04762C12.9282 7.57677 12.5465 7.19507 12.0757 7.19507ZM5.5 10.6759H7.25V15.1759H8.25V10.6759H10V9.6759H5.5V10.6759Z"/></svg> Microsoft Teams</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99432,2a10,10,0,1,0,10,10A9.99917,9.99917,0,0,0,11.99432,2Zm3.17951,15.15247a.70547.70547,0,0,1-1.002.3515l-2.71467-2.10938L9.71484,17.002a.29969.29969,0,0,1-.285.03894l.334-2.98846.01069.00848.00683-.059s4.885-4.44751,5.084-4.637c.20147-.189.135-.23.135-.23.01147-.23053-.36152,0-.36152,0L8.16632,13.299l-2.69549-.918s-.414-.1485-.453-.475c-.041-.324.46649-.5.46649-.5l10.717-4.25751s.881-.39252.881.25751Z"/></svg> Telegram</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="instagram"></i> Instagram DM</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="file-text"></i> Notion</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="layout-dashboard"></i> Jira</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="github"></i> GitHub</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="triangle"></i> Linear</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Slack</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.76774C5.3009 4.57637 5.70204 4.75358 5.76107 5.10774L5.90051 5.94441C5.93286 6.13849 5.84837 6.33349 5.68466 6.44263L5.18366 6.77664C5.06414 6.37192 5 5.94345 5 5.5V4.76774Z"/><path d="M9.5 10C9.05655 10 8.62808 9.93586 8.22337 9.81634L8.55737 9.31534C8.66651 9.15163 8.86152 9.06714 9.0556 9.09949L9.89227 9.23894C10.2464 9.29796 10.4236 9.6991 10.2323 10H9.5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M1.37898e-05 7.5C1.37898e-05 3.35786 3.35788 0 7.50001 0C11.6421 0 15 3.35786 15 7.5C15 11.6421 11.6421 15 7.50001 15C5.9241 15 4.46057 14.5134 3.25306 13.6825L0.723621 14.9472C0.531126 15.0435 0.298641 15.0057 0.14646 14.8536C-0.00571975 14.7014-0.043447 14.4689 0.0528002 14.2764L1.31752 11.7469C0.486584 10.5394 1.37898e-05 9.07592 1.37898e-05 7.5ZM4.22919 4.07962L4.43582 3.94186C5.3415 3.33808 6.56851 3.86966 6.74746 4.94334L6.88691 5.78001C6.98394 6.36224 6.7305 6.94726 6.23936 7.27468L5.58114 7.7135C5.98392 8.42508 6.57492 9.01608 7.2865 9.41887L7.72532 8.76064C8.05274 8.26951 8.63776 8.01606 9.22 8.1131L10.0567 8.25254C11.1303 8.43149 11.6619 9.65851 11.0581 10.5642L10.9201 10.7712C10.8311 10.9089 10.6762 11 10.5 11H9.5C6.46243 11 4 8.53757 4 5.5V4.5C4 4.32366 4.09129 4.16864 4.22919 4.07962Z"/></svg> WhatsApp</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg> Discord</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.1376 9.05555C21.2935 9.05555 22.2306 8.11848 22.2306 6.96253C22.2306 5.80659 21.2935 4.86951 20.1376 4.86951C18.9816 4.86951 18.0446 5.80659 18.0446 6.96253C18.0446 8.11848 18.9816 9.05555 20.1376 9.05555Z"/><path d="M19.0215 18.7972C19.1561 18.8142 19.2932 18.8229 19.4325 18.8229H19.4478C21.2416 18.8229 22.6957 17.3688 22.6957 15.575V10.8694C22.6957 10.3814 22.3001 9.98572 21.812 9.98572H19.2939C19.4364 10.2554 19.5149 10.5636 19.5096 10.8896V16.236C19.5291 17.144 19.3536 18.0111 19.0215 18.7972Z"/><path d="M17.2096 17.9435C16.5785 17.3511 16.1842 16.5094 16.1841 15.5755V10.9857H17.5096V16.2588L17.5099 16.2704C17.5237 16.8614 17.416 17.4271 17.2096 17.9435Z"/><path d="M13.9281 9.03159C15.4559 8.87992 16.6491 7.59093 16.6491 6.02326C16.6491 4.35356 15.2955 3 13.6258 3C11.9561 3 10.6025 4.35356 10.6025 6.02326C10.6025 6.08092 10.6042 6.1382 10.6073 6.19507H12.0755C13.0987 6.19507 13.9281 7.0245 13.9281 8.04762V9.03159Z"/><path d="M11.9281 8.5252V8.19507H11.5226C11.6478 8.31634 11.7835 8.42688 11.9281 8.5252Z"/><path d="M8.27593 16.4276C8.2753 16.3677 8.27568 16.3075 8.27708 16.2471V15.1759H8.75V10.6759H10.5V9.98572H11.9281V16.4276H8.27593Z"/><path d="M8.695 18.4276H12.0755C13.0987 18.4276 13.9281 17.5982 13.9281 16.5751V9.98572H17.6571C18.1393 9.99765 18.5208 10.3979 18.5096 10.8801V16.2471C18.577 19.1412 16.2873 21.5428 13.3934 21.6136C11.2731 21.5617 9.47723 20.2588 8.695 18.4276Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0757 7.19507H3.54823C3.07739 7.19507 2.69568 7.57677 2.69568 8.04762V16.5751C2.69568 17.0459 3.07738 17.4276 3.54823 17.4276H12.0757C12.5465 17.4276 12.9282 17.0459 12.9282 16.5751V8.04762C12.9282 7.57677 12.5465 7.19507 12.0757 7.19507ZM5.5 10.6759H7.25V15.1759H8.25V10.6759H10V9.6759H5.5V10.6759Z"/></svg> Microsoft Teams</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99432,2a10,10,0,1,0,10,10A9.99917,9.99917,0,0,0,11.99432,2Zm3.17951,15.15247a.70547.70547,0,0,1-1.002.3515l-2.71467-2.10938L9.71484,17.002a.29969.29969,0,0,1-.285.03894l.334-2.98846.01069.00848.00683-.059s4.885-4.44751,5.084-4.637c.20147-.189.135-.23.135-.23.01147-.23053-.36152,0-.36152,0L8.16632,13.299l-2.69549-.918s-.414-.1485-.453-.475c-.041-.324.46649-.5.46649-.5l10.717-4.25751s.881-.39252.881.25751Z"/></svg> Telegram</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="instagram"></i> Instagram DM</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="file-text"></i> Notion</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="layout-dashboard"></i> Jira</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="github"></i> GitHub</div>
+            <div class="marquee-dot"></div>
+            <div class="marquee-item"><i data-lucide="triangle"></i> Linear</div>
+            <div class="marquee-dot"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     PROBLEM
+═══════════════════════════════════════════ -->
+    <section id="problem">
+        <div class="container">
+            <div class="problem-grid">
+                <div>
+                    <p class="section-eyebrow reveal">O Problema</p>
+                    <h2 class="problem-headline reveal reveal-delay-1">
+                        <span>"</span>Abri um chamado<br>
+                        há 3 horas e ainda<br>
+                        não recebi resposta.<span>"</span>
+                    </h2>
+                </div>
+                <div>
+                    <p class="problem-text reveal reveal-delay-1">
+                        Equipes de TI vivem apagando incêndios. Tickets empilham, usuários
+                        travam por horas aguardando suporte, e o conhecimento técnico fica
+                        preso na cabeça de uma ou duas pessoas.
+                        <br><br>
+                        O suporte manual não escala. O Teki existe para acabar com esse ciclo.
+                    </p>
+                </div>
+            </div>
+
+            <div class="pain-cards">
+                <div class="pain-card reveal reveal-delay-1">
+                    <div class="pain-card-num">01</div>
+                    <div class="pain-icon"><i data-lucide="clock"></i></div>
+                    <div class="pain-title">Horas de espera</div>
+                    <p class="pain-desc">Usuários parando por problemas que levam 2 minutos para resolver, aguardando o
+                        técnico estar disponível.</p>
+                </div>
+                <div class="pain-card reveal reveal-delay-2">
+                    <div class="pain-card-num">02</div>
+                    <div class="pain-icon"><i data-lucide="brain"></i></div>
+                    <div class="pain-title">Conhecimento preso</div>
+                    <p class="pain-desc">Soluções repetidas que só o técnico sênior sabe — e que não está disponível no
+                        momento crítico.</p>
+                </div>
+                <div class="pain-card reveal reveal-delay-3">
+                    <div class="pain-card-num">03</div>
+                    <div class="pain-icon"><i data-lucide="bar-chart-2"></i></div>
+                    <div class="pain-title">Visibilidade zero</div>
+                    <p class="pain-desc">Sem relatórios, sem histórico centralizado, sem métricas de SLA. A gestão voa
+                        às cegas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     FEATURES
+═══════════════════════════════════════════ -->
+    <section id="features">
+        <div class="container">
+            <div class="features-header">
+                <p class="section-eyebrow reveal" style="justify-content:center;">Funcionalidades</p>
+                <h2 class="features-headline reveal reveal-delay-1">
+                    Tudo que sua equipe de TI<br>
+                    precisava em um lugar só.
+                </h2>
+                <p class="features-sub reveal reveal-delay-2">
+                    Do chamado ao diagnóstico, do diagnóstico à solução. Em segundos.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card reveal reveal-delay-1">
+                    <div class="feature-num">01</div>
+                    <div class="feature-icon-wrap"><i data-lucide="zap"></i></div>
+                    <h3 class="feature-title">Respostas Instantâneas</h3>
+                    <p class="feature-desc">Consulta sua base de conhecimento, tickets anteriores e documentação para
+                        responder em menos de 3 segundos. Sem fila, sem espera.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-2">
+                    <div class="feature-num">02</div>
+                    <div class="feature-icon-wrap"><i data-lucide="message-square"></i></div>
+                    <h3 class="feature-title">Omnichannel Real</h3>
+                    <p class="feature-desc">Slack, WhatsApp, Discord, Teams, Telegram. Seus usuários chamam de onde
+                        preferirem — o Teki está em todos ao mesmo tempo.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-3">
+                    <div class="feature-num">03</div>
+                    <div class="feature-icon-wrap"><i data-lucide="brain"></i></div>
+                    <h3 class="feature-title">Base de Conhecimento com IA</h3>
+                    <p class="feature-desc">Carregue seus manuais, wikis e runbooks. Busca semântica encontra a resposta
+                        certa, não apenas a palavra-chave exata.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-1">
+                    <div class="feature-num">04</div>
+                    <div class="feature-icon-wrap"><i data-lucide="radio"></i></div>
+                    <h3 class="feature-title">Monitor de Conexão</h3>
+                    <p class="feature-desc">Dashboard em tempo real com status de todos os canais. Queda no WhatsApp?
+                        Fallback automático sem interrupção para o usuário.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-2">
+                    <div class="feature-num">05</div>
+                    <div class="feature-icon-wrap"><i data-lucide="mic"></i></div>
+                    <h3 class="feature-title">Overlay de Voz</h3>
+                    <p class="feature-desc">Push-to-talk flutuante para técnicos ditarem respostas complexas sem parar o
+                        que estão fazendo. Fluxo de trabalho natural.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-3">
+                    <div class="feature-num">06</div>
+                    <div class="feature-icon-wrap"><i data-lucide="trending-up"></i></div>
+                    <h3 class="feature-title">Histórico e Relatórios</h3>
+                    <p class="feature-desc">Cada atendimento registrado. Métricas de SLA, tempo médio, satisfação e
+                        chamados por categoria. Visibilidade total para o gestor.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════ -->
+    <section id="how">
+        <div class="container">
+            <div class="how-header">
+                <p class="section-eyebrow reveal" style="justify-content:center;">Como funciona</p>
+                <h2 class="how-headline reveal reveal-delay-1">
+                    De zero a suporte inteligente<br>
+                    em menos de 30 minutos.
+                </h2>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-item reveal reveal-delay-1">
+                    <div class="step-num-wrap">01</div>
+                    <div class="step-icon"><i data-lucide="plug"></i></div>
+                    <h3 class="step-title">Conecte seus canais</h3>
+                    <p class="step-desc">Adicione o Teki ao Slack, WhatsApp ou Discord em 3 cliques. Sem código, sem
+                        configuração complexa.</p>
+                </div>
+                <div class="step-item reveal reveal-delay-2">
+                    <div class="step-num-wrap">02</div>
+                    <div class="step-icon"><i data-lucide="book-open"></i></div>
+                    <h3 class="step-title">Carregue sua KB</h3>
+                    <p class="step-desc">Faça upload dos seus manuais, tickets e wikis internos. O Teki processa e
+                        indexa tudo automaticamente.</p>
+                </div>
+                <div class="step-item reveal reveal-delay-3">
+                    <div class="step-num-wrap">03</div>
+                    <div class="step-icon"><i data-lucide="play-circle"></i></div>
+                    <h3 class="step-title">Ative e monitore</h3>
+                    <p class="step-desc">Ligue o Teki no canal desejado. O dashboard mostra cada atendimento em tempo
+                        real: canal, resposta, confiança e tempo.</p>
+                </div>
+                <div class="step-item reveal reveal-delay-4">
+                    <div class="step-num-wrap">04</div>
+                    <div class="step-icon"><i data-lucide="refresh-cw"></i></div>
+                    <h3 class="step-title">Melhore sempre</h3>
+                    <p class="step-desc">Revise respostas, adicione correções, expanda a KB. O Teki fica mais preciso a
+                        cada semana de uso.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     INTEGRATIONS
+═══════════════════════════════════════════ -->
+    <section id="integrations">
+        <div class="container">
+            <div class="int-header">
+                <p class="section-eyebrow reveal" style="justify-content:center;">Integrações</p>
+                <h2 class="int-headline reveal reveal-delay-1">
+                    Onde sua equipe está,<br>
+                    o Teki também está.
+                </h2>
+            </div>
+
+            <div class="integrations-grid">
+                <div class="int-card reveal reveal-delay-1">
+                    <div class="int-logo"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg></div>
+                    <div class="int-name">Slack</div>
+                    <span class="badge badge-success">Disponível</span>
+                </div>
+                <div class="int-card reveal reveal-delay-2">
+                    <div class="int-logo"><svg class="brand-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.76774C5.3009 4.57637 5.70204 4.75358 5.76107 5.10774L5.90051 5.94441C5.93286 6.13849 5.84837 6.33349 5.68466 6.44263L5.18366 6.77664C5.06414 6.37192 5 5.94345 5 5.5V4.76774Z"/><path d="M9.5 10C9.05655 10 8.62808 9.93586 8.22337 9.81634L8.55737 9.31534C8.66651 9.15163 8.86152 9.06714 9.0556 9.09949L9.89227 9.23894C10.2464 9.29796 10.4236 9.6991 10.2323 10H9.5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M1.37898e-05 7.5C1.37898e-05 3.35786 3.35788 0 7.50001 0C11.6421 0 15 3.35786 15 7.5C15 11.6421 11.6421 15 7.50001 15C5.9241 15 4.46057 14.5134 3.25306 13.6825L0.723621 14.9472C0.531126 15.0435 0.298641 15.0057 0.14646 14.8536C-0.00571975 14.7014-0.043447 14.4689 0.0528002 14.2764L1.31752 11.7469C0.486584 10.5394 1.37898e-05 9.07592 1.37898e-05 7.5ZM4.22919 4.07962L4.43582 3.94186C5.3415 3.33808 6.56851 3.86966 6.74746 4.94334L6.88691 5.78001C6.98394 6.36224 6.7305 6.94726 6.23936 7.27468L5.58114 7.7135C5.98392 8.42508 6.57492 9.01608 7.2865 9.41887L7.72532 8.76064C8.05274 8.26951 8.63776 8.01606 9.22 8.1131L10.0567 8.25254C11.1303 8.43149 11.6619 9.65851 11.0581 10.5642L10.9201 10.7712C10.8311 10.9089 10.6762 11 10.5 11H9.5C6.46243 11 4 8.53757 4 5.5V4.5C4 4.32366 4.09129 4.16864 4.22919 4.07962Z"/></svg></div>
+                    <div class="int-name">WhatsApp</div>
+                    <span class="badge badge-success">Disponível</span>
+                </div>
+                <div class="int-card reveal reveal-delay-3">
+                    <div class="int-logo"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></div>
+                    <div class="int-name">Discord</div>
+                    <span class="badge badge-success">Disponível</span>
+                </div>
+                <div class="int-card reveal reveal-delay-1">
+                    <div class="int-logo"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.1376 9.05555C21.2935 9.05555 22.2306 8.11848 22.2306 6.96253C22.2306 5.80659 21.2935 4.86951 20.1376 4.86951C18.9816 4.86951 18.0446 5.80659 18.0446 6.96253C18.0446 8.11848 18.9816 9.05555 20.1376 9.05555Z"/><path d="M19.0215 18.7972C19.1561 18.8142 19.2932 18.8229 19.4325 18.8229H19.4478C21.2416 18.8229 22.6957 17.3688 22.6957 15.575V10.8694C22.6957 10.3814 22.3001 9.98572 21.812 9.98572H19.2939C19.4364 10.2554 19.5149 10.5636 19.5096 10.8896V16.236C19.5291 17.144 19.3536 18.0111 19.0215 18.7972Z"/><path d="M17.2096 17.9435C16.5785 17.3511 16.1842 16.5094 16.1841 15.5755V10.9857H17.5096V16.2588L17.5099 16.2704C17.5237 16.8614 17.416 17.4271 17.2096 17.9435Z"/><path d="M13.9281 9.03159C15.4559 8.87992 16.6491 7.59093 16.6491 6.02326C16.6491 4.35356 15.2955 3 13.6258 3C11.9561 3 10.6025 4.35356 10.6025 6.02326C10.6025 6.08092 10.6042 6.1382 10.6073 6.19507H12.0755C13.0987 6.19507 13.9281 7.0245 13.9281 8.04762V9.03159Z"/><path d="M11.9281 8.5252V8.19507H11.5226C11.6478 8.31634 11.7835 8.42688 11.9281 8.5252Z"/><path d="M8.27593 16.4276C8.2753 16.3677 8.27568 16.3075 8.27708 16.2471V15.1759H8.75V10.6759H10.5V9.98572H11.9281V16.4276H8.27593Z"/><path d="M8.695 18.4276H12.0755C13.0987 18.4276 13.9281 17.5982 13.9281 16.5751V9.98572H17.6571C18.1393 9.99765 18.5208 10.3979 18.5096 10.8801V16.2471C18.577 19.1412 16.2873 21.5428 13.3934 21.6136C11.2731 21.5617 9.47723 20.2588 8.695 18.4276Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0757 7.19507H3.54823C3.07739 7.19507 2.69568 7.57677 2.69568 8.04762V16.5751C2.69568 17.0459 3.07738 17.4276 3.54823 17.4276H12.0757C12.5465 17.4276 12.9282 17.0459 12.9282 16.5751V8.04762C12.9282 7.57677 12.5465 7.19507 12.0757 7.19507ZM5.5 10.6759H7.25V15.1759H8.25V10.6759H10V9.6759H5.5V10.6759Z"/></svg></div>
+                    <div class="int-name">Microsoft Teams</div>
+                    <span class="badge badge-success">Disponível</span>
+                </div>
+                <div class="int-card reveal reveal-delay-2">
+                    <div class="int-logo"><svg class="brand-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99432,2a10,10,0,1,0,10,10A9.99917,9.99917,0,0,0,11.99432,2Zm3.17951,15.15247a.70547.70547,0,0,1-1.002.3515l-2.71467-2.10938L9.71484,17.002a.29969.29969,0,0,1-.285.03894l.334-2.98846.01069.00848.00683-.059s4.885-4.44751,5.084-4.637c.20147-.189.135-.23.135-.23.01147-.23053-.36152,0-.36152,0L8.16632,13.299l-2.69549-.918s-.414-.1485-.453-.475c-.041-.324.46649-.5.46649-.5l10.717-4.25751s.881-.39252.881.25751Z"/></svg></div>
+                    <div class="int-name">Telegram</div>
+                    <span class="badge badge-success">Disponível</span>
+                </div>
+                <div class="int-card reveal reveal-delay-3">
+                    <div class="int-logo"><i data-lucide="instagram"></i></div>
+                    <div class="int-name">Instagram DM</div>
+                    <span class="badge badge-muted">Em breve</span>
+                </div>
+            </div>
+
+            <div class="int-footer reveal" style="margin-top:32px;">
+                <a href="#">Sua ferramenta não está aqui? Solicitar integração →</a>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- ═══════════════════════════════════════════
+     PRICING
+═══════════════════════════════════════════ -->
+    <section id="pricing">
+        <div class="container">
+            <div class="pricing-header">
+                <p class="section-eyebrow reveal" style="justify-content:center;">Planos</p>
+                <h2 class="pricing-headline reveal reveal-delay-1">
+                    Simples. Previsível.<br>Sem surpresas.
+                </h2>
+            </div>
+
+            <div class="pricing-toggle reveal">
+                <span class="toggle-label active" id="labelMonthly" onclick="setAnnual(false)">Mensal</span>
+                <div class="toggle-switch" id="toggleSwitch" onclick="togglePricing()">
+                    <div class="toggle-thumb" id="toggleThumb"></div>
+                </div>
+                <span class="toggle-label" id="labelAnnual" onclick="setAnnual(true)">Anual</span>
+                <span class="discount-badge">−20%</span>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- Starter -->
+                <div class="pricing-card reveal reveal-delay-1">
+                    <div class="plan-name">Starter</div>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-amount" id="price-starter">0</span>
+                        <span class="price-period">/mês</span>
+                    </div>
+                    <p class="plan-desc">Para equipes pequenas começarem sem compromisso.</p>
+                    <ul class="plan-features">
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>1 canal conectado
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>500 mensagens/mês
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Base de conhecimento 10MB
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Histórico 7 dias
+                        </li>
+                        <li class="plan-feature">
+                            <div class="feature-check no">—</div>Suporte prioritário
+                        </li>
+                        <li class="plan-feature">
+                            <div class="feature-check no">—</div>Relatórios avançados
+                        </li>
+                    </ul>
+                    <button class="btn-plan btn-plan-outline">Começar grátis</button>
+                </div>
+
+                <!-- Pro -->
+                <div class="pricing-card popular reveal reveal-delay-2">
+                    <div class="popular-badge">Mais popular</div>
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-price">
+                        <span class="price-currency">R$</span>
+                        <span class="price-amount" id="price-pro">149</span>
+                        <span class="price-period">/mês</span>
+                    </div>
+                    <p class="plan-desc">Para equipes de TI em crescimento que precisam de escala.</p>
+                    <ul class="plan-features">
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>5 canais conectados
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Mensagens ilimitadas
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Base de conhecimento 5GB
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Histórico 90 dias
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Relatórios e SLA
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Suporte prioritário
+                        </li>
+                    </ul>
+                    <button class="btn-plan btn-plan-primary">Começar com Pro</button>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="pricing-card reveal reveal-delay-3">
+                    <div class="plan-name">Enterprise</div>
+                    <div class="plan-price">
+                        <span class="price-amount" style="font-size:32px;letter-spacing:-0.02em;">Sob consulta</span>
+                    </div>
+                    <p class="plan-desc">Para grandes operações com SLAs críticos e white label.</p>
+                    <ul class="plan-features">
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Canais ilimitados
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Mensagens ilimitadas
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Base de conhecimento ilimitada
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>White label completo
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>SLA dedicado
+                        </li>
+                        <li class="plan-feature included">
+                            <div class="feature-check yes">✓</div>Acesso à API
+                        </li>
+                    </ul>
+                    <button class="btn-plan btn-plan-outline">Falar com vendas</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     FAQ
+═══════════════════════════════════════════ -->
+    <section id="faq">
+        <div class="container">
+            <div class="faq-header">
+                <p class="section-eyebrow reveal" style="justify-content:center;">Dúvidas</p>
+                <h2 class="faq-headline reveal reveal-delay-1">
+                    Perguntas que todo mundo faz<br>antes de testar.
+                </h2>
+            </div>
+
+            <div class="faq-list">
+                <div class="faq-item reveal reveal-delay-1">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        O Teki substitui meu técnico de TI?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Não. O Teki resolve os problemas repetitivos e de nível 1, liberando seu técnico para focar
+                            em desafios mais complexos e estratégicos. Pense nele como um colega sempre disponível, não
+                            como uma substituição.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item reveal reveal-delay-2">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        Meus dados ficam seguros?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Sim. A base de conhecimento e os tickets são criptografados em repouso e em trânsito. Nunca
+                            usamos seus dados para treinar modelos externos. Somos totalmente conformes com a LGPD.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item reveal reveal-delay-3">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        Quanto tempo leva para configurar?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            A maioria das empresas está operacional em menos de 30 minutos. O onboarding guiado cobre a
+                            conexão do canal e o carregamento da base de conhecimento passo a passo.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item reveal reveal-delay-4">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        Funciona em português?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Sim, o Teki foi construído com foco em português brasileiro. Entende gírias, siglas técnicas
+                            e o contexto de TI local — incluindo ERPs e sistemas comuns no mercado nacional.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item reveal reveal-delay-5">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        Existe período de teste gratuito?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            O plano Starter é gratuito para sempre. O plano Pro tem trial de 14 dias sem necessidade de
+                            cartão de crédito. Você só paga quando estiver convencido.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item reveal reveal-delay-6">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        Posso integrar com meu ERP ou sistema interno?
+                        <span class="faq-chevron">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">
+                            Sim. Via API e webhooks você integra o Teki com qualquer sistema que precise enviar ou
+                            receber notificações de suporte. A documentação da API está disponível para todos os planos
+                            pagos.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     CTA FINAL
+═══════════════════════════════════════════ -->
+    <section id="cta-final">
+        <div class="cta-glow"></div>
+        <div class="cta-grid-overlay"></div>
+        <div class="container">
+            <div class="cta-content">
+                <p class="cta-eyebrow reveal">Pronto para começar?</p>
+                <h2 class="cta-headline reveal reveal-delay-1">
+                    Seu próximo chamado<br>
+                    já tem <em>resposta.</em>
+                </h2>
+                <p class="cta-sub reveal reveal-delay-2">
+                    Comece grátis hoje. Sem cartão. Sem burocracia.
+                </p>
+                <div class="cta-actions reveal reveal-delay-3">
+                    <a href="#" class="btn btn-primary btn-primary-lg">
+                        <i data-lucide="download" style="width:16px;height:16px;"></i>
+                        Baixar Teki — é grátis
+                    </a>
+                    <a href="#" class="btn btn-outline-lg">Agendar demo →</a>
+                </div>
+                <div class="cta-proof reveal reveal-delay-4">
+                    <div class="proof-item">
+                        <span class="proof-icon"><i data-lucide="star" style="fill:var(--accent-light)"></i></span>
+                        <span>4.9/5 · 200+ usuários</span>
+                    </div>
+                    <div class="proof-item">
+                        <span class="proof-icon"><i data-lucide="zap"></i></span>
+                        <span>Resposta em &lt; 3s</span>
+                    </div>
+                    <div class="proof-item">
+                        <span class="proof-icon"><i data-lucide="shield-check"></i></span>
+                        <span>LGPD Compliant</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="nav-logo" style="text-decoration:none;">
+                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                            <path d="M7 10 L4 4 L10 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                            <path d="M25 10 L28 4 L22 8 Z" fill="#111e30" stroke="#2A8F9D" stroke-width="1" />
+                            <rect x="6" y="9" width="20" height="16" rx="8" fill="#111e30" stroke="#2A8F9D"
+                                stroke-width="1" />
+                            <circle cx="12" cy="16" r="3" fill="#e8e6e1" />
+                            <circle cx="20" cy="16" r="3" fill="#e8e6e1" />
+                            <circle cx="12.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                            <circle cx="20.5" cy="16.5" r="1.8" fill="#34D8C0" />
+                            <path d="M14 21 Q16 22.5 18 21" stroke="#2A8F9D" stroke-width="1.2" stroke-linecap="round"
+                                fill="none" />
+                        </svg>
+                        <span class="nav-logo-text">Teki</span>
+                    </a>
+                    <p>Suporte técnico inteligente, disponível 24 horas por dia, 7 dias por semana.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" title="GitHub"><i data-lucide="github"></i></a>
+                        <a href="#" class="social-link" title="LinkedIn"><i data-lucide="linkedin"></i></a>
+                        <a href="#" class="social-link" title="Twitter"><i data-lucide="twitter"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Produto</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">Funcionalidades</a></li>
+                        <li><a href="#integrations">Integrações</a></li>
+                        <li><a href="#pricing">Planos</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                        <li>
+                            <a href="status.html" style="display:flex;align-items:center;gap:6px;">
+                                Status
+                                <span class="status-badge">
+                                    <span class="status-dot"></span>
+                                    Operacional
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Empresa</h4>
+                    <ul class="footer-links">
+                        <li><a href="sobre.html">Sobre</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="imprensa.html">Imprensa</a></li>
+                        <li><a href="carreiras.html">Trabalhe conosco</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Suporte</h4>
+                    <ul class="footer-links">
+                        <li><a href="docs.html">Documentação</a></li>
+                        <li><a href="ajuda.html">Central de ajuda</a></li>
+                        <li><a href="contato.html">Contato</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>© 2026 Teki — Todos os direitos reservados</span>
+                <div class="footer-legal">
+                    <a href="privacidade.html">Privacidade</a>
+                    <a href="termos.html">Termos de Uso</a>
+                    <a href="lgpd.html">LGPD</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+    <script>
+        // ── Custom cursor ──────────────────────────
+        const cursor = document.getElementById('cursor')
+        const cursorRing = document.getElementById('cursorRing')
+        let mouseX = 0, mouseY = 0
+        let ringX = 0, ringY = 0
+
+        document.addEventListener('mousemove', e => {
+            mouseX = e.clientX; mouseY = e.clientY
+            cursor.style.left = mouseX + 'px'
+            cursor.style.top = mouseY + 'px'
+        })
+
+        // Lag on ring for smooth follow
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.12
+            ringY += (mouseY - ringY) * 0.12
+            cursorRing.style.left = ringX + 'px'
+            cursorRing.style.top = ringY + 'px'
+            requestAnimationFrame(animateCursor)
+        }
+        animateCursor()
+
+        // Enlarge ring on hoverable elements
+        document.querySelectorAll('a, button, .feature-card, .pain-card, .int-card, .testimonial-card, .pricing-card, .faq-question').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'translate(-50%,-50%) scale(1.8)'
+                cursorRing.style.width = '56px'
+                cursorRing.style.height = '56px'
+                cursorRing.style.opacity = '0.8'
+                cursorRing.style.borderColor = 'var(--accent-light)'
+            })
+            el.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'translate(-50%,-50%) scale(1)'
+                cursorRing.style.width = '36px'
+                cursorRing.style.height = '36px'
+                cursorRing.style.opacity = '0.5'
+                cursorRing.style.borderColor = 'var(--accent)'
+            })
+        })
+
+        // ── Nav scroll effect ──────────────────────
+        const nav = document.getElementById('nav')
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 60)
+        }, { passive: true })
+
+        // ── Scroll reveal ──────────────────────────
+        const revealEls = document.querySelectorAll('.reveal')
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible')
+                    revealObserver.unobserve(entry.target)
+                }
+            })
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' })
+
+        revealEls.forEach(el => revealObserver.observe(el))
+
+        // ── Pricing toggle ─────────────────────────
+        let isAnnual = false
+        const prices = { starter: [0, 0], pro: [149, 119], enterprise: [null, null] }
+
+        function togglePricing() {
+            isAnnual = !isAnnual
+            updatePricing()
+        }
+        function setAnnual(val) {
+            isAnnual = val
+            updatePricing()
+        }
+        function updatePricing() {
+            const toggle = document.getElementById('toggleSwitch')
+            const labelM = document.getElementById('labelMonthly')
+            const labelA = document.getElementById('labelAnnual')
+
+            toggle.classList.toggle('annual', isAnnual)
+            labelM.classList.toggle('active', !isAnnual)
+            labelA.classList.toggle('active', isAnnual)
+
+            const starterEl = document.getElementById('price-starter')
+            const proEl = document.getElementById('price-pro')
+
+            const idx = isAnnual ? 1 : 0
+            animateNumber(starterEl, parseInt(starterEl.textContent) || 0, prices.starter[idx])
+            animateNumber(proEl, parseInt(proEl.textContent) || 0, prices.pro[idx])
+        }
+
+        function animateNumber(el, from, to) {
+            const duration = 400
+            const start = performance.now()
+            function update(now) {
+                const progress = Math.min((now - start) / duration, 1)
+                const ease = 1 - Math.pow(1 - progress, 3)
+                el.textContent = Math.round(from + (to - from) * ease)
+                if (progress < 1) requestAnimationFrame(update)
+            }
+            requestAnimationFrame(update)
+        }
+
+        // ── FAQ accordion ──────────────────────────
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item')
+            const answer = item.querySelector('.faq-answer')
+            const isOpen = item.classList.contains('open')
+
+            // Close all
+            document.querySelectorAll('.faq-item.open').forEach(i => {
+                i.classList.remove('open')
+                i.querySelector('.faq-answer').style.maxHeight = '0'
+            })
+
+            // Open clicked if was closed
+            if (!isOpen) {
+                item.classList.add('open')
+                answer.style.maxHeight = answer.scrollHeight + 'px'
+            }
+        }
+
+        // ── Init Lucide icons ──────────────────────
+        lucide.createIcons()
+
+        // ── Smooth scroll for anchor links ─────────
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                const target = document.querySelector(a.getAttribute('href'))
+                if (target) {
+                    e.preventDefault()
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+            })
+        })
+
+        // ── Animated chat messages in hero ─────────
+        // Re-trigger animation on scroll back to hero
+        const heroObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const msgs = document.querySelectorAll('.chat-msg')
+                    msgs.forEach((msg, i) => {
+                        msg.style.animation = 'none'
+                        msg.offsetHeight // reflow
+                        msg.style.animation = `msg-in 0.5s ${0.2 + i * 0.6}s var(--ease-out) both`
+                    })
+                }
+            })
+        }, { threshold: 0.5 })
+        const heroSection = document.getElementById('hero')
+        if (heroSection) heroObserver.observe(heroSection)
+    </script>
+
+</body>
+
+</html>
