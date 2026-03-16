@@ -23,7 +23,7 @@ export function useOpenClaw() {
       setChannels((prev) =>
         prev.map((ch) =>
           ch.id === event.channelId
-            ? { ...ch, status: event.status, detail: event.detail, error: event.error }
+            ? { ...ch, status: event.status, detail: event.detail, error: event.error, qrDataUrl: event.qrDataUrl }
             : ch,
         ),
       );

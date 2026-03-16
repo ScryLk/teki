@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { ConnectionHealth } from '@teki/shared';
 import { DEFAULT_CONNECTION_HEALTH } from '@teki/shared';
 
-export type LayoutMode = 'split' | 'chat-only' | 'screen-only' | 'compact' | 'monitor';
+export type LayoutMode = 'split' | 'chat-only' | 'screen-only' | 'compact';
 
 export type CatState = 'idle' | 'watching' | 'thinking' | 'happy' | 'alert' | 'sleeping';
 
@@ -61,6 +61,14 @@ interface AppState {
   requestWindowSelector: boolean;
   triggerWindowSelector: () => void;
   clearWindowSelector: () => void;
+
+  // Pending image (from "Capturar tela agora" command)
+  pendingImage: string | null;
+  setPendingImage: (image: string | null) => void;
+
+  // Chat history modal
+  chatHistoryOpen: boolean;
+  setChatHistoryOpen: (open: boolean) => void;
 
   // Auth actions
   userPlan: string | null;
@@ -154,6 +162,14 @@ export const useAppStore = create<AppState>((set) => ({
 
   triggerWindowSelector: () => set({ requestWindowSelector: true }),
   clearWindowSelector: () => set({ requestWindowSelector: false }),
+
+  // Pending image
+  pendingImage: null,
+  setPendingImage: (pendingImage) => set({ pendingImage }),
+
+  // Chat history modal
+  chatHistoryOpen: false,
+  setChatHistoryOpen: (chatHistoryOpen) => set({ chatHistoryOpen }),
 
   // Auth actions
   userPlan: null,

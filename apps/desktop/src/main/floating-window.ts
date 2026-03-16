@@ -1,5 +1,6 @@
 import { BrowserWindow, screen, app } from 'electron';
 import { join } from 'path';
+import { markRendererAlive, markRendererDead } from './utils/safe-ipc';
 const is = { get dev() { return !app.isPackaged; } };
 
 let floatingWin: BrowserWindow | null = null;
@@ -47,6 +48,13 @@ export function createFloatingWindow(): void {
 
   floatingWin.webContents.once('did-finish-load', () => {
     isLoaded = true;
+    markRendererAlive(floatingWin!.webContents);
+  });
+
+  floatingWin.webContents.on('render-process-gone', () => {
+    if (floatingWin && !floatingWin.isDestroyed()) {
+      markRendererDead(floatingWin.webContents);
+    }
   });
 
   floatingWin.on('closed', () => {
@@ -104,9 +112,11 @@ export function resizeFloating(width: number, height: number): void {
 export function startRecording(): void {
   if (!floatingWin || floatingWin.isDestroyed()) return;
   showFloating();
-  // Wait a tick for window to be ready
+  // Wait a tick for window to be ready, then focus so input receives keystrokes
   setTimeout(() => {
-    floatingWin?.webContents.send('floating:start-recording');
+    if (!floatingWin || floatingWin.isDestroyed()) return;
+    floatingWin.focus();
+    floatingWin.webContents.send('floating:start-recording');
   }, 100);
 }
 

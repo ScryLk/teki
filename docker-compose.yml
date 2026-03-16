@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: teki
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-teki_secret}
+      POSTGRES_DB: teki
+    volumes:
+      - teki-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teki -d teki"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://teki:${POSTGRES_PASSWORD:-teki_secret}@postgres:5432/teki
+      DIRECT_URL: postgresql://teki:${POSTGRES_PASSWORD:-teki_secret}@postgres:5432/teki
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  teki-pgdata:

@@ -1,10 +1,12 @@
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
+  fetchLatestBaileysVersion,
   type WASocket,
 } from '@whiskeysockets/baileys';
 import { app } from 'electron';
 import { join } from 'path';
+import { rmSync } from 'fs';
 import { BaseChannel } from '../core/types';
 import type { ChannelConfig, IncomingMessage } from '@teki/shared';
 
@@ -24,8 +26,16 @@ export class WhatsAppChannel extends BaseChannel {
   }
 
   async connect(config: ChannelConfig): Promise<void> {
+    // If this is a fresh user-initiated connection (not an auto-reconnect),
+    // reset the counter and clear stale auth to force a new QR code.
+    const isReconnect = this.status === 'reconnecting';
     this.config = config;
     this.intentionalDisconnect = false;
+    if (!isReconnect) {
+      this.reconnectAttempts = 0;
+      // Remove stale auth state so Baileys generates a fresh QR code
+      try { rmSync(this.authDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    }
     this.emitStatus('waiting', 'Gerando QR code...');
 
     // Clean up previous socket and listeners before creating a new one
@@ -42,19 +52,35 @@ export class WhatsAppChannel extends BaseChannel {
     try {
       const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
 
+      // Fetch the latest WhatsApp Web version to avoid "Connection Failure"
+      let version: [number, number, number] | undefined;
+      try {
+        const result = await fetchLatestBaileysVersion();
+        version = result.version;
+      } catch {
+        /* use default version */
+      }
+
       this.sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
+        ...(version && { version }),
       });
 
       this.sock.ev.on('creds.update', saveCreds);
 
-      this.sock.ev.on('connection.update', (update) => {
+      this.sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
           this.qrCode = qr;
-          this.emitStatus('waiting', 'Escaneie o QR code');
+          // Generate QR data URL and send it directly via status event
+          let qrDataUrl: string | undefined;
+          try {
+            const QRCode = await import('qrcode');
+            qrDataUrl = await QRCode.toDataURL(qr, { width: 256 });
+          } catch { /* ignore */ }
+          this.emitStatus('waiting', 'Escaneie o QR code', undefined, qrDataUrl);
         }
 
         if (connection === 'open') {

@@ -13,25 +13,28 @@ interface PillResponseProps {
   transcript: string;
   onClose: () => void;
   onNew: () => void;
+  /** Called when timer expires — goes back to idle instead of hiding */
+  onDismiss: () => void;
+  shortcut?: string;
 }
 
-export default function PillResponse({ response, transcript, onClose, onNew }: PillResponseProps) {
+export default function PillResponse({ response, transcript, onClose, onNew, onDismiss, shortcut = 'Ctrl+D' }: PillResponseProps) {
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     const start = Date.now();
-    const duration = 12000;
+    const duration = 30000;
     const t = setInterval(() => {
       const elapsed = Date.now() - start;
       setProgress(Math.max(0, 100 - (elapsed / duration) * 100));
       if (elapsed >= duration) {
         clearInterval(t);
-        onClose();
+        onDismiss();
       }
     }, 100);
     return () => clearInterval(t);
-  }, [onClose]);
+  }, [onDismiss]);
 
   const copy = () => {
     navigator.clipboard.writeText(response);
@@ -89,7 +92,7 @@ export default function PillResponse({ response, transcript, onClose, onNew }: P
             fontFamily: FONT,
           }}
         >
-          Ctrl+D
+          {shortcut}
         </button>
         <button
           onClick={onClose}
@@ -127,11 +130,11 @@ export default function PillResponse({ response, transcript, onClose, onNew }: P
           color: TEXT,
           fontFamily: FONT,
           lineHeight: 1.6,
-          maxHeight: 120,
+          maxHeight: 90,
           overflowY: 'auto',
         }}
       >
-        {response}
+        {response.length > 200 ? `${response.slice(0, 200)}…` : response}
       </p>
 
       {/* Progress bar */}

@@ -13,6 +13,7 @@ const ScreenViewer: React.FC = () => {
   const setCatState = useAppStore((s) => s.setCatState);
   const requestWindowSelector = useAppStore((s) => s.requestWindowSelector);
   const clearWindowSelector = useAppStore((s) => s.clearWindowSelector);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
   const [viewerState, setViewerState] = useState<ViewerState>('idle');
   const [availableWindows, setAvailableWindows] = useState<WindowSource[]>([]);
@@ -98,7 +99,10 @@ const ScreenViewer: React.FC = () => {
 
   // Handle tray menu actions: "Trocar janela" and "Pausar monitoramento"
   useEffect(() => {
-    const unsubSelect = window.tekiAPI.onTraySelectWindow(() => openSelector());
+    const unsubSelect = window.tekiAPI.onTraySelectWindow(() => {
+      setSettingsOpen(false);
+      openSelector();
+    });
     const unsubStop = window.tekiAPI.onTrayStopWatching(() => stopWatching());
     return () => {
       unsubSelect();
@@ -182,7 +186,7 @@ const ScreenViewer: React.FC = () => {
                 />
                 <div className="flex items-center gap-2 min-w-0">
                   {win.appIcon && (
-                    <img src={win.appIcon} alt="" className="w-4 h-4 shrink-0" />
+                    <img src={win.appIcon} alt="" className="w-5 h-5 shrink-0 rounded-sm" />
                   )}
                   <span className="text-xs text-text-secondary truncate">{win.name}</span>
                 </div>

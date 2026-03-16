@@ -1,6 +1,8 @@
-import { app, BrowserWindow, desktopCapturer, session, shell, globalShortcut } from 'electron';
+import { app, BrowserWindow, session, shell, globalShortcut, nativeImage } from 'electron';
 import { join } from 'path';
 const is = { get dev() { return !app.isPackaged; } };
+
+const iconPath = join(__dirname, '../../resources/icon.png');
 
 // Prevent EPIPE crash when parent process (electron-vite dev) closes the stdio pipe
 process.stdout?.on('error', () => {});
@@ -8,11 +10,9 @@ process.stderr?.on('error', () => {});
 import { registerIPCHandlers } from './ipc-handlers';
 import { registerOpenClawIPC } from './openclaw/ipc/openclawIpc';
 import { createTray, destroyTray, initTrayIcons } from './tray';
-import { createFloatingWindow, toggleFloating, startRecording, destroyFloating } from './floating-window';
+import { createFloatingWindow, showFloating, toggleFloating, startRecording, destroyFloating } from './floating-window';
 import { registerFloatingIPC } from './floating-ipc';
-import { setupConnectionHealth } from './connection/setupConnectionHealth';
 import { setupKnowledgeBase } from './services/kb-ipc';
-import { setupTranscriptionIPC } from './transcription-ipc';
 import { safeSend, markRendererAlive, markRendererDead } from './utils/safe-ipc';
 import { startLogService, stopLogService, logAction, setAuthExpiredCallback } from './services/log-service';
 // import { startPolling, stopPolling } from './services/window-detector';
@@ -26,6 +26,7 @@ function createWindow(): BrowserWindow {
     minWidth: 1024,
     minHeight: 700,
     show: false,
+    icon: iconPath,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 12 },
     backgroundColor: '#09090b',
@@ -83,21 +84,22 @@ if (!gotTheLock) {
   // ── App ready ─────────────────────────────────────────────────────
 
   app.whenReady().then(() => {
-    mainWindow = createWindow();
+    // Set dock icon on macOS (essential for dev mode where there's no bundled .icns)
+    if (process.platform === 'darwin') {
+      const dockIcon = nativeImage.createFromPath(iconPath);
+      if (!dockIcon.isEmpty()) app.dock.setIcon(dockIcon);
+    }
 
-    // Allow renderer to capture desktop audio via getDisplayMedia().
-    // This avoids the getUserMedia+chromeMediaSourceId crash (Chromium bad_message 263).
-    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
-      const sources = await desktopCapturer.getSources({ types: ['screen'] });
-      callback({ video: sources[0], audio: 'loopback' });
-    });
+    mainWindow = createWindow();
 
     // Register IPC handlers
     registerIPCHandlers(mainWindow);
     registerOpenClawIPC(mainWindow);
-    setupConnectionHealth(mainWindow);
-    setupKnowledgeBase(mainWindow);
-    setupTranscriptionIPC(mainWindow);
+
+    // Knowledge Base depends on better-sqlite3 which may fail in dev — wrap to avoid blocking other handlers
+    try { setupKnowledgeBase(mainWindow); } catch (err) {
+      console.warn('[KnowledgeBase] Failed to setup:', (err as Error).message);
+    }
 
     // Create system tray (with fallback icon; cat PNG icons load after renderer)
     createTray(mainWindow);
@@ -114,17 +116,24 @@ if (!gotTheLock) {
       safeSend(mainWindow, 'auth:expired', null);
     });
 
-    // Create floating voice overlay
+    // Create floating voice overlay and show it automatically
     createFloatingWindow();
     registerFloatingIPC();
+    showFloating();
 
     // Register global hotkeys
-    globalShortcut.register('CommandOrControl+Space', () => {
+    const floatingShortcut = globalShortcut.register('CommandOrControl+Option+Space', () => {
       toggleFloating();
     });
-    globalShortcut.register('CommandOrControl+D', () => {
+    if (!floatingShortcut) {
+      console.warn('[Hotkey] Failed to register Cmd+Option+Space for floating window');
+    }
+    const recordShortcut = globalShortcut.register('CommandOrControl+D', () => {
       startRecording();
     });
+    if (!recordShortcut) {
+      console.warn('[Hotkey] Failed to register Cmd+D for recording');
+    }
 
     // Start active window detection polling
     // startPolling(mainWindow);

@@ -9,7 +9,6 @@ import CommandPalette from './components/command-palette/CommandPalette';
 import SettingsModal from './components/settings/SettingsModal';
 import DesktopLogin from './components/auth/DesktopLogin';
 import ConnectionAlert from './components/connection/ConnectionAlert';
-import MonitorDashboard from './components/monitor/MonitorDashboard';
 import { useConnectionHealth } from './hooks/useConnectionHealth';
 
 const App: React.FC = () => {
@@ -19,9 +18,9 @@ const App: React.FC = () => {
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const setAuth = useAppStore((s) => s.setAuth);
   const setLayout = useAppStore((s) => s.setLayout);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
 
-  // Start connection health monitoring
   useConnectionHealth();
 
   const clearAuth = useAppStore((s) => s.clearAuth);
@@ -49,16 +48,19 @@ const App: React.FC = () => {
 
       if (isCtrl && e.key === '1') {
         e.preventDefault();
-        setLayout('chat-only');
+        setLayout('split');
       } else if (isCtrl && e.key === '2') {
         e.preventDefault();
-        setLayout('screen-only');
+        setLayout('chat-only');
       } else if (isCtrl && e.key === '3') {
         e.preventDefault();
-        setLayout('compact');
+        setLayout('screen-only');
       } else if (isCtrl && e.key === '4') {
         e.preventDefault();
-        setLayout('monitor');
+        setLayout('compact');
+      } else if (isCtrl && e.key === ',') {
+        e.preventDefault();
+        setSettingsOpen(true);
       } else if (isCtrl && e.key === 'k') {
         e.preventDefault();
         toggleCommandPalette();
@@ -67,7 +69,7 @@ const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setLayout, toggleCommandPalette]);
+  }, [setLayout, setSettingsOpen, toggleCommandPalette]);
 
   const renderContent = () => {
     switch (layout) {
@@ -90,8 +92,6 @@ const App: React.FC = () => {
             </div>
           </div>
         );
-      case 'monitor':
-        return <MonitorDashboard />;
       default:
         return (
           <SplitLayout

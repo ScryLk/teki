@@ -20,10 +20,6 @@ export async function GET(req: NextRequest) {
         expiresAt: true,
         isRevoked: true,
         createdAt: true,
-        usageLogs: {
-          where: { period },
-          select: { tokensIn: true, tokensOut: true, costUsd: true },
-        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -31,20 +27,8 @@ export async function GET(req: NextRequest) {
     const plan = getPlan(user.planId);
 
     const result = keys.map((k) => ({
-      id: k.id,
-      keyPrefix: k.keyPrefix,
-      name: k.name,
-      type: k.type,
-      lastUsedAt: k.lastUsedAt,
-      expiresAt: k.expiresAt,
-      isRevoked: k.isRevoked,
-      createdAt: k.createdAt,
-      monthlyUsage: {
-        requests: k.usageLogs.length,
-        tokensIn: k.usageLogs.reduce((s, l) => s + l.tokensIn, 0),
-        tokensOut: k.usageLogs.reduce((s, l) => s + l.tokensOut, 0),
-        costUsd: k.usageLogs.reduce((s, l) => s + Number(l.costUsd), 0),
-      },
+      ...k,
+      monthlyUsage: { requests: 0, tokensIn: 0, tokensOut: 0, costUsd: 0 },
     }));
 
     return NextResponse.json({ keys: result, planLimit: plan.features.apiKeys });

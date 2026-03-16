@@ -8,6 +8,7 @@ const POLL_INTERVAL = 2000;
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let lastWindowTitle = '';
+let lastExternalWindow: ActiveWindowInfo = { title: '', processName: '' };
 
 function getActiveWindowLinux(): Promise<ActiveWindowInfo> {
   return new Promise((resolve) => {
@@ -130,6 +131,13 @@ export function startPolling(mainWindow: BrowserWindow): void {
   pollTimer = setInterval(async () => {
     try {
       const info = await getActiveWindow();
+
+      // Track last non-Electron window for floating context
+      const isElectron = info.processName.toLowerCase().includes('electron') ||
+        info.processName.toLowerCase().includes('teki');
+      if (!isElectron && info.title) {
+        lastExternalWindow = info;
+      }
 
       // Only send update if the window title changed
       if (info.title !== lastWindowTitle) {

@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Waveform from './Waveform';
 
 const FONT = "'JetBrains Mono', 'Fira Code', monospace";
 const ACCENT = '#00d4ff';
 const MUTED = '#64748b';
-const DIM = '#334155';
 const SURFACE = '#161b27';
 const BORDER = '#1e293b';
 
@@ -14,19 +12,12 @@ interface PillRecordingProps {
 }
 
 export default function PillRecording({ onTranscriptReady, onCancel }: PillRecordingProps) {
-  const [seconds, setSeconds] = useState(0);
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [inputText, setInputText] = useState('');
-  const [speechText, setSpeechText] = useState('');
   const [speechAvailable, setSpeechAvailable] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const ctxRef = useRef<AudioContext | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setSeconds((s) => s + 1), 1000);
-
     // Try Web Speech API
     const SR = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition;
     if (SR) {
@@ -41,7 +32,6 @@ export default function PillRecording({ onTranscriptReady, onCancel }: PillRecor
             text += e.results[i][0].transcript;
           }
           if (text.trim()) {
-            setSpeechText(text.trim());
             setInputText(text.trim());
             setSpeechAvailable(true);
           }
@@ -56,42 +46,18 @@ export default function PillRecording({ onTranscriptReady, onCancel }: PillRecor
       }
     }
 
-    // Web Audio API for waveform
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        streamRef.current = stream;
-        const ctx = new AudioContext();
-        ctxRef.current = ctx;
-        const analyserNode = ctx.createAnalyser();
-        analyserNode.fftSize = 128;
-        ctx.createMediaStreamSource(stream).connect(analyserNode);
-        setAnalyser(analyserNode);
-      })
-      .catch((err) => {
-        console.error('[Floating] Microphone error:', err);
-      });
-
     // Focus input
     setTimeout(() => inputRef.current?.focus(), 200);
 
     return () => {
-      clearInterval(timer);
       recognitionRef.current?.stop();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      ctxRef.current?.close();
     };
   }, []);
-
-  const fmt = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const handleSend = useCallback(() => {
     const text = inputText.trim();
     if (!text) return;
     recognitionRef.current?.stop();
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    ctxRef.current?.close();
     onTranscriptReady(text);
   }, [inputText, onTranscriptReady]);
 
@@ -103,13 +69,13 @@ export default function PillRecording({ onTranscriptReady, onCancel }: PillRecor
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: '#ef4444',
-            boxShadow: '0 0 8px #ef444488',
+            background: speechAvailable ? ACCENT : '#ef4444',
+            boxShadow: speechAvailable ? `0 0 8px ${ACCENT}88` : '0 0 8px #ef444488',
             animation: 'tekiPulse 1s infinite',
           }}
         />
         <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: FONT }}>
-          {speechAvailable ? 'Ouvindo...' : 'Gravando...'} {fmt(seconds)}
+          {speechAvailable ? 'Ouvindo...' : 'Fale ou digite'}
         </span>
         <button
           onClick={onCancel}
@@ -126,12 +92,10 @@ export default function PillRecording({ onTranscriptReady, onCancel }: PillRecor
         </button>
       </div>
 
-      <Waveform active={true} analyser={analyser} />
-
-      {/* Text input — works as fallback when Speech API is unavailable */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <input
           ref={inputRef}
+          autoFocus
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}

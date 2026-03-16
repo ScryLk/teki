@@ -47,6 +47,7 @@ export interface ChannelInfo {
   connectedAt?: string;
   error?: string;
   config?: ChannelConfig;
+  qrDataUrl?: string;
 }
 
 export interface IncomingMessage {
@@ -56,6 +57,8 @@ export interface IncomingMessage {
   text: string;
   sessionKey: string;
   timestamp: number;
+  /** Extra context injected into system prompt (e.g. watched window name) */
+  systemContext?: string;
 }
 
 export interface ChannelStatusEvent {
@@ -63,4 +66,5 @@ export interface ChannelStatusEvent {
   status: ChannelStatus;
   detail?: string;
   error?: string;
+  qrDataUrl?: string;
 }

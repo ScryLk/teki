@@ -4,11 +4,8 @@ import type {
   TekiAPI, TekiSettings, WindowSource, WindowFrame, AiProviderId, ApiKeyValidationResult,
   ChannelInfo, ChannelConfig, ChannelStatusEvent, OpenClawChannelId,
   ConnectionHealth, ConnectionHealthEvent,
-  MonitoredService, PingResult, PingHistoryQuery, HourlyAggregate, ServiceStats,
-  AlertEvent, DetectedPattern,
   KBDocument, KBUploadPayload, KBSearchResult, KBStats, KBDocStatusEvent, KBChunk,
   TekiApiKeyListResult, TekiApiKeyCreateResult, TekiApiKeyUsage,
-  AudioSource, TranscriptionSegment, AISuggestion, TranscriptionConfig,
 } from '@teki/shared';
 
 const tekiAPI: TekiAPI = {
@@ -200,55 +197,6 @@ const tekiAPI: TekiAPI = {
     return () => ipcRenderer.removeListener(IPC_CHANNELS.CONNECTION_HEALTH_STATUS, listener);
   },
 
-  // Monitor
-  monitorListServices: (): Promise<MonitoredService[]> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_LIST_SERVICES);
-  },
-
-  monitorAddService: (service: Omit<MonitoredService, 'id'>): Promise<MonitoredService> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_ADD_SERVICE, service);
-  },
-
-  monitorUpdateService: (service: MonitoredService): Promise<void> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_UPDATE_SERVICE, service);
-  },
-
-  monitorRemoveService: (serviceId: string): Promise<void> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_REMOVE_SERVICE, serviceId);
-  },
-
-  monitorProbeNow: (serviceId: string): Promise<PingResult> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_PROBE_NOW, serviceId);
-  },
-
-  onMonitorProbeResult: (callback: (result: PingResult) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, data: PingResult) => callback(data);
-    ipcRenderer.on(IPC_CHANNELS.MONITOR_PROBE_RESULT, listener);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.MONITOR_PROBE_RESULT, listener);
-  },
-
-  monitorQueryHistory: (query: PingHistoryQuery): Promise<PingResult[]> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_QUERY_HISTORY, query);
-  },
-
-  monitorQueryHourly: (query: PingHistoryQuery): Promise<HourlyAggregate[]> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_QUERY_HOURLY, query);
-  },
-
-  monitorGetStats: (serviceId: string, period: string): Promise<ServiceStats> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_GET_STATS, serviceId, period);
-  },
-
-  onMonitorAlert: (callback: (alert: AlertEvent) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, data: AlertEvent) => callback(data);
-    ipcRenderer.on(IPC_CHANNELS.MONITOR_ALERT, listener);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.MONITOR_ALERT, listener);
-  },
-
-  monitorGetPatterns: (): Promise<DetectedPattern[]> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.MONITOR_GET_PATTERNS);
-  },
-
   // Knowledge Base
   kbListDocs: (): Promise<KBDocument[]> => {
     return ipcRenderer.invoke(IPC_CHANNELS.KB_LIST_DOCS);
@@ -291,39 +239,9 @@ const tekiAPI: TekiAPI = {
     return ipcRenderer.invoke(IPC_CHANNELS.TEKI_APIKEYS_USAGE, id);
   },
 
-  // Transcription
-  transcriptionGetSources: (): Promise<AudioSource[]> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_GET_SOURCES);
-  },
-  transcriptionStart: (sourceId: string, config?: Partial<TranscriptionConfig>): Promise<void> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_START, sourceId, config);
-  },
-  transcriptionStop: (): Promise<{ segments: TranscriptionSegment[] }> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_STOP);
-  },
-  transcriptionPause: (): Promise<void> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_PAUSE);
-  },
-  transcriptionResume: (): Promise<void> => {
-    return ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_RESUME);
-  },
-  transcriptionSendChunk: (base64: string): void => {
-    ipcRenderer.send(IPC_CHANNELS.TRANSCRIPTION_SEND_CHUNK, base64);
-  },
-  onTranscriptionSegment: (callback: (segment: TranscriptionSegment) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, segment: TranscriptionSegment) => callback(segment);
-    ipcRenderer.on(IPC_CHANNELS.TRANSCRIPTION_SEGMENT, listener);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_SEGMENT, listener);
-  },
-  onTranscriptionSuggestion: (callback: (suggestion: AISuggestion) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, suggestion: AISuggestion) => callback(suggestion);
-    ipcRenderer.on(IPC_CHANNELS.TRANSCRIPTION_SUGGESTION, listener);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_SUGGESTION, listener);
-  },
-  onTranscriptionError: (callback: (error: { message: string }) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, error: { message: string }) => callback(error);
-    ipcRenderer.on(IPC_CHANNELS.TRANSCRIPTION_ERROR, listener);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_ERROR, listener);
+  // Floating window
+  toggleFloating: (): Promise<void> => {
+    return ipcRenderer.invoke('floating:toggle');
   },
 
   // Logging

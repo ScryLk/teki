@@ -68,16 +68,14 @@ async function _POST(req: NextRequest) {
       data: { failedAttempts: 0, lockedUntil: null },
     });
 
-    // Resolve user plan for API key limits
-    const membership = await prisma.tenantMember.findFirst({
-      where: { userId: user.id, status: 'ACTIVE' },
-      include: { tenant: { select: { plan: true } } },
-      orderBy: { createdAt: 'asc' },
+    // Revoke any existing desktop keys before creating a new one (keep only 1 active)
+    await prisma.apiKey.updateMany({
+      where: { userId: user.id, name: 'Teki Desktop', isRevoked: false },
+      data: { isRevoked: true },
     });
-    const planId = membership?.tenant.plan ?? 'FREE';
 
-    // Create API key for desktop
-    const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE', planId);
+    // Create API key for desktop (no plan check — desktop login always allowed)
+    const { key } = await createApiKey(user.id, 'Teki Desktop', 'LIVE');
 
     const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
     const userAgent = req.headers.get('user-agent') ?? undefined;
@@ -99,7 +97,7 @@ async function _POST(req: NextRequest) {
       apiKey: key,
       email: user.email,
       name: user.displayName ?? user.firstName,
-      plan: planId,
+      plan: 'desktop',
     });
   } catch (error) {
     console.error('[desktop-login]', error);

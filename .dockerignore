@@ -1,0 +1,42 @@
+node_modules
+.git
+.gitignore
+
+# Desktop app (not needed for web deploy)
+apps/desktop
+
+# Admin app (separate deploy)
+apps/admin
+
+# Future experiments
+_future
+
+# Build output
+.next
+out
+dist
+
+# Environment files (injected via docker-compose)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dev scripts (not needed in image)
+scripts/dev.ts
+scripts/setup.ts
+scripts/seed.ts

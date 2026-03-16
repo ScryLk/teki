@@ -8,10 +8,17 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-const SYSTEM_PROMPT = (msg: IncomingMessage) =>
-  'Você é o Teki, um assistente de suporte técnico com IA. ' +
-  'Responda sempre em português do Brasil. Seja direto, técnico e prático. ' +
-  `Canal: ${msg.channelId}. Usuário: ${msg.senderName}.`;
+const SYSTEM_PROMPT = (msg: IncomingMessage) => {
+  let prompt =
+    'Você é o Teki, um assistente de suporte técnico com IA integrado ao desktop do usuário. ' +
+    'Você tem acesso ao contexto do ambiente do usuário. ' +
+    'Responda sempre em português do Brasil. Seja direto, técnico e prático. ' +
+    `Canal: ${msg.channelId}. Usuário: ${msg.senderName}.`;
+  if (msg.systemContext) {
+    prompt += `\n\n${msg.systemContext}`;
+  }
+  return prompt;
+};
 
 export class AgentRouter {
   private sessions = new Map<string, Array<{ role: string; content: string }>>();

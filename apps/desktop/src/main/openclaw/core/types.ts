@@ -44,13 +44,13 @@ export abstract class BaseChannel {
 
   // Injected by ChannelRegistry
   onMessage?: (msg: IncomingMessage) => void;
-  onStatusChange?: (status: ChannelStatus, detail?: string, error?: string) => void;
+  onStatusChange?: (status: ChannelStatus, detail?: string, error?: string, qrDataUrl?: string) => void;
 
-  protected emitStatus(status: ChannelStatus, detail?: string, error?: string): void {
+  protected emitStatus(status: ChannelStatus, detail?: string, error?: string, qrDataUrl?: string): void {
     this.status = status;
     this.detail = detail;
     this.errorMessage = error;
     if (status === 'connected') this.connectedAt = new Date().toISOString();
-    this.onStatusChange?.(status, detail, error);
+    this.onStatusChange?.(status, detail, error, qrDataUrl);
   }
 }

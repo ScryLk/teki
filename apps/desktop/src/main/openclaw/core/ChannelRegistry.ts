@@ -32,8 +32,12 @@ export class ChannelRegistry {
 
     for (const ch of allChannels) {
       ch.onMessage = (msg) => this.handleIncoming(ch, msg);
-      ch.onStatusChange = (status, detail, error) => {
-        this.emitStatus({ channelId: ch.id, status, detail, error });
+      ch.onStatusChange = (status, detail, error, qrDataUrl) => {
+        this.emitStatus({ channelId: ch.id, status, detail, error, qrDataUrl });
+        // Save session for QR-based channels only after successful connection
+        if (status === 'connected' && ch.authType === 'qrcode' && ch.getConfig()) {
+          sessionStore.saveSession(ch.id, ch.getConfig()!);
+        }
       };
       this.channels.set(ch.id, ch);
     }
@@ -65,7 +69,11 @@ export class ChannelRegistry {
     if (!ch) throw new Error(`Canal "${channelId}" não encontrado`);
 
     await ch.connect(config);
-    sessionStore.saveSession(channelId, config);
+    // Only save session for auto-reconnect if the channel uses tokens (not QR).
+    // QR-based channels (WhatsApp) need a successful connection first.
+    if (ch.authType !== 'qrcode') {
+      sessionStore.saveSession(channelId, config);
+    }
   }
 
   async disconnect(channelId: OpenClawChannelId): Promise<void> {
@@ -191,6 +199,7 @@ export class ChannelRegistry {
       status: event.status,
       detail: event.detail ?? undefined,
       error: event.error ? String(event.error) : undefined,
+      qrDataUrl: event.qrDataUrl ?? undefined,
     });
   }
 }

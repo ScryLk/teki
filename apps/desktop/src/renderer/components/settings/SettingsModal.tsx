@@ -5,6 +5,7 @@ import type { AIModel, AiProviderId, ChannelInfo, OpenClawChannelId, ChannelConf
 import { ApiKeyInput, AllApiKeys } from './ApiKeyInput';
 import { ApiKeysTab } from './ApiKeysTab';
 import { useOpenClaw } from '@/hooks/useOpenClaw';
+import { StatusTab } from './StatusTab';
 
 // ─── Provider metadata (for ModelSelect dots) ─────────────────────────────────
 
@@ -341,10 +342,9 @@ const AddStep2View: React.FC<{
   platform: string;
   onBack: () => void;
   onConnect: (channelId: OpenClawChannelId, config: ChannelConfig) => void;
-  getQR: (channelId: OpenClawChannelId) => Promise<string | null>;
   getOAuthUrl: (channelId: OpenClawChannelId) => Promise<string | null>;
   channelStatus?: ChannelInfo;
-}> = ({ platform, onBack, onConnect, getQR, getOAuthUrl, channelStatus }) => {
+}> = ({ platform, onBack, onConnect, getOAuthUrl, channelStatus }) => {
   const meta = CHANNEL_META[platform];
   const authType = AUTH_TYPE_MAP[platform] ?? 'bottoken';
   const instructions = CONNECT_INSTRUCTIONS[platform] ?? [];
@@ -354,9 +354,10 @@ const AddStep2View: React.FC<{
   const [clientSecret, setClientSecret] = useState('');
   const [signingSecret, setSigningSecret] = useState('');
   const [appPassword, setAppPassword] = useState('');
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const status = channelStatus?.status ?? 'idle';
+  // QR data URL comes directly from the status event (generated in main process)
+  const qrDataUrl = channelStatus?.qrDataUrl ?? null;
 
   const handleConnect = async () => {
     setConnecting(true);
@@ -374,10 +375,6 @@ const AddStep2View: React.FC<{
     }
     try {
       await onConnect(platform as OpenClawChannelId, config);
-      if (authType === 'qrcode') {
-        const qr = await getQR(platform as OpenClawChannelId);
-        if (qr) setQrDataUrl(qr);
-      }
     } catch (err) {
       console.error('Connect error:', err);
     } finally {
@@ -385,10 +382,9 @@ const AddStep2View: React.FC<{
     }
   };
 
-  const refreshQR = async () => {
-    const qr = await getQR(platform as OpenClawChannelId);
-    if (qr) setQrDataUrl(qr);
-  };
+  // Baileys automatically refreshes the QR code periodically;
+  // a manual refresh re-triggers the connection to get a fresh QR.
+  const refreshQR = () => handleConnect();
 
   return (
     <div>
@@ -1350,7 +1346,7 @@ const HotkeyRow: React.FC<{ keys: string[]; description: string }> = ({ keys, de
 
 // ─── Tab types ───────────────────────────────────────────────────────────────
 
-type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'apikeys' | 'geral' | 'atalhos';
+type Tab = 'ia' | 'openclaw' | 'kb' | 'conta' | 'apikeys' | 'status' | 'geral' | 'atalhos';
 type OpenClawView =
   | { type: 'list' }
   | { type: 'add-step1' }
@@ -1369,7 +1365,7 @@ const SettingsModal: React.FC = () => {
   const [ocView, setOcView] = useState<OpenClawView>({ type: 'list' });
   const [visible, setVisible] = useState(false);
 
-  const { channels, connect, disconnect, getQR, getOAuthUrl } = useOpenClaw();
+  const { channels, connect, disconnect, getOAuthUrl } = useOpenClaw();
 
   const currentModel = ALL_MODELS.find((m) => m.id === selectedModel) ?? ALL_MODELS[0];
   const activeProvider = currentModel.providerId as AiProviderId;
@@ -1440,6 +1436,9 @@ const SettingsModal: React.FC = () => {
             <SidebarTab active={activeTab === 'apikeys'} onClick={() => handleTabChange('apikeys')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>}
               label="API Keys" />
+            <SidebarTab active={activeTab === 'status'} onClick={() => handleTabChange('status')}
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>}
+              label="Status" />
             <SidebarTab active={activeTab === 'atalhos'} onClick={() => handleTabChange('atalhos')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>}
               label="Atalhos" />
@@ -1484,7 +1483,6 @@ const SettingsModal: React.FC = () => {
                     platform={ocView.platform}
                     onBack={() => setOcView({ type: 'add-step1' })}
                     onConnect={connect}
-                    getQR={getQR}
                     getOAuthUrl={getOAuthUrl}
                     channelStatus={channels.find((c) => c.id === ocView.platform)}
                   />
@@ -1511,7 +1509,8 @@ const SettingsModal: React.FC = () => {
             {/* ── API Keys tab ── */}
             {activeTab === 'apikeys' && <ApiKeysTab />}
 
-            {/* ── Geral tab ── */}
+            {/* ── Status tab ── */}
+            {activeTab === 'status' && <StatusTab />}
 
             {/* ── Atalhos tab ── */}
             {activeTab === 'atalhos' && (

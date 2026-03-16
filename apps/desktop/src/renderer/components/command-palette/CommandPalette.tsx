@@ -4,262 +4,99 @@ import { useAppStore, type LayoutMode } from '@/stores/app-store';
 // ─── Icon Components ───────────────────────────────────────────────────────────
 
 const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="11" cy="11" r="8" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
 const CameraIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    <circle cx="12" cy="13" r="4" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
   </svg>
 );
 
 const PauseIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="6" y="4" width="4" height="16" />
-    <rect x="14" y="4" width="4" height="16" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
   </svg>
 );
 
 const PlayIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="5 3 19 12 5 21 5 3" />
   </svg>
 );
 
-const MonitorIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-);
-
 const ClockIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-    <polyline points="2 17 12 22 22 17" />
-    <polyline points="2 12 12 17 22 12" />
-  </svg>
-);
-
-const GlobeIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="2" y1="12" x2="22" y2="12" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" />
   </svg>
 );
 
 const LayoutIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    <line x1="3" y1="9" x2="21" y2="9" />
-    <line x1="9" y1="21" x2="9" y2="9" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" />
   </svg>
 );
 
 const MessageIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   </svg>
 );
 
 const HistoryIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 3v5h5" />
-    <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
-    <path d="M12 7v5l4 2" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" />
   </svg>
 );
 
 const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
 
 const LogOutIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 );
 
 const ScreenIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
   </svg>
 );
 
 const CompactIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    <line x1="9" y1="3" x2="9" y2="21" />
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" />
+  </svg>
+);
+
+const ChevronLeftIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const ReturnIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 10 4 15 9 20" /><path d="M20 4v7a4 4 0 0 1-4 4H4" />
   </svg>
 );
 
@@ -271,30 +108,47 @@ interface Command {
   icon: React.ReactNode;
   action: () => void;
   group: string;
+  shortcut?: string;
 }
+
+const INTERVAL_OPTIONS = [
+  { value: 3, label: '3 segundos' },
+  { value: 5, label: '5 segundos' },
+  { value: 10, label: '10 segundos' },
+  { value: 30, label: '30 segundos' },
+] as const;
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 const CommandPalette: React.FC = () => {
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette);
   const setLayout = useAppStore((s) => s.setLayout);
-  const setCaptureState = useAppStore((s) => s.setCaptureState);
-  const isCapturing = useAppStore((s) => s.isCapturing);
+  const isWatching = useAppStore((s) => s.isWatching);
   const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
   const clearAuth = useAppStore((s) => s.clearAuth);
+  const triggerWindowSelector = useAppStore((s) => s.triggerWindowSelector);
+  const setPendingImage = useAppStore((s) => s.setPendingImage);
+  const setChatHistoryOpen = useAppStore((s) => s.setChatHistoryOpen);
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [subMenu, setSubMenu] = useState<'interval' | null>(null);
+  const [currentInterval, setCurrentInterval] = useState<number>(5);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Load current interval setting
+  useEffect(() => {
+    window.tekiAPI?.getSetting<number>('captureInterval').then((val) => {
+      if (val) setCurrentInterval(val);
+    }).catch(() => {});
+  }, []);
+
   // Animate in on mount
   useEffect(() => {
-    requestAnimationFrame(() => {
-      setIsVisible(true);
-    });
+    requestAnimationFrame(() => setIsVisible(true));
   }, []);
 
   // Auto-focus search input
@@ -304,9 +158,7 @@ const CommandPalette: React.FC = () => {
 
   const close = useCallback(() => {
     setIsVisible(false);
-    setTimeout(() => {
-      toggleCommandPalette();
-    }, 150);
+    setTimeout(() => toggleCommandPalette(), 150);
   }, [toggleCommandPalette]);
 
   // Build commands list
@@ -321,31 +173,27 @@ const CommandPalette: React.FC = () => {
         icon: <CameraIcon className={iconClass} />,
         group: 'Captura',
         action: () => {
-          window.tekiAPI.captureNow();
+          const { currentFrame, isWatching: watching } = useAppStore.getState();
+          if (watching && currentFrame) {
+            setPendingImage(currentFrame);
+          } else {
+            triggerWindowSelector();
+          }
           close();
         },
       },
       {
-        id: 'toggle-capture',
-        label: isCapturing ? 'Pausar observação' : 'Retomar observação',
-        icon: isCapturing ? (
-          <PauseIcon className={iconClass} />
-        ) : (
-          <PlayIcon className={iconClass} />
-        ),
+        id: 'toggle-watching',
+        label: isWatching ? 'Pausar observacao' : 'Retomar observacao',
+        icon: isWatching ? <PauseIcon className={iconClass} /> : <PlayIcon className={iconClass} />,
         group: 'Captura',
         action: () => {
-          setCaptureState(!isCapturing);
-          close();
-        },
-      },
-      {
-        id: 'switch-monitor',
-        label: 'Trocar monitor',
-        icon: <MonitorIcon className={iconClass} />,
-        group: 'Captura',
-        action: () => {
-          // placeholder/future
+          if (isWatching) {
+            window.tekiAPI.stopWatching();
+            useAppStore.getState().setWatching(false);
+          } else {
+            triggerWindowSelector();
+          }
           close();
         },
       },
@@ -355,8 +203,9 @@ const CommandPalette: React.FC = () => {
         icon: <ClockIcon className={iconClass} />,
         group: 'Captura',
         action: () => {
-          // placeholder/future
-          close();
+          setSubMenu('interval');
+          setQuery('');
+          setSelectedIndex(0);
         },
       },
 
@@ -367,97 +216,70 @@ const CommandPalette: React.FC = () => {
         icon: <LayersIcon className={iconClass} />,
         group: 'Contexto',
         action: () => {
-          // placeholder/future
-          close();
-        },
-      },
-      {
-        id: 'switch-environment',
-        label: 'Trocar ambiente',
-        icon: <GlobeIcon className={iconClass} />,
-        group: 'Contexto',
-        action: () => {
-          // placeholder/future
+          triggerWindowSelector();
           close();
         },
       },
 
-      // ── Navegação ──
+      // ── Navegacao ──
       {
         id: 'layout-split',
         label: 'Layout: Split',
         icon: <LayoutIcon className={iconClass} />,
-        group: 'Navegação',
-        action: () => {
-          setLayout('split' as LayoutMode);
-          close();
-        },
+        group: 'Navegacao',
+        shortcut: '⌘1',
+        action: () => { setLayout('split' as LayoutMode); close(); },
       },
       {
-        id: 'layout-chat-only',
-        label: 'Layout: Chat Only',
+        id: 'layout-chat',
+        label: 'Layout: Chat',
         icon: <MessageIcon className={iconClass} />,
-        group: 'Navegação',
-        action: () => {
-          setLayout('chat-only' as LayoutMode);
-          close();
-        },
+        group: 'Navegacao',
+        shortcut: '⌘2',
+        action: () => { setLayout('chat-only' as LayoutMode); close(); },
       },
       {
-        id: 'layout-screen-only',
-        label: 'Layout: Screen Only',
+        id: 'layout-screen',
+        label: 'Layout: Tela',
         icon: <ScreenIcon className={iconClass} />,
-        group: 'Navegação',
-        action: () => {
-          setLayout('screen-only' as LayoutMode);
-          close();
-        },
+        group: 'Navegacao',
+        shortcut: '⌘3',
+        action: () => { setLayout('screen-only' as LayoutMode); close(); },
       },
       {
         id: 'layout-compact',
-        label: 'Layout: Compact',
+        label: 'Layout: Compacto',
         icon: <CompactIcon className={iconClass} />,
-        group: 'Navegação',
-        action: () => {
-          setLayout('compact' as LayoutMode);
-          close();
-        },
+        group: 'Navegacao',
+        shortcut: '⌘4',
+        action: () => { setLayout('compact' as LayoutMode); close(); },
       },
 
       // ── App ──
       {
         id: 'chat-history',
-        label: 'Histórico de chats',
+        label: 'Historico de chats',
         icon: <HistoryIcon className={iconClass} />,
         group: 'App',
-        action: () => {
-          setLayout('chat-only' as LayoutMode);
-          close();
-        },
+        action: () => { setChatHistoryOpen(true); close(); },
       },
       {
         id: 'settings',
-        label: 'Configurações',
+        label: 'Configuracoes',
         icon: <SettingsIcon className={iconClass} />,
         group: 'App',
-        action: () => {
-          setSettingsOpen(true);
-          close();
-        },
+        shortcut: '⌘,',
+        action: () => { setSettingsOpen(true); close(); },
       },
       {
         id: 'quit',
         label: 'Sair',
         icon: <LogOutIcon className={iconClass} />,
         group: 'App',
-        action: async () => {
-          await window.tekiAPI.logout();
-          clearAuth();
-          close();
-        },
+        action: async () => { await window.tekiAPI.logout(); clearAuth(); close(); },
       },
     ];
-  }, [isCapturing, close, setCaptureState, setLayout, setSettingsOpen, clearAuth]);
+  }, [isWatching, close, setLayout, setSettingsOpen, clearAuth, triggerWindowSelector, setPendingImage, setChatHistoryOpen]);
 
   // Filter commands by query
   const filteredCommands = useMemo(() => {
@@ -497,48 +319,107 @@ const CommandPalette: React.FC = () => {
     return groups;
   }, [filteredCommands]);
 
+  // Handle interval selection
+  const selectInterval = useCallback(async (value: number) => {
+    try {
+      await window.tekiAPI.setSetting('captureInterval', value);
+      setCurrentInterval(value);
+    } catch { /* ignore */ }
+    close();
+  }, [close]);
+
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (subMenu === 'interval') {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            setSelectedIndex((prev) => prev < INTERVAL_OPTIONS.length - 1 ? prev + 1 : 0);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            setSelectedIndex((prev) => prev > 0 ? prev - 1 : INTERVAL_OPTIONS.length - 1);
+            break;
+          case 'Enter':
+            e.preventDefault();
+            selectInterval(INTERVAL_OPTIONS[selectedIndex].value);
+            break;
+          case 'Escape':
+          case 'Backspace':
+            e.preventDefault();
+            setSubMenu(null);
+            setSelectedIndex(0);
+            break;
+        }
+        return;
+      }
+
       switch (e.key) {
-        case 'ArrowDown': {
+        case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev < filteredCommands.length - 1 ? prev + 1 : 0
-          );
+          setSelectedIndex((prev) => prev < filteredCommands.length - 1 ? prev + 1 : 0);
           break;
-        }
-        case 'ArrowUp': {
+        case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredCommands.length - 1
-          );
+          setSelectedIndex((prev) => prev > 0 ? prev - 1 : filteredCommands.length - 1);
           break;
-        }
-        case 'Enter': {
+        case 'Enter':
           e.preventDefault();
-          const cmd = filteredCommands[selectedIndex];
-          if (cmd) cmd.action();
+          filteredCommands[selectedIndex]?.action();
           break;
-        }
-        case 'Escape': {
+        case 'Escape':
           e.preventDefault();
           close();
           break;
-        }
       }
     },
-    [filteredCommands, selectedIndex, close]
+    [filteredCommands, selectedIndex, close, subMenu, selectInterval]
   );
 
   // Click outside to close
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        close();
-      }
+      if (e.target === e.currentTarget) close();
     },
     [close]
+  );
+
+  // ── Render interval sub-menu ──
+  const renderIntervalMenu = () => (
+    <div className="py-2">
+      <button
+        onClick={() => { setSubMenu(null); setSelectedIndex(0); }}
+        className="flex items-center gap-2 px-4 py-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+      >
+        <ChevronLeftIcon className="text-text-muted" />
+        <span>Voltar</span>
+      </button>
+      <div className="px-4 py-1.5 text-[11px] font-medium text-text-muted uppercase tracking-wider">
+        Intervalo de captura
+      </div>
+      {INTERVAL_OPTIONS.map((opt, i) => (
+        <button
+          key={opt.value}
+          data-command-item
+          onClick={() => selectInterval(opt.value)}
+          onMouseEnter={() => setSelectedIndex(i)}
+          className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors duration-75 ${
+            i === selectedIndex
+              ? 'bg-surface-hover text-text-primary'
+              : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+          }`}
+        >
+          <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+            {currentInterval === opt.value ? <CheckIcon className="text-accent" /> : <ClockIcon className="text-text-secondary" />}
+          </span>
+          <span className="flex-1">{opt.label}</span>
+          {currentInterval === opt.value && (
+            <span className="text-[10px] text-accent">atual</span>
+          )}
+        </button>
+      ))}
+    </div>
   );
 
   return (
@@ -557,92 +438,87 @@ const CommandPalette: React.FC = () => {
         }`}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <SearchIcon className="text-text-muted flex-shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar comandos..."
-            className="flex-1 bg-transparent text-text-primary text-sm placeholder:text-text-muted outline-none"
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono text-text-muted bg-bg border border-border rounded">
-            ESC
-          </kbd>
-        </div>
+        {!subMenu && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+            <SearchIcon className="text-text-muted flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar comandos..."
+              className="flex-1 bg-transparent text-text-primary text-sm placeholder:text-text-muted outline-none"
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono text-text-muted bg-bg border border-border rounded">
+              ESC
+            </kbd>
+          </div>
+        )}
 
-        {/* Command list */}
-        <div
-          ref={listRef}
-          className="max-h-[360px] overflow-y-auto py-2"
-        >
-          {groupedCommands.length === 0 && (
-            <div className="px-4 py-8 text-center text-text-muted text-sm">
-              Nenhum comando encontrado
-            </div>
-          )}
-
-          {groupedCommands.map((group, groupIndex) => (
-            <div key={group.name}>
-              {/* Group separator - shown between groups */}
-              {groupIndex > 0 && (
-                <div className="mx-3 my-1 border-t border-border" />
+        {/* Command list or sub-menu */}
+        <div ref={listRef} className="max-h-[360px] overflow-y-auto">
+          {subMenu === 'interval' ? renderIntervalMenu() : (
+            <div className="py-2">
+              {groupedCommands.length === 0 && (
+                <div className="px-4 py-8 text-center text-text-muted text-sm">
+                  Nenhum comando encontrado
+                </div>
               )}
 
-              {/* Group label */}
-              <div className="px-4 py-1.5 text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                {group.name}
-              </div>
-
-              {/* Commands */}
-              {group.commands.map((cmd) => (
-                <button
-                  key={cmd.id}
-                  data-command-item
-                  onClick={() => cmd.action()}
-                  onMouseEnter={() => setSelectedIndex(cmd.flatIndex)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors duration-75 ${
-                    cmd.flatIndex === selectedIndex
-                      ? 'bg-surface-hover text-text-primary'
-                      : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
-                  }`}
-                >
-                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                    {cmd.icon}
-                  </span>
-                  <span className="flex-1 truncate">{cmd.label}</span>
-                  {cmd.flatIndex === selectedIndex && (
-                    <span className="flex-shrink-0 text-text-muted text-xs">
-                      <ReturnIcon className="text-text-muted" />
-                    </span>
-                  )}
-                </button>
+              {groupedCommands.map((group, groupIndex) => (
+                <div key={group.name}>
+                  {groupIndex > 0 && <div className="mx-3 my-1 border-t border-border" />}
+                  <div className="px-4 py-1.5 text-[11px] font-medium text-text-muted uppercase tracking-wider">
+                    {group.name}
+                  </div>
+                  {group.commands.map((cmd) => (
+                    <button
+                      key={cmd.id}
+                      data-command-item
+                      onClick={() => cmd.action()}
+                      onMouseEnter={() => setSelectedIndex(cmd.flatIndex)}
+                      className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors duration-75 ${
+                        cmd.flatIndex === selectedIndex
+                          ? 'bg-surface-hover text-text-primary'
+                          : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+                      }`}
+                    >
+                      <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                        {cmd.icon}
+                      </span>
+                      <span className="flex-1 truncate">{cmd.label}</span>
+                      {cmd.shortcut && (
+                        <kbd className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-mono text-text-muted bg-bg border border-border rounded">
+                          {cmd.shortcut}
+                        </kbd>
+                      )}
+                      {cmd.flatIndex === selectedIndex && !cmd.shortcut && (
+                        <span className="flex-shrink-0">
+                          <ReturnIcon className="text-text-muted" />
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Footer hint */}
         <div className="flex items-center gap-4 px-4 py-2 border-t border-border text-[11px] text-text-muted">
           <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">
-              ↑↓
-            </kbd>
+            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">↑↓</kbd>
             navegar
           </span>
           <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">
-              ↵
-            </kbd>
+            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">↵</kbd>
             selecionar
           </span>
           <span className="inline-flex items-center gap-1">
-            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">
-              esc
-            </kbd>
+            <kbd className="px-1 py-0.5 font-mono bg-bg border border-border rounded text-[10px]">esc</kbd>
             fechar
           </span>
         </div>
@@ -650,23 +526,5 @@ const CommandPalette: React.FC = () => {
     </div>
   );
 };
-
-// Small return/enter key icon shown on selected items
-const ReturnIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="9 10 4 15 9 20" />
-    <path d="M20 4v7a4 4 0 0 1-4 4H4" />
-  </svg>
-);
 
 export default CommandPalette;

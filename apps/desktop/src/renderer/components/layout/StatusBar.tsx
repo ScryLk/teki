@@ -110,14 +110,11 @@ const StatusBar: React.FC = () => {
         </div>
 
         <button
-          onClick={() => {
-            const store = useAppStore.getState();
-            store.setLayout(store.layout === 'monitor' ? 'split' : 'monitor');
-          }}
+          onClick={() => window.tekiAPI?.toggleFloating()}
           className="text-text-muted hover:text-text-secondary transition-colors text-[11px]"
-          title="Monitor de Conexão (Ctrl+4)"
+          title="Abrir/fechar janela flutuante (Cmd+Option+Space)"
         >
-          Monitor
+          Flutuante
         </button>
 
       <div

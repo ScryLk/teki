@@ -7,6 +7,7 @@ import { updateTrayState } from './tray';
 import { validateApiKey } from './services/ai-key-validator';
 import { logAction } from './services/log-service';
 import { showFloating, hideFloating } from './floating-window';
+import { channelRegistry } from './openclaw/core/ChannelRegistry';
 import {
   startDeviceFlow,
   cancelDeviceFlow,
@@ -137,6 +138,65 @@ export function registerIPCHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle(IPC_CHANNELS.TEKI_APIKEYS_USAGE, async (_event, id: string) => {
     return getApiKeyUsage(id);
   });
+
+  // ── Connection Health ──────────────────────────────────────────
+
+  type ServiceStatus = 'online' | 'offline' | 'degraded' | 'checking';
+  let lastHealth: { internet: ServiceStatus; backend: ServiceStatus; openclaw: ServiceStatus } =
+    { internet: 'checking', backend: 'checking', openclaw: 'checking' };
+
+  const checkHealth = async () => {
+    const { internet: prevI, backend: prevB, openclaw: prevO } = lastHealth;
+
+    // Internet check
+    let internet: ServiceStatus = 'offline';
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      await fetch('https://www.google.com/generate_204', { method: 'HEAD', signal: ctrl.signal });
+      clearTimeout(timer);
+      internet = 'online';
+    } catch { /* offline */ }
+
+    // Backend check
+    let backend: ServiceStatus = 'offline';
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://teki.app';
+      await fetch(`${baseUrl}/api/health`, { method: 'HEAD', signal: ctrl.signal });
+      clearTimeout(timer);
+      backend = 'online';
+    } catch { /* offline */ }
+
+    // OpenClaw check — derive from channel list
+    let openclaw: ServiceStatus = 'offline';
+    try {
+      const channels = channelRegistry.listChannels();
+      const connected = channels.filter((c: { status: string }) => c.status === 'connected').length;
+      if (connected === channels.length && channels.length > 0) openclaw = 'online';
+      else if (connected > 0) openclaw = 'degraded';
+      else if (channels.length === 0) openclaw = 'checking';
+    } catch { /* offline */ }
+
+    lastHealth = { internet, backend, openclaw };
+
+    // Emit only on change
+    if (internet !== prevI || backend !== prevB || openclaw !== prevO) {
+      mainWindow.webContents.send(IPC_CHANNELS.CONNECTION_HEALTH_STATUS, { health: lastHealth, timestamp: Date.now() });
+    }
+
+    return lastHealth;
+  };
+
+  ipcMain.handle(IPC_CHANNELS.CONNECTION_HEALTH_GET, async () => {
+    return checkHealth();
+  });
+
+  // Poll every 30s
+  const healthInterval = setInterval(checkHealth, 30_000);
+  checkHealth();
+  mainWindow.on('closed', () => clearInterval(healthInterval));
 
   // ── Display ────────────────────────────────────────────────────
 
