@@ -52,6 +52,9 @@ const defaults: TekiSettings = {
   authEmail: null,
   authName: null,
   authAuthenticatedAt: null,
+
+  // Voice listening
+  voiceConsentGrantedAt: null,
 };
 
 const store = new Store<TekiSettings>({

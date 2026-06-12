@@ -7,8 +7,10 @@ const iconPath = join(__dirname, '../../resources/icon.png');
 // Prevent EPIPE crash when parent process (electron-vite dev) closes the stdio pipe
 process.stdout?.on('error', () => {});
 process.stderr?.on('error', () => {});
+import { initMain as initAudioLoopback } from 'electron-audio-loopback';
 import { registerIPCHandlers } from './ipc-handlers';
 import { registerOpenClawIPC } from './openclaw/ipc/openclawIpc';
+import { registerVoiceIPC, teardownVoiceSession } from './voice-ipc';
 import { createTray, destroyTray, initTrayIcons } from './tray';
 import { createFloatingWindow, showFloating, toggleFloating, startRecording, destroyFloating } from './floating-window';
 import { registerFloatingIPC } from './floating-ipc';
@@ -16,6 +18,13 @@ import { setupKnowledgeBase } from './services/kb-ipc';
 import { safeSend, markRendererAlive, markRendererDead } from './utils/safe-ipc';
 import { startLogService, stopLogService, logAction, setAuthExpiredCallback } from './services/log-service';
 // import { startPolling, stopPolling } from './services/window-detector';
+
+// System audio loopback (voice listening). Must run before app is ready.
+// Registers the 'enable-loopback-audio'/'disable-loopback-audio' IPC handlers
+// that override getDisplayMedia via setDisplayMediaRequestHandler with
+// audio: 'loopback'. See apps/desktop/docs/VOICE-CAPTURE.md for why the
+// Electron version is pinned (loopback regressions between major versions).
+initAudioLoopback();
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -119,6 +128,7 @@ if (!gotTheLock) {
     // Create floating voice overlay and show it automatically
     createFloatingWindow();
     registerFloatingIPC();
+    registerVoiceIPC();
     showFloating();
 
     // Register global hotkeys
@@ -155,6 +165,7 @@ if (!gotTheLock) {
 
   app.on('window-all-closed', () => {
     // stopPolling();
+    teardownVoiceSession().catch(() => {});
     logAction('Aplicacao desktop encerrada');
     stopLogService();
     globalShortcut.unregisterAll();

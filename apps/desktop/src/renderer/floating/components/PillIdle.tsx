@@ -8,9 +8,10 @@ const MUTED = '#64748b';
 interface PillIdleProps {
   onClose: () => void;
   shortcut?: string;
+  onStartListening?: () => void;
 }
 
-export default function PillIdle({ onClose, shortcut = 'Ctrl+D' }: PillIdleProps) {
+export default function PillIdle({ onClose, shortcut = 'Ctrl+D', onStartListening }: PillIdleProps) {
   return (
     <div
       style={{
@@ -47,6 +48,30 @@ export default function PillIdle({ onClose, shortcut = 'Ctrl+D' }: PillIdleProps
       <span style={{ flex: 1, fontSize: 11, color: MUTED, fontFamily: FONT }}>
         Teki — <span style={{ color: ACCENT }}>{shortcut}</span> para falar
       </span>
+      {onStartListening && (
+        <button
+          onClick={onStartListening}
+          title="Escutar chamada (sugestões em tempo real)"
+          style={{
+            // @ts-expect-error electron webkit
+            WebkitAppRegion: 'no-drag',
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            border: `1px solid ${BORDER}`,
+            background: SURFACE,
+            color: MUTED,
+            cursor: 'pointer',
+            fontSize: 11,
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          🎧
+        </button>
+      )}
       <button
         onClick={onClose}
         style={{

@@ -2,8 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import PillIdle from './components/PillIdle';
 import PillRecording from './components/PillRecording';
 import PillResponse from './components/PillResponse';
+import ListeningPill from './components/ListeningPill';
+import VoiceConsentModal from './components/VoiceConsentModal';
+import { useVoiceListening } from './voice/useVoiceListening';
 
-type State = 'idle' | 'no-window' | 'recording' | 'transcribing' | 'responding';
+type State =
+  | 'idle'
+  | 'no-window'
+  | 'recording'
+  | 'transcribing'
+  | 'responding'
+  | 'voice-consent'
+  | 'listening'
+  | 'voice-error';
 
 const SIZES: Record<State, { w: number; h: number }> = {
   idle: { w: 280, h: 52 },
@@ -11,7 +22,12 @@ const SIZES: Record<State, { w: number; h: number }> = {
   recording: { w: 380, h: 90 },
   transcribing: { w: 380, h: 80 },
   responding: { w: 420, h: 210 },
+  'voice-consent': { w: 420, h: 250 },
+  listening: { w: 340, h: 52 },
+  'voice-error': { w: 380, h: 80 },
 };
+
+const LISTENING_WITH_CARD = { w: 420, h: 280 };
 
 const isMac = navigator.platform.toUpperCase().includes('MAC');
 const SHORTCUT = isMac ? '⌘ + D' : 'Ctrl + D';
@@ -31,6 +47,24 @@ declare global {
       isWatching: () => Promise<boolean>;
       onStartRecording: (callback: () => void) => () => void;
       expandToMain: () => void;
+      // Voice listening
+      voiceConsentGet: () => Promise<{ granted: boolean; recordedAt: string | null }>;
+      voiceConsentSet: (granted: boolean) => Promise<{ ok: boolean; granted?: boolean }>;
+      voiceStart: () => Promise<{
+        ok: boolean;
+        session?: unknown;
+        error?: { code: string; message: string };
+      }>;
+      voiceStop: () => Promise<{ ok: boolean }>;
+      voiceSendUtterance: (payload: {
+        audioBase64: string;
+        mimeType: string;
+        durationMs: number;
+      }) => Promise<{ ok: boolean; result?: unknown; error?: { code: string; message: string } }>;
+      onVoiceState: (callback: (event: unknown) => void) => () => void;
+      onVoiceSuggestion: (callback: (suggestion: unknown) => void) => () => void;
+      enableLoopbackAudio: () => Promise<void>;
+      disableLoopbackAudio: () => Promise<void>;
     };
   }
 }
@@ -39,12 +73,30 @@ export default function FloatingApp() {
   const [state, setState] = useState<State>('idle');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
+  const voice = useVoiceListening();
 
-  // Resize window when state changes
+  // Resize window when state changes (listening expands when a card shows)
   useEffect(() => {
-    const { w, h } = SIZES[state];
+    const { w, h } =
+      state === 'listening' && voice.pushedSuggestion
+        ? LISTENING_WITH_CARD
+        : SIZES[state];
     window.floatingApi?.resize(w, h);
-  }, [state]);
+  }, [state, voice.pushedSuggestion]);
+
+  // Keep the pill state in sync with the voice capture lifecycle
+  useEffect(() => {
+    if (voice.status === 'consent') setState('voice-consent');
+    else if (voice.status === 'listening') setState('listening');
+    else if (voice.status === 'error') setState('voice-error');
+    else if (
+      voice.status === 'idle' &&
+      (state === 'listening' || state === 'voice-consent' || state === 'voice-error')
+    ) {
+      setState('idle');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice.status]);
 
   // Listen for external start-recording command (Cmd+D / Ctrl+D)
   useEffect(() => {
@@ -138,7 +190,41 @@ export default function FloatingApp() {
           }}
         />
 
-        {state === 'idle' && <PillIdle onClose={handleClose} shortcut={SHORTCUT} />}
+        {state === 'idle' && (
+          <PillIdle onClose={handleClose} shortcut={SHORTCUT} onStartListening={voice.start} />
+        )}
+
+        {state === 'voice-consent' && (
+          <VoiceConsentModal onAccept={voice.grantConsent} onDecline={voice.declineConsent} />
+        )}
+
+        {state === 'voice-error' && (
+          <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+            <span style={{ flex: 1, fontSize: 11, color: MUTED, fontFamily: FONT, lineHeight: 1.5 }}>
+              {voice.error ?? 'Não foi possível ativar a escuta.'}
+            </span>
+            <button
+              onClick={() => void voice.stop()}
+              style={{
+                background: 'transparent', border: 'none',
+                color: MUTED, cursor: 'pointer', fontSize: 13,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {state === 'listening' && (
+          <ListeningPill
+            suggestion={voice.pushedSuggestion}
+            hasBadge={Boolean(voice.badgeSuggestion)}
+            onExpandBadge={voice.expandBadge}
+            onDismissSuggestion={voice.dismissSuggestion}
+            onStop={voice.stop}
+          />
+        )}
 
         {state === 'no-window' && (
           <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
