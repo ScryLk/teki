@@ -28,9 +28,26 @@ services:
     environment:
       DATABASE_URL: postgresql://teki:${POSTGRES_PASSWORD:-teki_secret}@postgres:5432/teki
       DIRECT_URL: postgresql://teki:${POSTGRES_PASSWORD:-teki_secret}@postgres:5432/teki
+      WHISPER_BASE_URL: ${WHISPER_BASE_URL:-http://whisper:8000}
     depends_on:
       postgres:
         condition: service_healthy
 
+  # STT local para Voice Listening (origem 'local', custo zero por minuto).
+  # Servidor OpenAI-compatible (POST /v1/audio/transcriptions) via faster-whisper.
+  # Opcional: suba com `docker compose --profile voice up -d`.
+  # Sem ele (e sem fallback cloud sob opt-in), utterances retornam STT_ERROR.
+  whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: [voice]
+    restart: unless-stopped
+    ports:
+      - "9000:8000"
+    environment:
+      WHISPER__MODEL: ${WHISPER_MODEL:-Systran/faster-whisper-small}
+    volumes:
+      - teki-whisper-cache:/home/ubuntu/.cache/huggingface
+
 volumes:
   teki-pgdata:
+  teki-whisper-cache:

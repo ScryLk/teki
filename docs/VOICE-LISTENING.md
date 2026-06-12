@@ -86,6 +86,44 @@ Limiar, janela e cooldown são configuráveis por tenant
 | Auditoria | `AuditLog`: `voice.activated`, `voice.deactivated`, `voice.consent.*`, `stt.fallback.cloud`, `suggestion.surfaced` |
 | Acesso a dados | `DataAccessLog` a cada retrieval que toca dados do tenant |
 
+## Setup local (passo a passo)
+
+1. **Banco**: aplique a migration aditiva (primeira migration tracked do
+   projeto — veja `apps/web/prisma/migrations/README.md` para o baseline):
+
+   ```bash
+   pnpm db:migrate   # ou pnpm db:push no fluxo atual de dev
+   ```
+
+2. **STT local**: suba o sidecar Whisper (OpenAI-compatible, porta 9000):
+
+   ```bash
+   docker compose --profile voice up -d whisper
+   ```
+
+   Configure no `.env` do web: `WHISPER_BASE_URL=http://localhost:9000`.
+   Modelos maiores (`Systran/faster-whisper-medium`) melhoram a precisão em
+   PT-BR ao custo de latência/CPU. Sem GPU, prefira `small`.
+
+3. **Fallback cloud (opcional)**: defina `GROQ_API_KEY` e ative
+   `sttPolicy=HYBRID` + `cloudOptIn=true` no `TenantVoiceConfig` do tenant.
+   Sem opt-in o fallback nunca acontece.
+
+4. **Desktop**: `pnpm dev:pro` (a feature é bloqueada em Free/Starter) e, na
+   primeira ativação pelo botão 🎧 do assistente flutuante, aceite o modal de
+   consentimento. Valide também `pnpm dev:enterprise` (sem cota).
+
+5. **Smoke test de captura** (por SO, obrigatório antes de bump do Electron):
+
+   ```bash
+   pnpm --filter @teki/desktop smoke:loopback
+   ```
+
+6. **Calibração do VAD**: se utterances estiverem sendo cortados cedo demais
+   (ruído) ou não detectados (volume baixo), ajuste `energyThreshold` /
+   `silenceHangoverMs` em
+   `apps/desktop/src/renderer/floating/voice/utterance-segmenter.ts`.
+
 ## Endpoints
 
 - `GET/POST /api/v1/voice/consent` — estado/registro do consentimento
