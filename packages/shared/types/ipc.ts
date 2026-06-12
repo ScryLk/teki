@@ -88,6 +88,15 @@ export const IPC_CHANNELS = {
   TEKI_APIKEYS_REVOKE: 'tekiApiKeys:revoke',
   TEKI_APIKEYS_USAGE:  'tekiApiKeys:usage',
 
+  // Voice listening (call assistance)
+  VOICE_START: 'voice:start',
+  VOICE_STOP: 'voice:stop',
+  VOICE_UTTERANCE: 'voice:utterance',
+  VOICE_STATE: 'voice:state',
+  VOICE_SUGGESTION: 'voice:suggestion',
+  VOICE_CONSENT_GET: 'voice:consent:get',
+  VOICE_CONSENT_SET: 'voice:consent:set',
+
 } as const;
 
 // ─── Preload API exposed to renderer ─────────────────────────────────────────
@@ -262,4 +271,7 @@ export interface TekiSettings {
   authEmail: string | null;
   authName: string | null;
   authAuthenticatedAt: string | null;
+
+  // Voice listening (local cache; the authoritative consent record lives server-side)
+  voiceConsentGrantedAt: string | null;
 }

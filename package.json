@@ -22,7 +22,12 @@
     "start:web": "pnpm --filter @teki/web start",
     "dev:admin": "pnpm --filter @teki/admin dev",
     "build:admin": "pnpm --filter @teki/admin build",
-    "start:admin": "pnpm --filter @teki/admin start"
+    "start:admin": "pnpm --filter @teki/admin start",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint",
+    "db:migrate": "pnpm --filter @teki/web db:migrate",
+    "db:generate": "pnpm --filter @teki/web db:generate",
+    "db:push": "pnpm --filter @teki/web db:push"
   },
   "engines": {
     "node": ">=18.17.0"

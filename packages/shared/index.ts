@@ -12,4 +12,6 @@ export * from './services/preferences.service';
 export * from './services/anonymization.service';
 export * from './types/connection';
 export * from './types/kb';
+export * from './types/voice';
+export * from './constants/voice';
 export * from './utils/withTimeout';

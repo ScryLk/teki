@@ -78,6 +78,9 @@ model Tenant {
   // Relations - Templates
   responseTemplates ResponseTemplate[]
 
+  // Relations - Voice Listening
+  voiceConfig TenantVoiceConfig?
+
   @@index([slug])
   @@index([plan, status])
   @@index([status])
@@ -2592,4 +2595,140 @@ enum DeviceCodeStatus {
   AUTHORIZED
   EXPIRED
   DENIED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUDIT LOG — Eventos administrativos e de features sensiveis
+// Imutavel: nunca UPDATE/DELETE. Acoes em formato 'dominio.evento'
+// (ex.: voice.activated, stt.fallback.cloud, suggestion.surfaced)
+// ═══════════════════════════════════════════════════════════════
+
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId String? @map("tenant_id") @db.Uuid
+  userId   String? @map("user_id") @db.Uuid
+
+  // Acao no formato 'dominio.evento'
+  action String @db.VarChar(100)
+
+  // Recurso afetado (ex.: 'voice_session:<id>')
+  resource String? @db.VarChar(200)
+
+  details Json?
+
+  ipAddress String? @map("ip_address")
+
+  // Imutavel - sem updated_at
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, action, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@map("audit_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VOICE LISTENING — Assistencia por voz em chamadas VoIP
+// LGPD: audio bruto NUNCA e persistido (processado em memoria).
+// Transcricoes so sao persistidas sob opt-in do tenant, com
+// retencao curta (expires_at) e isolamento por tenant.
+// ═══════════════════════════════════════════════════════════════
+
+model TenantVoiceConfig {
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Feature liga/desliga (alem do gating por plano)
+  enabled Boolean @default(true)
+
+  // Politica de STT: LOCAL_ONLY nunca usa cloud
+  sttPolicy SttPolicyType @default(LOCAL_ONLY) @map("stt_policy")
+
+  // Opt-in explicito para fallback de STT em cloud
+  cloudOptIn Boolean @default(false) @map("cloud_opt_in")
+
+  // Persistencia de transcricao (opt-in; audio bruto jamais)
+  persistTranscripts       Boolean @default(false) @map("persist_transcripts")
+  transcriptRetentionHours Int     @default(24) @map("transcript_retention_hours")
+
+  // Tuning do trigger (null = default do plano/plataforma)
+  triggerThreshold Float? @map("trigger_threshold")
+  contextWindowSec Int?   @map("context_window_sec")
+  cooldownSec      Int?   @map("cooldown_sec")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_voice_configs")
+}
+
+enum SttPolicyType {
+  LOCAL_ONLY
+  HYBRID
+}
+
+model VoiceSession {
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId String? @map("tenant_id") @db.Uuid
+  userId   String  @map("user_id") @db.Uuid
+  agentId  String? @map("agent_id")
+
+  status VoiceSessionStatus @default(ACTIVE)
+
+  // Quota mensal (YYYY-MM), espelha UsageCounter.period
+  period String @db.VarChar(7)
+
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationSeconds Int       @default(0) @map("duration_seconds")
+
+  // Telemetria agregada (sem conteudo)
+  utteranceCount      Int @default(0) @map("utterance_count")
+  cloudFallbackCount  Int @default(0) @map("cloud_fallback_count")
+  suggestionsSurfaced Int @default(0) @map("suggestions_surfaced")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transcriptSegments VoiceTranscriptSegment[]
+
+  @@index([userId, period])
+  @@index([tenantId, startedAt(sort: Desc)])
+  @@index([status])
+  @@map("voice_sessions")
+}
+
+enum VoiceSessionStatus {
+  ACTIVE
+  ENDED
+}
+
+// Persistido APENAS se TenantVoiceConfig.persistTranscripts = true.
+// expires_at obrigatorio: limpeza por job/cron respeitando retencao.
+model VoiceTranscriptSegment {
+  id        String @id @default(uuid()) @db.Uuid
+  sessionId String @map("session_id") @db.Uuid
+
+  text       String        @db.Text
+  origin     SttOriginType
+  providerId String        @map("provider_id") @db.VarChar(50)
+  confidence Float?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+
+  session VoiceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([expiresAt])
+  @@map("voice_transcript_segments")
+}
+
+enum SttOriginType {
+  LOCAL
+  CLOUD
 }
