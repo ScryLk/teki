@@ -1,0 +1,15 @@
+appId: com.teki.desktop
+productName: Teki
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - resources/**/*
+mac:
+  icon: resources/icon.icns
+  category: public.app-category.productivity
+win:
+  icon: resources/icon.png
+linux:
+  icon: resources/icon.png
