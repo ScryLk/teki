@@ -270,7 +270,7 @@ export async function getFullUsage(userId: string, planId: PlanTier) {
 
 // ─── Helpers ───
 
-function getCurrentPeriod(): string {
+export function getCurrentPeriod(): string {
   return new Date().toISOString().slice(0, 7);
 }
 

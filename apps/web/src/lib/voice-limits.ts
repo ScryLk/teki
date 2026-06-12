@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { getCurrentPeriod } from './plan-limits';
 import { VOICE_PLAN_LIMITS } from '@teki/shared';
 import type { PlanTier } from '@prisma/client';
 
@@ -20,10 +21,8 @@ export function getVoicePlanLimits(planId: PlanTier) {
   return VOICE_PLAN_LIMITS[planId];
 }
 
-export function getCurrentVoicePeriod(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
+/** Voice quota uses the same YYYY-MM period semantics as UsageCounter. */
+export const getCurrentVoicePeriod = getCurrentPeriod;
 
 export async function checkVoiceAccess(
   userId: string,
@@ -52,7 +51,7 @@ export async function checkVoiceAccess(
     };
   }
 
-  const period = getCurrentVoicePeriod();
+  const period = getCurrentPeriod();
   const usage = await prisma.voiceSession.aggregate({
     where: { userId, period },
     _sum: { durationSeconds: true },
